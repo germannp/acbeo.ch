@@ -24,6 +24,7 @@
                     Älter</a>
                 {% endif %}
                 {% if page_obj.has_previous %}
+                <a href="{% url 'home' %}" type="button" class="btn btn-primary">Anfang</a>
                 <a href="?page={{ page_obj.previous_page_number }}" type="button" class="btn btn-primary">Neuer
                     &raquo;</a>
                 {% endif %}
