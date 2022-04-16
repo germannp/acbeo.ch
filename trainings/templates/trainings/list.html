@@ -1,36 +1,38 @@
 {% extends "base.html" %}
 
-{% block title %}ACBeo - Trainings{% endblock %}
+{% block title %}Trainings{% endblock %}
 
 {% block content %}
 
-<div class="container">
-    <div class="row">
-        <div class="col-md-12 mt-4 left">
-            <div class="card mb-4">
-                <div class="card-body">
-                    <h2 class="card-title">2022-04-14</h2>
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th scope="col">Pilot·in</th>
-                                <th scope="col">Status</th>
-                                <th scope="col">Kommentar</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for registration in registration_list %}
-                            <tr>
-                                <td>{{ registration.pilot.first_name }} {{ registration.pilot.last_name }}</td>
-                                <td>{{ registration.status }}</td>
-                                <td>{{ registration.comment }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+{% regroup registration_list by date as trainings %}
+
+<div class="row">
+    <div class="col-md-12 mt-4 left">
+        {% for date, training in trainings %}
+        <div class="card mb-4">
+            <div class="card-body">
+                <h2 class="card-title">{{ date }}</h2>
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th class="col-sm-2" scope="col">Pilot·in</th>
+                            <th class="col-sm-1" scope="col">Status</th>
+                            <th scope="col">Kommentar</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for registration in training %}
+                        <tr>
+                            <td>{{ registration.pilot.first_name }} {{ registration.pilot.last_name }}</td>
+                            <td>{{ registration.status }}</td>
+                            <td>{{ registration.comment | safe }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
+        {% endfor %}
     </div>
 </div>
 
