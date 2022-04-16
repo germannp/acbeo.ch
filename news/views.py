@@ -5,7 +5,7 @@ from .models import Post
 
 class PostList(generic.ListView):
     queryset = Post.objects.all().order_by("-created_on")
-    paginate_by = 3
+    paginate_by = 4
     template_name = "news/index.html"
 
 
