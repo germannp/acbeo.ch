@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 
-{% block title %}Trainings{% endblock %}
+{% block title %}Trainings{% endblock title %}
 
 {% block content %}
 
-{% regroup registration_list by date as trainings %}
+{% regroup registrations by date as trainings %}
 
 <div class="row">
     <div class="col-md-12 mt-4 left">

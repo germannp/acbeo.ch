@@ -5,9 +5,9 @@ from django.utils.translation import gettext_lazy as _
 
 class Registration(models.Model):
     class Status(models.TextChoices):
-        WAIT = "WAIT", _("Wait")
-        SELECTED = "SELE", _("Selected")
-        CANCELED = "CANC", _("Canceled")
+        WAIT = "🟡", _("Wait")
+        SELECTED = "🟢", _("Selected")
+        CANCELED = "❌", _("Canceled")
 
     pilot = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="registrations"
@@ -18,7 +18,7 @@ class Registration(models.Model):
         choices=Status.choices,
         default=Status.WAIT,
     )
-    comment = models.CharField(max_length=200, default=None, blank=True, null=True)
+    comment = models.CharField(max_length=200, default="", blank=True)
     created_on = models.DateTimeField(auto_now_add=True)
     updated_on = models.DateTimeField(auto_now=True)
 

@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}News{% endblock %}
+{% block title %}News{% endblock title %}
 
 {% block content %}
 
 <div class="row">
     <div class="col-md-8 mt-4 left">
-        {% for post in post_list %}
+        {% for post in posts %}
         <div class="card mb-4">
             <h5 class="card-header"><a href="{% url 'post' post.slug  %}">{{ post.title }}</a></h5>
             <div class="card-body">
@@ -24,7 +24,7 @@
                     Älter</a>
                 {% endif %}
                 {% if page_obj.has_previous %}
-                <a href="{% url 'home' %}" type="button" class="btn btn-primary">Anfang</a>
+                <a href="{% url 'home' %}" type="button" class="btn btn-primary">Neuste</a>
                 <a href="?page={{ page_obj.previous_page_number }}" type="button" class="btn btn-primary">Neuer
                     &raquo;</a>
                 {% endif %}

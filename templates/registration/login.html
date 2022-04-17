@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Login{% endblock title %}
+
+{% block content %}
+
+<div class="col-md-4">
+    {% if form.errors %}
+    <div class="alert my-4 alert-warning" role="alert">
+        Benutzername und Passwort stimmen nicht überein.
+    </div>
+    {% endif %}
+    <div class="card my-4">
+        <h5 class="card-header">Login</h5>
+        <div class="card-body">
+            <main class="form-signin mb-2">
+                <form method="post" action="{% url 'login' %}">
+                    {% csrf_token %}
+                    <div class="form-floating">
+                        <input type="text" name="username" class="form-control" placeholder="text">
+                        <label for="floatingInput">Benutzername</label>
+                    </div>
+                    <div class="form-floating">
+                        <input type="password" name="password" class="form-control" placeholder="password">
+                        <label for="floatingPassword">Passwort</label>
+                    </div>
+                    <button class="w-100 btn btn-lg btn-primary" type="submit">Login</button>
+                    <input type="hidden" name="next" value="{{ next }}">
+                </form>
+            </main>
+            <a href="{% url 'login' %}">Noch kein Konto</a> oder <a href="{% url 'password_reset' %}">Passwort
+                vergessen</a>?
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
