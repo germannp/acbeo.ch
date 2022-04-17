@@ -52,6 +52,7 @@ MIDDLEWARE = [
 ROOT_URLCONF = "acbeo.urls"
 
 LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "/"
 
 TEMPLATES = [
     {
