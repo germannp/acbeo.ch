@@ -51,6 +51,8 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = "acbeo.urls"
 
+LOGIN_URL = "login"
+
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",

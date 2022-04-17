@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Konto erstellen{% endblock title %}
+
+{% block content %}
+
+<div class="col-md-4">
+    {% if form.errors %}
+    <div class="alert my-4 alert-warning" role="alert">
+        {{ form.errors }}
+    </div>
+    {% endif %}
+    <div class="card my-4">
+        <h5 class="card-header">Konto erstellen</h5>
+        <div class="card-body">
+            <main class="form mb-2">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-floating">
+                        <input type="text" name="username" class="form-control" placeholder="text">
+                        <label for="floatingInput">Benutzername</label>
+                    </div>
+                    <div class="form-floating">
+                        <input type="text" name="first_name" class="form-control" placeholder="text">
+                        <label for="floatingInput">Vorname</label>
+                    </div>
+                    <div class="form-floating">
+                        <input type="text" name="last_name" class="form-control" placeholder="text">
+                        <label for="floatingInput">Nachname</label>
+                    </div>
+                    <div class="form-floating">
+                        <input type="email" name="email" class="form-control" placeholder="name@example.com">
+                        <label for="floatingInput">Email</label>
+                    </div>
+                    <div class="form-floating">
+                        <input type="password" name="password1" autocomplete="new-password" class="form-control" placeholder="password">
+                        <label for="floatingPassword">Passwort</label>
+                    </div>
+                    <div class="form-floating">
+                        <input type="password" name="password2" autocomplete="new-password" class="form-control" placeholder="password">
+                        <label for="floatingPassword">Passwort wiederholen</label>
+                    </div>
+                    <button class="w-100 btn btn-lg btn-primary" type="submit">Konto erstellen</button>
+                    <input type="hidden" name="next" value="{{ next }}">
+                </form>
+            </main>
+            Falls du bereits ein Konto hast, bitte <a href="{% url 'login' %}">einloggen</a>.
+        </div>
+    </div>
+</div>
+
+{% endblock content %}

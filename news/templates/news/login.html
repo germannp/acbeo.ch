@@ -14,7 +14,7 @@
         <h5 class="card-header">Login</h5>
         <div class="card-body">
             <main class="form-signin mb-2">
-                <form method="post" action="{% url 'login' %}">
+                <form method="post">
                     {% csrf_token %}
                     <div class="form-floating">
                         <input type="text" name="username" class="form-control" placeholder="text">
@@ -28,7 +28,7 @@
                     <input type="hidden" name="next" value="{{ next }}">
                 </form>
             </main>
-            <a href="{% url 'login' %}">Noch kein Konto</a> oder <a href="{% url 'password_reset' %}">Passwort
+            <a href="{% url 'register' %}?next={{ next }}">Noch kein Konto</a> oder <a href="{% url 'login' %}">Passwort
                 vergessen</a>?
         </div>
     </div>
