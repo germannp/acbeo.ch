@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
-from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.messages.views import SuccessMessageMixin
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.views import generic
@@ -16,7 +16,7 @@ class RegistrationListView(LoginRequiredMixin, generic.ListView):
     template_name = "trainings/list.html"
 
 
-class SignupView(LoginRequiredMixin, generic.CreateView):
+class SignupView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateView):
     form_class = SignupForm
     template_name = "trainings/signup.html"
 
@@ -53,7 +53,7 @@ class SignupView(LoginRequiredMixin, generic.CreateView):
         return super().form_valid(form)
 
     def get_success_url(self):
-        messages.info(self.request, f"Eingeschrieben für {self.date}.")
+        self.success_message =  f"Eingeschrieben für {self.date}."
         next_day = self.date + timedelta(days=1)
         return reverse_lazy("signup", kwargs={"date": next_day})
 

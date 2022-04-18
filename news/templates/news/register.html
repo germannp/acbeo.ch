@@ -6,8 +6,13 @@
 
 <div class="col-md-4">
     {% if form.errors %}
-    <div class="alert my-4 alert-warning">{{ form.errors }}</div>
+    {% for error_list in form.errors.values %}
+    {% for error in error_list %}
+    <div class="alert my-4 alert-warning">{{ error }}</div>
+    {% endfor %}
+    {% endfor %}
     {% endif %}
+
     <div class="card my-4">
         <h5 class="card-header">Konto erstellen</h5>
         <div class="card-body">
