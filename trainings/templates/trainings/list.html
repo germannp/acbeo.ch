@@ -23,7 +23,12 @@
                     <tbody>
                         {% for registration in training %}
                         <tr>
-                            <td>{{ registration.pilot.first_name }} {{ registration.pilot.last_name }}</td>
+                            <td>{{ registration.pilot.first_name }} {{ registration.pilot.last_name }}
+                                {% if registration.pilot == request.user %}
+                                <a href="{{ date.isoformat }}/update/"
+                                    class="btn btn-primary btn-sm bi bi-pencil-square" /a>
+                                    {% endif %}
+                            </td>
                             <td>{{ registration.status }}</td>
                             <td>{{ registration.comment | safe }}</td>
                         </tr>
