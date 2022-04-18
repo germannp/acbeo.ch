@@ -5,11 +5,18 @@
 {% block content %}
 
 <div class="col-md-4">
-    {% if form.errors %}
-    <div class="alert my-4 alert-warning" role="alert">
-        {{ form.errors }}
-    </div>
+    {% if messages %}
+    {% for message in messages %}<div class="alert my-4 alert-success">{{ message }}</div>{% endfor %}
     {% endif %}
+
+    {% if form.errors %}
+    {% for error_list in form.errors.values %}
+    {% for error in error_list %}
+    <div class="alert my-4 alert-warning">{{ error }}</div>
+    {% endfor %}
+    {% endfor %}
+    {% endif %}
+
     <div class="card my-4">
         <h5 class="card-header">Für Training einschreiben</h5>
         <div class="card-body">
@@ -24,8 +31,9 @@
                         <input type="text" name="comment" class="form-control" placeholder="text">
                         <label for="floatingInput">Kommentar</label>
                     </div>
-                    <button class="w-100 btn btn-lg btn-primary" type="submit">Einschreiben</button>
+                    <button class="btn btn-primary" type="submit">Einschreiben</button>
                     <input type="hidden" name="next" value="{{ next }}">
+                    <a href="{% url 'trainings' %}" class="btn btn-primary">Abbrechen</a>
                 </form>
             </main>
         </div>

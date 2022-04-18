@@ -1,18 +1,27 @@
 from datetime import datetime, timedelta
 
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404
+from django.urls import reverse_lazy
 from django.views import generic
 
-from . import models, forms
+from .models import Registration
+from .forms import SignupForm, UpdateForm
+
+
+class RegistrationListView(LoginRequiredMixin, generic.ListView):
+    context_object_name = "registrations"
+    queryset = Registration.objects.filter(date__gte=datetime.now())
+    template_name = "trainings/list.html"
 
 
 class SignupView(LoginRequiredMixin, generic.CreateView):
-    form_class = forms.SignupForm
-    success_url = "/trainings/"
+    form_class = SignupForm
     template_name = "trainings/signup.html"
 
     def get_context_data(self, **kwargs):
+        """Set default date based on url pattern"""
         context = super().get_context_data(**kwargs)
         if "date" in self.kwargs:
             context["date"] = self.kwargs["date"]
@@ -23,30 +32,38 @@ class SignupView(LoginRequiredMixin, generic.CreateView):
         return context
 
     def form_valid(self, form):
-        date = form.instance.date
-        if date > (datetime.now() + timedelta(days=365)).date():
-            form.add_error("date", f"Einschreiben ist nur ein Jahr im voraus möglich.")
+        """Fill in pilot from logged in user and check sanity"""
+        self.date = form.instance.date
+        today = datetime.now()
+        if self.date < today.date():
+            form.add_error(
+                "date", f"Einschreiben ist nur für zukünftige Trainings möglich."
+            )
             return super().form_invalid(form)
-        pilot = self.request.user
-        if models.Registration.objects.filter(pilot=pilot, date=date).exists():
-            form.add_error("date", f"Du bist für {date} bereits eingeschrieben.")
+        if self.date > (today + timedelta(days=365)).date():
+            form.add_error(
+                "date", f"Einschreiben ist höchstens ein Jahr im Voraus möglich."
+            )
             return super().form_invalid(form)
-        form.instance.pilot = pilot
+        self.pilot = self.request.user
+        if Registration.objects.filter(pilot=self.pilot, date=self.date).exists():
+            form.add_error("date", f"Du bist für {self.date} bereits eingeschrieben.")
+            return super().form_invalid(form)
+        form.instance.pilot = self.pilot
         return super().form_valid(form)
+
+    def get_success_url(self):
+        messages.info(self.request, f"Eingeschrieben für {self.date}.")
+        next_day = self.date + timedelta(days=1)
+        return reverse_lazy("signup", kwargs={"date": next_day})
 
 
 class UpdateView(LoginRequiredMixin, generic.UpdateView):
-    form_class = forms.UpdateForm
+    form_class = UpdateForm
     template_name = "trainings/update.html"
-    success_url = "/trainings/"
+    success_url = reverse_lazy("trainings")
 
     def get_object(self):
         date = self.kwargs["date"]
         pilot = self.request.user
-        return get_object_or_404(models.Registration.objects, pilot=pilot, date=date)
-
-
-class RegistrationListView(LoginRequiredMixin, generic.ListView):
-    context_object_name = "registrations"
-    queryset = models.Registration.objects.filter(date__gte=datetime.now())
-    template_name = "trainings/list.html"
+        return get_object_or_404(Registration.objects, pilot=pilot, date=date)
