@@ -12,6 +12,16 @@ class SignupView(LoginRequiredMixin, generic.CreateView):
     success_url = "/trainings/"
     template_name = "trainings/signup.html"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if "date" in self.kwargs:
+            context["date"] = self.kwargs["date"]
+        else:
+            today = datetime.now().date()
+            next_saturday = today + timedelta(days=(5 - today.weekday()) % 7)
+            context["date"] = next_saturday
+        return context
+
     def form_valid(self, form):
         date = form.instance.date
         if date > (datetime.now() + timedelta(days=365)).date():
