@@ -24,7 +24,7 @@
                 <form method="post">
                     {% csrf_token %}
                     <div class="form-floating">
-                        <input type="date" name="date" class="form-control" value="{{ date.isoformat }}">
+                        <input type="date" name="date" class="form-control" value="{{ date.isoformat }}" required>
                         <label for="floatingInput">Datum</label>
                     </div>
                     <div class="form-floating">
