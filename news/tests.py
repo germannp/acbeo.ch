@@ -51,8 +51,10 @@ class UserCreationTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "<title>ACBeo - Login</title>")
         self.assertContains(response, "/register/?next=/trainings/")
-        
-        self.client.post("/register/?next=/trainings/", data=self.user_data, follow=True)
+
+        self.client.post(
+            "/register/?next=/trainings/", data=self.user_data, follow=True
+        )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "<title>ACBeo - Login</title>")
-        self.assertContains(response, "/login/?next=/trainings/")
+        self.assertContains(response, 'name="next" value="/trainings/"')
