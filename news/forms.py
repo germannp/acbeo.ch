@@ -23,5 +23,5 @@ class UserCreationForm(UserCreationForm):
     def clean_email(self):
         email = self.cleaned_data["email"]
         if User.objects.filter(email=email).exists():
-            raise ValidationError("Ein Konto mit dieser Email existiert bereits!")
+            raise ValidationError("Ein Konto mit dieser Email existiert bereits.")
         return email
