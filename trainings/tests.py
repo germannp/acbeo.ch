@@ -145,3 +145,21 @@ class SignupTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "alert-warning")
         self.assertEqual(0, len(Registration.objects.all()))
+
+
+class SignupUpdateTests(TestCase):
+    def setUp(self):
+        self.pilot = User(username="Pilot")
+        self.pilot.save()
+        self.client.force_login(self.pilot)
+        self.today = datetime.now().date()
+        Registration(pilot=self.pilot, date=self.today, comment="Test comment").save()
+        self.yesterday = self.today - timedelta(days=1)
+        Registration(pilot=self.pilot, date=self.yesterday).save()
+
+    def test_comment_is_in_form(self):
+        response = self.client.get(
+            reverse("update", kwargs={"date": self.today.isoformat()})
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'value="Test comment"')

@@ -34,13 +34,13 @@ class SignupView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateView):
     def form_valid(self, form):
         """Fill in pilot from logged in user and check sanity"""
         self.date = form.instance.date
-        today = datetime.now()
-        if self.date < today.date():
+        today = datetime.now().date()
+        if self.date < today:
             form.add_error(
                 "date", f"Einschreiben ist nur für zukünftige Trainings möglich."
             )
             return super().form_invalid(form)
-        if self.date > (today + timedelta(days=365)).date():
+        if self.date > today + timedelta(days=365):
             form.add_error(
                 "date", f"Einschreiben ist höchstens ein Jahr im Voraus möglich."
             )
