@@ -6,7 +6,7 @@ from .forms import UserCreationForm
 from .models import Post
 
 
-class RegistrationView(SuccessMessageMixin, generic.CreateView):
+class UserCreateView(SuccessMessageMixin, generic.CreateView):
     form_class = UserCreationForm
     template_name = "news/register.html"
     success_url = reverse_lazy("login")

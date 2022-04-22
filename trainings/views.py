@@ -10,13 +10,13 @@ from .models import Registration
 from .forms import SignupForm, UpdateForm
 
 
-class RegistrationListView(LoginRequiredMixin, generic.ListView):
+class SingupListView(LoginRequiredMixin, generic.ListView):
     context_object_name = "registrations"
     queryset = Registration.objects.filter(date__gte=datetime.now())
     template_name = "trainings/list.html"
 
 
-class SignupView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateView):
+class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateView):
     form_class = SignupForm
     template_name = "trainings/signup.html"
 
@@ -58,7 +58,7 @@ class SignupView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateView):
         return reverse_lazy("signup", kwargs={"date": next_day})
 
 
-class UpdateView(LoginRequiredMixin, generic.UpdateView):
+class SignupUpdateView(LoginRequiredMixin, generic.UpdateView):
     form_class = UpdateForm
     template_name = "trainings/update.html"
     success_url = reverse_lazy("trainings")
