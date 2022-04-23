@@ -65,7 +65,46 @@ class TrainingListTests(TestCase):
         self.assertIsNotNone(hidden_update_button.search(str(response.content)))
 
 
-class SignupTests(TestCase):
+class TrainingUpdateTests(TestCase):
+    def setUp(self):
+        self.pilot = User(username="Pilot")
+        self.pilot.save()
+        self.client.force_login(self.pilot)
+
+        self.today = datetime.now().date()
+        Training(date=self.today).save()
+
+        self.default_info = "Training findet statt"
+        self.info = "Training abgesagt"
+
+    def test_form_is_prefilled(self):
+        response = self.client.get(
+            reverse("update_training", kwargs={"date": self.today.isoformat()})
+        )
+        self.assertContains(response, self.default_info)
+        response = self.client.post(
+            reverse("update_training", kwargs={"date": self.today.isoformat()}),
+            data={"info": self.info},
+        )
+        response = self.client.get(
+            reverse("update_training", kwargs={"date": self.today.isoformat()})
+        )
+        self.assertContains(response, self.info)
+
+    def test_infos_are_shown_in_list(self):
+        response = self.client.get(reverse("trainings"))
+        self.assertNotContains(response, self.default_info)
+        self.assertNotContains(response, self.info)
+        response = self.client.post(
+            reverse("update_training", kwargs={"date": self.today.isoformat()}),
+            data={"info": self.info},
+        )
+        response = self.client.get(reverse("trainings"))
+        self.assertNotContains(response, self.default_info)
+        self.assertContains(response, self.info)
+
+
+class SignupCreateTests(TestCase):
     def setUp(self):
         self.pilot = User(username="Pilot")
         self.pilot.save()
@@ -160,7 +199,7 @@ class SignupUpdateTests(TestCase):
 
     def test_comment_is_in_form(self):
         response = self.client.get(
-            reverse("update", kwargs={"date": self.today.isoformat()})
+            reverse("update_signup", kwargs={"date": self.today.isoformat()})
         )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'value="Test comment"')

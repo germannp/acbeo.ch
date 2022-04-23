@@ -3,7 +3,13 @@ from django import forms
 from . import models
 
 
-class SignupForm(forms.ModelForm):
+class TrainingUpdateForm(forms.ModelForm):
+    class Meta:
+        model = models.Training
+        exclude = ["date"]
+
+
+class SignupCreateForm(forms.ModelForm):
     date = forms.DateField()
 
     class Meta:
@@ -11,7 +17,7 @@ class SignupForm(forms.ModelForm):
         exclude = ["pilot", "training", "status"]
 
 
-class UpdateForm(forms.ModelForm):
+class SignupUpdateForm(forms.ModelForm):
     class Meta:
         model = models.Singup
         exclude = ["pilot", "training", "status"]

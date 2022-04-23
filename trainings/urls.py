@@ -21,5 +21,14 @@ urlpatterns = [
     path("", views.TrainingListView.as_view(), name="trainings"),
     path("signup/", views.SignupCreateView.as_view(), name="signup"),
     path("<date:date>/signup/", views.SignupCreateView.as_view(), name="signup"),
-    path("<date:date>/update/", views.SignupUpdateView.as_view(), name="update"),
+    path(
+        "<date:date>/update-signup/",
+        views.SignupUpdateView.as_view(),
+        name="update_signup",
+    ),
+    path(
+        "<date:date>/update-training/",
+        views.TrainingUpdateView.as_view(),
+        name="update_training",
+    ),
 ]

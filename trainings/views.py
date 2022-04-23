@@ -7,18 +7,27 @@ from django.urls import reverse_lazy
 from django.views import generic
 
 from .models import Training, Singup
-from .forms import SignupForm, UpdateForm
+from .forms import TrainingUpdateForm, SignupCreateForm, SignupUpdateForm
 
 
 class TrainingListView(LoginRequiredMixin, generic.ListView):
     context_object_name = "trainings"
     queryset = Training.objects.filter(date__gte=datetime.now())
     paginate_by = 3
-    template_name = "trainings/list.html"
+    template_name = "trainings/list_trainings.html"
+
+
+class TrainingUpdateView(LoginRequiredMixin, generic.UpdateView):
+    form_class = TrainingUpdateForm
+    template_name = "trainings/update_training.html"
+    success_url = reverse_lazy("trainings")
+
+    def get_object(self):
+        return get_object_or_404(Training.objects, date=self.kwargs["date"])
 
 
 class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateView):
-    form_class = SignupForm
+    form_class = SignupCreateForm
     template_name = "trainings/signup.html"
 
     def get_context_data(self, **kwargs):
@@ -66,12 +75,11 @@ class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateVi
 
 
 class SignupUpdateView(LoginRequiredMixin, generic.UpdateView):
-    form_class = UpdateForm
-    template_name = "trainings/update.html"
+    form_class = SignupUpdateForm
+    template_name = "trainings/update_signup.html"
     success_url = reverse_lazy("trainings")
 
     def get_object(self):
         pilot = self.request.user
-        date = self.kwargs["date"]
-        training = Training.objects.get(date=date)
+        training = Training.objects.get(date=self.kwargs["date"])
         return get_object_or_404(Singup.objects, pilot=pilot, training=training)

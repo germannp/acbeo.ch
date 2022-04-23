@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Anmeldung bearbeiten{% endblock title %}
+
+{% block content %}
+
+<div class="col-md-4">
+    {% if form.errors %}
+    {% for error_list in form.errors.values %}
+    {% for error in error_list %}
+    <div class="alert my-4 alert-warning">{{ error }}</div>
+    {% endfor %}
+    {% endfor %}
+    {% endif %}
+
+    <div class="card my-4">
+        <h5 class="card-header">Training bearbeiten</h5>
+        <div class="card-body">
+            <main class="form">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-floating mb-3">
+                        <input type="text" name="info" class="form-control" placeholder="text"
+                            value="{{ form.info.value|default:'Training findet statt, Treffpunkt 9 Uhr Aaregg.' }}">
+                        <label for="floatingInput">Infos</label>
+                    </div>
+                    <button class="btn btn-primary" type="submit">Speichern</button>
+                    <input type="hidden" name="next" value="{{ next }}">
+                    <a href="{% url 'trainings' %}" class="btn btn-primary">Abbrechen</a>
+                </form>
+            </main>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}

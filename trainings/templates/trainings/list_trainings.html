@@ -8,8 +8,14 @@
     <div class="col-md-12 mt-4 left">
         {% for training in trainings %}
         <div class="card mb-4">
-            <h5 class="card-header">{{ training.date|date:"l, d. E Y" }}</h5>
+            <h5 class="card-header">{{ training.date|date:"l, d. E Y" }} <a
+                    href="{% url 'update_training' date=training.date.isoformat %}"
+                    class="btn btn-primary btn-sm bi bi-pencil-square" /a></a>
+            </h5>
             <div class="card-body">
+                {% if training.info %}
+                {{ training.info }}
+                {% endif %}
                 <table class="table table-hover">
                     <thead>
                         <tr>
@@ -23,7 +29,7 @@
                         <tr>
                             <td>{{ signup.pilot.first_name }} {{ signup.pilot.last_name }}
                                 {% if signup.pilot == request.user %}
-                                <a href="{% url 'update' date=training.date.isoformat %}"
+                                <a href="{% url 'update_signup' date=training.date.isoformat %}"
                                     class="btn btn-primary btn-sm bi bi-pencil-square" /a>
                                 {% endif %}
                             </td>
