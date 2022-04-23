@@ -33,7 +33,14 @@
                                     class="btn btn-primary btn-sm bi bi-pencil-square" /a>
                                 {% endif %}
                             </td>
-                            <td>{{ signup.status }}</td>
+                            <td>
+                                {% if signup.get_status_display == 'Selected' %}<i
+                                    class="bi bi-cloud-check text-success"></i>{% endif %}
+                                {% if signup.get_status_display == 'Waiting' %}<i
+                                    class="bi bi-hourglass-split text-warning"></i>{% endif %}
+                                {% if signup.get_status_display == 'Canceled' %}<i
+                                    class="bi bi-x-octagon text-danger"></i>{% endif %}
+                            </td>
                             <td>{{ signup.comment | safe }}</td>
                         </tr>
                         {% endfor %}
