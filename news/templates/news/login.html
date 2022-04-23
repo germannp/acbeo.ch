@@ -16,18 +16,18 @@
     <div class="card my-4">
         <h5 class="card-header">Login</h5>
         <div class="card-body">
-            <main class="form-signin mb-2">
+            <main class="form-signin">
                 <form method="post">
                     {% csrf_token %}
-                    <div class="form-floating">
+                    <div class="form-floating mb-3">
                         <input type="text" name="username" class="form-control" placeholder="text">
                         <label for="floatingInput">Benutzername</label>
                     </div>
-                    <div class="form-floating">
+                    <div class="form-floating mb-3">
                         <input type="password" name="password" class="form-control" placeholder="password">
                         <label for="floatingPassword">Passwort</label>
                     </div>
-                    <button class="w-100 btn btn-lg btn-primary" type="submit">Login</button>
+                    <button class="btn btn-primary mb-2" type="submit">Login</button>
                     <input type="hidden" name="next" value="{{ next }}">
                 </form>
             </main>
