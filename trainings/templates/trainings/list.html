@@ -4,13 +4,11 @@
 
 {% block content %}
 
-{% regroup singups by date as trainings %}
-
 <div class="row">
     <div class="col-md-12 mt-4 left">
-        {% for date, training in trainings %}
+        {% for training in trainings %}
         <div class="card mb-4">
-            <h5 class="card-header">{{ date|date:"l, d. E Y" }}</h5>
+            <h5 class="card-header">{{ training.date|date:"l, d. E Y" }}</h5>
             <div class="card-body">
                 <table class="table table-hover">
                     <thead>
@@ -21,13 +19,13 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for signup in training %}
+                        {% for signup in training.signups.all %}
                         <tr>
                             <td>{{ signup.pilot.first_name }} {{ signup.pilot.last_name }}
                                 {% if signup.pilot == request.user %}
-                                <a href="{% url 'update' date=date.isoformat %}"
+                                <a href="{% url 'update' date=training.date.isoformat %}"
                                     class="btn btn-primary btn-sm bi bi-pencil-square" /a>
-                                    {% endif %}
+                                {% endif %}
                             </td>
                             <td>{{ signup.status }}</td>
                             <td>{{ signup.comment | safe }}</td>
@@ -35,10 +33,10 @@
                         {% endfor %}
                     </tbody>
                 </table>
-                {% for signup in training %}{% if signup.pilot == request.user %}
+                {% for signup in training.signups.all %}{% if signup.pilot == request.user %}
                 <!--{% endif %}{% endfor %}
-                <a href="{% url 'signup' date=date.isoformat %}" class="btn btn-primary">Einschreiben</a>
-                {% for signup in training %}{% if signup.pilot == request.user %}-->
+                <a href="{% url 'signup' date=training.date.isoformat %}" class="btn btn-primary">Einschreiben</a>
+                {% for signup in training.signups.all %}{% if signup.pilot == request.user %}-->
                 {% endif %}{% endfor %}
             </div>
         </div>

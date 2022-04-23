@@ -7,40 +7,41 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 
-from .models import Singup
+from .models import Training, Singup
 
 locale.setlocale(locale.LC_TIME, "de_CH")
 
 
-class SignupListTests(TestCase):
+class TrainingListTests(TestCase):
     def setUp(self):
-        self.pilot = User(username="Pilot")
-        self.pilot.save()
+        self.pilot_a = User(username="Pilot A")
+        self.pilot_a.save()
+        self.pilot_b = User(username="Pilot B")
+        self.pilot_b.save()
 
         self.today = datetime.now().date()
         self.yesterday = self.today - timedelta(days=1)
         self.tomorrow = self.today + timedelta(days=1)
 
-    def test_past_trainings_not_listed(self):
-        Singup(pilot=self.pilot, date=self.today).save()
-        Singup(pilot=self.pilot, date=self.yesterday).save()
+        Training(date=self.yesterday).save()
+        todays_training = Training(date=self.today)
+        todays_training.save()
+        tomorrows_training = Training(date=self.tomorrow)
+        tomorrows_training.save()
 
-        self.client.force_login(self.pilot)
+        Singup(pilot=self.pilot_a, training=todays_training).save()
+        Singup(pilot=self.pilot_b, training=tomorrows_training).save()
+
+    def test_past_trainings_not_listed(self):
+        self.client.force_login(self.pilot_a)
         response = self.client.get(reverse("trainings"))
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, self.yesterday.strftime("%A, %d. %B %Y"))
         self.assertContains(response, self.today.strftime("%A, %d. %B %Y"))
+        self.assertContains(response, self.tomorrow.strftime("%A, %d. %B %Y"))
 
     def test_showing_either_signup_or_update_button(self):
-        pilot_a = User(username="Pilot A")
-        pilot_a.save()
-        Singup(pilot=pilot_a, date=self.today).save()
-
-        pilot_b = User(username="Pilot B")
-        pilot_b.save()
-        Singup(pilot=pilot_b, date=self.tomorrow).save()
-
-        self.client.force_login(pilot_a)
+        self.client.force_login(self.pilot_a)
         response = self.client.get(reverse("trainings"))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, self.today.strftime("%A, %d. %B %Y"))
@@ -51,7 +52,7 @@ class SignupListTests(TestCase):
         )
         self.assertIsNotNone(hidden_update_button.search(str(response.content)))
 
-        self.client.force_login(pilot_b)
+        self.client.force_login(self.pilot_b)
         response = self.client.get(reverse("trainings"))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, self.today.strftime("%A, %d. %B %Y"))
@@ -152,10 +153,10 @@ class SignupUpdateTests(TestCase):
         self.pilot = User(username="Pilot")
         self.pilot.save()
         self.client.force_login(self.pilot)
-        self.today = datetime.now().date()
-        Singup(pilot=self.pilot, date=self.today, comment="Test comment").save()
-        self.yesterday = self.today - timedelta(days=1)
-        Singup(pilot=self.pilot, date=self.yesterday).save()
+        today = datetime.now().date()
+        training = Training(date=today)
+        training.save()
+        Singup(pilot=self.pilot, training=training, comment="Test comment").save()
 
     def test_comment_is_in_form(self):
         response = self.client.get(

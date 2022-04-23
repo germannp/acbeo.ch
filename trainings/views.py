@@ -6,13 +6,14 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.views import generic
 
-from .models import Singup
+from .models import Training, Singup
 from .forms import SignupForm, UpdateForm
 
 
-class SingupListView(LoginRequiredMixin, generic.ListView):
-    context_object_name = "singups"
-    queryset = Singup.objects.filter(date__gte=datetime.now())
+class TrainingListView(LoginRequiredMixin, generic.ListView):
+    context_object_name = "trainings"
+    queryset = Training.objects.filter(date__gte=datetime.now())
+    paginate_by = 3
     template_name = "trainings/list.html"
 
 
@@ -33,7 +34,7 @@ class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateVi
 
     def form_valid(self, form):
         """Fill in pilot from logged in user and check sanity"""
-        self.date = form.instance.date
+        self.date = datetime.fromisoformat(form.data["date"]).date()
         today = datetime.now().date()
         if self.date < today:
             form.add_error(
@@ -45,11 +46,17 @@ class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateVi
                 "date", f"Einschreiben ist höchstens ein Jahr im Voraus möglich."
             )
             return super().form_invalid(form)
-        self.pilot = self.request.user
-        if Singup.objects.filter(pilot=self.pilot, date=self.date).exists():
+        if Training.objects.filter(date=self.date).exists():
+            training = Training.objects.get(date=self.date)
+        else:
+            training = Training(date=self.date)
+            training.save()
+        pilot = self.request.user
+        if Singup.objects.filter(pilot=pilot, training=training).exists():
             form.add_error("date", f"Du bist für {self.date} bereits eingeschrieben.")
             return super().form_invalid(form)
-        form.instance.pilot = self.pilot
+        form.instance.pilot = pilot
+        form.instance.training = training
         return super().form_valid(form)
 
     def get_success_url(self):
@@ -64,6 +71,7 @@ class SignupUpdateView(LoginRequiredMixin, generic.UpdateView):
     success_url = reverse_lazy("trainings")
 
     def get_object(self):
-        date = self.kwargs["date"]
         pilot = self.request.user
-        return get_object_or_404(Singup.objects, pilot=pilot, date=date)
+        date = self.kwargs["date"]
+        training = Training.objects.get(date=date)
+        return get_object_or_404(Singup.objects, pilot=pilot, training=training)
