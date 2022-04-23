@@ -153,8 +153,8 @@ class SignupUpdateTests(TestCase):
         self.pilot = User(username="Pilot")
         self.pilot.save()
         self.client.force_login(self.pilot)
-        today = datetime.now().date()
-        training = Training(date=today)
+        self.today = datetime.now().date()
+        training = Training(date=self.today)
         training.save()
         Singup(pilot=self.pilot, training=training, comment="Test comment").save()
 
