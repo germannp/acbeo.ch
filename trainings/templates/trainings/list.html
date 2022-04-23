@@ -4,7 +4,7 @@
 
 {% block content %}
 
-{% regroup registrations by date as trainings %}
+{% regroup singups by date as trainings %}
 
 <div class="row">
     <div class="col-md-12 mt-4 left">
@@ -21,24 +21,24 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for registration in training %}
+                        {% for signup in training %}
                         <tr>
-                            <td>{{ registration.pilot.first_name }} {{ registration.pilot.last_name }}
-                                {% if registration.pilot == request.user %}
+                            <td>{{ signup.pilot.first_name }} {{ signup.pilot.last_name }}
+                                {% if signup.pilot == request.user %}
                                 <a href="{% url 'update' date=date.isoformat %}"
                                     class="btn btn-primary btn-sm bi bi-pencil-square" /a>
                                     {% endif %}
                             </td>
-                            <td>{{ registration.status }}</td>
-                            <td>{{ registration.comment | safe }}</td>
+                            <td>{{ signup.status }}</td>
+                            <td>{{ signup.comment | safe }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
-                {% for registration in training %}{% if registration.pilot == request.user %}
+                {% for signup in training %}{% if signup.pilot == request.user %}
                 <!--{% endif %}{% endfor %}
                 <a href="{% url 'signup' date=date.isoformat %}" class="btn btn-primary">Einschreiben</a>
-                {% for registration in training %}{% if registration.pilot == request.user %}-->
+                {% for signup in training %}{% if signup.pilot == request.user %}-->
                 {% endif %}{% endfor %}
             </div>
         </div>

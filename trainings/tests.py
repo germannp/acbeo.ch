@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 
-from .models import Registration
+from .models import Singup
 
 locale.setlocale(locale.LC_TIME, "de_CH")
 
@@ -22,8 +22,8 @@ class SignupListTests(TestCase):
         self.tomorrow = self.today + timedelta(days=1)
 
     def test_past_trainings_not_listed(self):
-        Registration(pilot=self.pilot, date=self.today).save()
-        Registration(pilot=self.pilot, date=self.yesterday).save()
+        Singup(pilot=self.pilot, date=self.today).save()
+        Singup(pilot=self.pilot, date=self.yesterday).save()
 
         self.client.force_login(self.pilot)
         response = self.client.get(reverse("trainings"))
@@ -34,11 +34,11 @@ class SignupListTests(TestCase):
     def test_showing_either_signup_or_update_button(self):
         pilot_a = User(username="Pilot A")
         pilot_a.save()
-        Registration(pilot=pilot_a, date=self.today).save()
+        Singup(pilot=pilot_a, date=self.today).save()
 
         pilot_b = User(username="Pilot B")
         pilot_b.save()
-        Registration(pilot=pilot_b, date=self.tomorrow).save()
+        Singup(pilot=pilot_b, date=self.tomorrow).save()
 
         self.client.force_login(pilot_a)
         response = self.client.get(reverse("trainings"))
@@ -116,7 +116,7 @@ class SignupTests(TestCase):
             },
             follow=True,
         )
-        self.assertEqual(1, len(Registration.objects.all()))
+        self.assertEqual(1, len(Singup.objects.all()))
 
         response = self.client.post(
             reverse("signup"),
@@ -128,7 +128,7 @@ class SignupTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "alert-warning")
-        self.assertEqual(1, len(Registration.objects.all()))
+        self.assertEqual(1, len(Singup.objects.all()))
 
     def test_cannot_signup_for_past_training(self):
         response = self.client.post(
@@ -136,7 +136,7 @@ class SignupTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "alert-warning")
-        self.assertEqual(0, len(Registration.objects.all()))
+        self.assertEqual(0, len(Singup.objects.all()))
 
     def test_cannot_signup_for_past_more_than_a_year_ahead(self):
         response = self.client.post(
@@ -144,7 +144,7 @@ class SignupTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "alert-warning")
-        self.assertEqual(0, len(Registration.objects.all()))
+        self.assertEqual(0, len(Singup.objects.all()))
 
 
 class SignupUpdateTests(TestCase):
@@ -153,9 +153,9 @@ class SignupUpdateTests(TestCase):
         self.pilot.save()
         self.client.force_login(self.pilot)
         self.today = datetime.now().date()
-        Registration(pilot=self.pilot, date=self.today, comment="Test comment").save()
+        Singup(pilot=self.pilot, date=self.today, comment="Test comment").save()
         self.yesterday = self.today - timedelta(days=1)
-        Registration(pilot=self.pilot, date=self.yesterday).save()
+        Singup(pilot=self.pilot, date=self.yesterday).save()
 
     def test_comment_is_in_form(self):
         response = self.client.get(

@@ -3,14 +3,14 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 
-class Registration(models.Model):
+class Singup(models.Model):
     class Status(models.TextChoices):
         WAIT = "🟡", _("Wait")
         SELECTED = "🟢", _("Selected")
         CANCELED = "❌", _("Canceled")
 
     pilot = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="registrations"
+        User, on_delete=models.CASCADE, related_name="signups"
     )
     date = models.DateField()
     status = models.CharField(

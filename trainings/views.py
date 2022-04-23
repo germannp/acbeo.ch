@@ -6,13 +6,13 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.views import generic
 
-from .models import Registration
+from .models import Singup
 from .forms import SignupForm, UpdateForm
 
 
 class SingupListView(LoginRequiredMixin, generic.ListView):
-    context_object_name = "registrations"
-    queryset = Registration.objects.filter(date__gte=datetime.now())
+    context_object_name = "singups"
+    queryset = Singup.objects.filter(date__gte=datetime.now())
     template_name = "trainings/list.html"
 
 
@@ -46,7 +46,7 @@ class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateVi
             )
             return super().form_invalid(form)
         self.pilot = self.request.user
-        if Registration.objects.filter(pilot=self.pilot, date=self.date).exists():
+        if Singup.objects.filter(pilot=self.pilot, date=self.date).exists():
             form.add_error("date", f"Du bist für {self.date} bereits eingeschrieben.")
             return super().form_invalid(form)
         form.instance.pilot = self.pilot
@@ -66,4 +66,4 @@ class SignupUpdateView(LoginRequiredMixin, generic.UpdateView):
     def get_object(self):
         date = self.kwargs["date"]
         pilot = self.request.user
-        return get_object_or_404(Registration.objects, pilot=pilot, date=date)
+        return get_object_or_404(Singup.objects, pilot=pilot, date=date)
