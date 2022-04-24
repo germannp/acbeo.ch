@@ -27,8 +27,10 @@
                         {% for signup in signups %}
                         <tr>
                             <td>{{ signup.training.date|date:"D., d. E Y" }}
+                                {% if time == "future" %}
                                 <a href="{% url 'update_signup' date=signup.training.date.isoformat %}?next={% url 'my_signups' %}"
                                     class="btn btn-primary btn-sm bi bi-pencil-square" /a>
+                                {% endif %}
                             </td>
                             <td>
                                 {% if signup.get_status_display == 'Selected' %}<i

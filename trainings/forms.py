@@ -10,8 +10,6 @@ class TrainingUpdateForm(forms.ModelForm):
 
 
 class SignupCreateForm(forms.ModelForm):
-    date = forms.DateField()
-
     class Meta:
         model = models.Signup
         exclude = ["pilot", "training", "status"]

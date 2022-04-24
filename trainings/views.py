@@ -31,7 +31,9 @@ class SignupListView(LoginRequiredMixin, generic.ListView):
     template_name = "trainings/list_signups.html"
 
     def get_queryset(self):
-        signups = Signup.objects.filter(pilot=self.request.user)
+        signups = Signup.objects.filter(pilot=self.request.user).order_by(
+            "training__date"
+        )
         today = datetime.now().date()
         future_signups = [signup for signup in signups if signup.training.date >= today]
         past_signups = [signup for signup in signups if signup.training.date < today]
@@ -58,13 +60,11 @@ class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateVi
         self.date = datetime.fromisoformat(form.data["date"]).date()
         today = datetime.now().date()
         if self.date < today:
-            form.add_error(
-                "date", f"Einschreiben ist nur für zukünftige Trainings möglich."
-            )
+            form.add_error(None, "Einschreiben ist nur für kommende Trainings möglich.")
             return super().form_invalid(form)
         if self.date > today + timedelta(days=365):
             form.add_error(
-                "date", f"Einschreiben ist höchstens ein Jahr im Voraus möglich."
+                None, "Einschreiben ist höchstens ein Jahr im Voraus möglich."
             )
             return super().form_invalid(form)
         if Training.objects.filter(date=self.date).exists():
@@ -74,7 +74,7 @@ class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateVi
             training.save()
         pilot = self.request.user
         if Signup.objects.filter(pilot=pilot, training=training).exists():
-            form.add_error("date", f"Du bist für {self.date} bereits eingeschrieben.")
+            form.add_error(None, f"Du bist für {self.date} bereits eingeschrieben.")
             return super().form_invalid(form)
         form.instance.pilot = pilot
         form.instance.training = training
@@ -89,6 +89,14 @@ class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateVi
 class SignupUpdateView(LoginRequiredMixin, generic.UpdateView):
     form_class = SignupUpdateForm
     template_name = "trainings/update_signup.html"
+
+    def form_valid(self, form):
+        if self.kwargs["date"] < datetime.now().date():
+            form.add_error(
+                None, "Vergangene Anmeldungen können nicht bearbeitet werden."
+            )
+            return super().form_invalid(form)
+        return super().form_valid(form)
 
     def get_object(self):
         pilot = self.request.user

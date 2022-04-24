@@ -85,8 +85,8 @@ class TrainingUpdateTests(TestCase):
             reverse("update_training", kwargs={"date": self.today.isoformat()})
         )
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, self.default_info)
         self.assertTemplateUsed(response, "trainings/update_training.html")
+        self.assertContains(response, self.default_info)
 
         response = self.client.post(
             reverse("update_training", kwargs={"date": self.today.isoformat()}),
@@ -95,23 +95,29 @@ class TrainingUpdateTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertContains(response, self.info)
 
         response = self.client.get(
             reverse("update_training", kwargs={"date": self.today.isoformat()})
         )
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, self.info)
         self.assertTemplateUsed(response, "trainings/update_training.html")
+        self.assertContains(response, self.info)
 
     def test_infos_are_shown_in_list(self):
         response = self.client.get(reverse("trainings"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/list_trainings.html")
         self.assertNotContains(response, self.default_info)
         self.assertNotContains(response, self.info)
+
         response = self.client.post(
             reverse("update_training", kwargs={"date": self.today.isoformat()}),
             data={"info": self.info},
         )
         response = self.client.get(reverse("trainings"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/list_trainings.html")
         self.assertNotContains(response, self.default_info)
         self.assertContains(response, self.info)
 
@@ -135,7 +141,7 @@ class SingupListTests(TestCase):
         yesterdays_training = Training(date=self.yesterday)
         yesterdays_training.save()
         Signup(pilot=self.pilot_b, training=yesterdays_training).save()
-    
+
     def test_only_my_signups_are_shown(self):
         self.client.force_login(self.pilot_a)
         response = self.client.get(reverse("my_signups"))
@@ -195,7 +201,7 @@ class SignupCreateTests(TestCase):
         today = datetime.now().date()
         response = self.client.post(
             reverse("signup"),
-            data={"pilot": self.pilot.username, "date": today.isoformat()},
+            data={"date": today.isoformat()},
             follow=True,
         )
         self.assertEqual(response.status_code, 200)
@@ -207,20 +213,14 @@ class SignupCreateTests(TestCase):
     def test_cannot_signup_twice(self):
         response = self.client.post(
             reverse("signup"),
-            data={
-                "pilot": self.pilot.username,
-                "date": datetime.now().date().isoformat(),
-            },
+            data={"date": datetime.now().date().isoformat()},
             follow=True,
         )
         self.assertEqual(1, len(Signup.objects.all()))
 
         response = self.client.post(
             reverse("signup"),
-            data={
-                "pilot": self.pilot.username,
-                "date": datetime.now().date().isoformat(),
-            },
+            data={"date": datetime.now().date().isoformat()},
             follow=True,
         )
         self.assertEqual(response.status_code, 200)
@@ -229,18 +229,14 @@ class SignupCreateTests(TestCase):
         self.assertEqual(1, len(Signup.objects.all()))
 
     def test_cannot_signup_for_past_training(self):
-        response = self.client.post(
-            reverse("signup"), data={"pilot": self.pilot.username, "date": "2004-12-01"}
-        )
+        response = self.client.post(reverse("signup"), data={"date": "2004-12-01"})
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/signup.html")
         self.assertContains(response, "alert-warning")
         self.assertEqual(0, len(Signup.objects.all()))
 
-    def test_cannot_signup_for_past_more_than_a_year_ahead(self):
-        response = self.client.post(
-            reverse("signup"), data={"pilot": self.pilot.username, "date": "2048-12-01"}
-        )
+    def test_cannot_signup_more_than_a_year_ahead(self):
+        response = self.client.post(reverse("signup"), data={"date": "2048-12-01"})
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/signup.html")
         self.assertContains(response, "alert-warning")
@@ -260,13 +256,41 @@ class SignupUpdateTests(TestCase):
         )
         self.signup.save()
 
-    def test_comment_is_in_form(self):
+    def test_comment_is_in_form_and_can_be_updated(self):
         response = self.client.get(
             reverse("update_signup", kwargs={"date": self.today.isoformat()})
         )
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/update_signup.html")
         self.assertContains(response, 'value="Test comment"')
+
+        response = self.client.post(
+            reverse("update_signup", kwargs={"date": self.today.isoformat()}),
+            data={"comment": "Updated comment"},
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.signup.refresh_from_db()
+        self.assertEqual(self.signup.comment, "Updated comment")
+
+    def test_cannot_update_past_signup(self):
+        yesterday = self.today - timedelta(days=1)
+        training = Training(date=yesterday)
+        training.save()
+        signup = Signup(pilot=self.pilot, training=training)
+        signup.save()
+
+        response = self.client.post(
+            reverse("update_signup", kwargs={"date": yesterday.isoformat()}),
+            data={"comment": "Updated comment"},
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/update_signup.html")
+        self.assertContains(response, "alert-warning")
+        signup.refresh_from_db()
+        self.assertNotEqual(signup.comment, "New comment")
 
     def test_cancel_and_resignup(self):
         self.assertNotEqual(self.signup.status, Signup.Status.Canceled)
@@ -288,19 +312,23 @@ class SignupUpdateTests(TestCase):
             data={"resignup": ""},
             follow=True,
         )
-        self.signup.refresh_from_db()        
+        self.signup.refresh_from_db()
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
         self.assertNotEqual(self.signup.status, Signup.Status.Canceled)
         self.assertGreater(self.signup.signed_up_on, first_signup_time)
-    
+
     def test_next_urls(self):
         trainings_url = reverse("trainings")
         my_signups_url = reverse("my_signups")
 
         response = self.client.get(trainings_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/list_trainings.html")
         self.assertContains(response, "/update-signup/?next=" + trainings_url)
         self.assertNotContains(response, "/update-signup/?next=" + my_signups_url)
 
         response = self.client.get(my_signups_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/list_signups.html")
         self.assertContains(response, "/update-signup/?next=" + my_signups_url)
