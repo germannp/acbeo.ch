@@ -28,11 +28,15 @@ class TrainingUpdateView(LoginRequiredMixin, generic.UpdateView):
 
 
 class SignupListView(LoginRequiredMixin, generic.ListView):
-    context_object_name = "signups"
+    context_object_name = "future_and_past_signups"
     template_name = "trainings/list_signups.html"
 
     def get_queryset(self):
-        return Signup.objects.filter(pilot=self.request.user)
+        signups = Signup.objects.filter(pilot=self.request.user)
+        today = datetime.now().date()
+        future_signups = [signup for signup in signups if signup.training.date >= today]
+        past_signups = [signup for signup in signups if signup.training.date < today]
+        return {"future": future_signups, "past": past_signups}
 
 
 class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateView):

@@ -143,6 +143,7 @@ class SingupListTests(TestCase):
         self.assertTemplateUsed(response, "trainings/list_signups.html")
         self.assertContains(response, self.today.strftime("%a, %d. %B %Y"))
         self.assertNotContains(response, self.tomorrow.strftime("%a, %d. %B %Y"))
+        self.assertNotContains(response, "Vergangene Trainings")
         self.assertNotContains(response, self.yesterday.strftime("%a, %d. %B %Y"))
 
         self.client.force_login(self.pilot_b)
@@ -151,6 +152,7 @@ class SingupListTests(TestCase):
         self.assertTemplateUsed(response, "trainings/list_signups.html")
         self.assertContains(response, self.tomorrow.strftime("%a, %d. %B %Y"))
         self.assertNotContains(response, self.today.strftime("%a, %d. %B %Y"))
+        self.assertContains(response, "Vergangene Trainings")
         self.assertContains(response, self.yesterday.strftime("%a, %d. %B %Y"))
 
 
