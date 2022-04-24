@@ -13,11 +13,11 @@ class SignupCreateForm(forms.ModelForm):
     date = forms.DateField()
 
     class Meta:
-        model = models.Singup
+        model = models.Signup
         exclude = ["pilot", "training", "status"]
 
 
 class SignupUpdateForm(forms.ModelForm):
     class Meta:
-        model = models.Singup
+        model = models.Signup
         exclude = ["pilot", "training", "status"]

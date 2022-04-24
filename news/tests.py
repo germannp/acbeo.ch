@@ -24,11 +24,13 @@ class UserCreationTests(TestCase):
                 reverse("register"), data=partial_data, follow=True
             )
             self.assertEqual(response.status_code, 200)
+            self.assertTemplateUsed(response, "news/register.html")
             self.assertEqual(0, len(User.objects.all()))
         response = self.client.post(
             reverse("register"), data=self.user_data, follow=True
         )
         self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "news/login.html")
         self.assertEqual(1, len(User.objects.all()))
 
     def test_username_and_email_must_be_unique(self):
@@ -36,12 +38,14 @@ class UserCreationTests(TestCase):
             reverse("register"), data=self.user_data, follow=True
         )
         self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "news/login.html")
         self.assertEqual(1, len(User.objects.all()))
 
         response = self.client.post(
             reverse("register"), data=self.user_data, follow=True
         )
         self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "news/register.html")
         self.assertContains(response, "Ein Konto mit dieser Email existiert bereits.")
         self.assertContains(response, "Dieser Benutzername ist bereits vergeben.")
         self.assertEqual(1, len(User.objects.all()))
@@ -49,12 +53,12 @@ class UserCreationTests(TestCase):
     def test_forwarding_after_registration_for_login_required(self):
         response = self.client.get(reverse("trainings"), follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "<title>ACBeo - Login</title>")
+        self.assertTemplateUsed(response, "news/login.html")
         self.assertContains(response, "/register/?next=/trainings/")
 
         self.client.post(
             "/register/?next=/trainings/", data=self.user_data, follow=True
         )
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "<title>ACBeo - Login</title>")
+        self.assertTemplateUsed(response, "news/login.html")
         self.assertContains(response, 'name="next" value="/trainings/"')

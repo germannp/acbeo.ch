@@ -1,12 +1,13 @@
 from datetime import datetime, timedelta
 
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.views import generic
 
-from .models import Training, Singup
+from .models import Training, Signup
 from .forms import TrainingUpdateForm, SignupCreateForm, SignupUpdateForm
 
 
@@ -61,7 +62,7 @@ class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateVi
             training = Training(date=self.date)
             training.save()
         pilot = self.request.user
-        if Singup.objects.filter(pilot=pilot, training=training).exists():
+        if Signup.objects.filter(pilot=pilot, training=training).exists():
             form.add_error("date", f"Du bist für {self.date} bereits eingeschrieben.")
             return super().form_invalid(form)
         form.instance.pilot = pilot
@@ -69,7 +70,7 @@ class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateVi
         return super().form_valid(form)
 
     def get_success_url(self):
-        self.success_message =  f"Eingeschrieben für {self.date}."
+        self.success_message = f"Eingeschrieben für {self.date}."
         next_day = self.date + timedelta(days=1)
         return reverse_lazy("signup", kwargs={"date": next_day})
 
@@ -81,5 +82,10 @@ class SignupUpdateView(LoginRequiredMixin, generic.UpdateView):
 
     def get_object(self):
         pilot = self.request.user
-        training = Training.objects.get(date=self.kwargs["date"])
-        return get_object_or_404(Singup.objects, pilot=pilot, training=training)
+        training = get_object_or_404(Training, date=self.kwargs["date"])
+        signup = get_object_or_404(Signup.objects, pilot=pilot, training=training)
+        if "cancel" in self.request.POST:
+            signup.cancel()
+        elif "resignup" in self.request.POST:
+            signup.resignup()
+        return signup

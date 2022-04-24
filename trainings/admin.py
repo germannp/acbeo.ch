@@ -1,12 +1,12 @@
 from django.contrib import admin
 
-from .models import Training, Singup
+from .models import Training, Signup
 
 
-class SingupAdmin(admin.ModelAdmin):
-    list_display = ("training", "pilot", "status", "updated_on", "created_on")
+class SignupAdmin(admin.ModelAdmin):
+    list_display = ("training", "pilot", "status", "signed_up_on")
     search_fields = ["training", "pilot"]
 
 
 admin.site.register(Training)
-admin.site.register(Singup, SingupAdmin)
+admin.site.register(Signup, SignupAdmin)
