@@ -116,6 +116,44 @@ class TrainingUpdateTests(TestCase):
         self.assertContains(response, self.info)
 
 
+class SingupListTests(TestCase):
+    def setUp(self):
+        self.pilot_a = User(username="Pilot A")
+        self.pilot_a.save()
+        self.today = datetime.now().date()
+        todays_training = Training(date=self.today)
+        todays_training.save()
+        Signup(pilot=self.pilot_a, training=todays_training).save()
+
+        self.pilot_b = User(username="Pilot B")
+        self.pilot_b.save()
+        self.tomorrow = self.today + timedelta(days=1)
+        tomorrows_training = Training(date=self.tomorrow)
+        tomorrows_training.save()
+        Signup(pilot=self.pilot_b, training=tomorrows_training).save()
+        self.yesterday = self.today - timedelta(days=1)
+        yesterdays_training = Training(date=self.yesterday)
+        yesterdays_training.save()
+        Signup(pilot=self.pilot_b, training=yesterdays_training).save()
+    
+    def test_only_my_signups_are_shown(self):
+        self.client.force_login(self.pilot_a)
+        response = self.client.get(reverse("my_signups"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/list_signups.html")
+        self.assertContains(response, self.today.strftime("%a, %d. %B %Y"))
+        self.assertNotContains(response, self.tomorrow.strftime("%a, %d. %B %Y"))
+        self.assertNotContains(response, self.yesterday.strftime("%a, %d. %B %Y"))
+
+        self.client.force_login(self.pilot_b)
+        response = self.client.get(reverse("my_signups"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/list_signups.html")
+        self.assertContains(response, self.tomorrow.strftime("%a, %d. %B %Y"))
+        self.assertNotContains(response, self.today.strftime("%a, %d. %B %Y"))
+        self.assertContains(response, self.yesterday.strftime("%a, %d. %B %Y"))
+
+
 class SignupCreateTests(TestCase):
     def setUp(self):
         self.pilot = User(username="Pilot")

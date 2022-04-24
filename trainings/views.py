@@ -27,6 +27,14 @@ class TrainingUpdateView(LoginRequiredMixin, generic.UpdateView):
         return get_object_or_404(Training.objects, date=self.kwargs["date"])
 
 
+class SignupListView(LoginRequiredMixin, generic.ListView):
+    context_object_name = "signups"
+    template_name = "trainings/list_signups.html"
+
+    def get_queryset(self):
+        return Signup.objects.filter(pilot=self.request.user)
+
+
 class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateView):
     form_class = SignupCreateForm
     template_name = "trainings/signup.html"
