@@ -29,7 +29,7 @@
                         <tr>
                             <td>{{ signup.pilot.first_name }} {{ signup.pilot.last_name }}
                                 {% if signup.pilot == request.user %}
-                                <a href="{% url 'update_signup' date=training.date.isoformat %}"
+                                <a href="{% url 'update_signup' date=training.date.isoformat %}?next={% url 'trainings' %}"
                                     class="btn btn-primary btn-sm bi bi-pencil-square" /a>
                                 {% endif %}
                             </td>

@@ -293,3 +293,14 @@ class SignupUpdateTests(TestCase):
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
         self.assertNotEqual(self.signup.status, Signup.Status.Canceled)
         self.assertGreater(self.signup.signed_up_on, first_signup_time)
+    
+    def test_next_urls(self):
+        trainings_url = reverse("trainings")
+        my_signups_url = reverse("my_signups")
+
+        response = self.client.get(trainings_url)
+        self.assertContains(response, "/update-signup/?next=" + trainings_url)
+        self.assertNotContains(response, "/update-signup/?next=" + my_signups_url)
+
+        response = self.client.get(my_signups_url)
+        self.assertContains(response, "/update-signup/?next=" + my_signups_url)

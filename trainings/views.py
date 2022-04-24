@@ -1,9 +1,8 @@
 from datetime import datetime, timedelta
 
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.views import generic
 
@@ -90,7 +89,6 @@ class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateVi
 class SignupUpdateView(LoginRequiredMixin, generic.UpdateView):
     form_class = SignupUpdateForm
     template_name = "trainings/update_signup.html"
-    success_url = reverse_lazy("trainings")
 
     def get_object(self):
         pilot = self.request.user
@@ -101,3 +99,9 @@ class SignupUpdateView(LoginRequiredMixin, generic.UpdateView):
         elif "resignup" in self.request.POST:
             signup.resignup()
         return signup
+
+    def get_success_url(self):
+        next = self.request.GET.get("next", None)
+        if next:
+            return next
+        return reverse_lazy("trainings")
