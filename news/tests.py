@@ -62,3 +62,10 @@ class UserCreationTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "news/login.html")
         self.assertContains(response, 'name="next" value="/trainings/"')
+
+
+class PostDetailTests(TestCase):
+    def test_post_not_found_404(self):
+        response = self.client.get(reverse("post", kwargs={"slug": "missing"}))
+        self.assertEqual(response.status_code, 404)
+        self.assertTemplateUsed(response, "404.html")
