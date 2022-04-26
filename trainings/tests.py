@@ -34,7 +34,8 @@ class TrainingListTests(TestCase):
 
     def test_past_trainings_not_listed(self):
         self.client.force_login(self.pilot_a)
-        response = self.client.get(reverse("trainings"))
+        with self.assertNumQueries(6):
+            response = self.client.get(reverse("trainings"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
         self.assertNotContains(response, YESTERDAY.strftime("%A, %d. %B %Y"))
@@ -43,7 +44,8 @@ class TrainingListTests(TestCase):
 
     def test_showing_either_signup_or_update_button(self):
         self.client.force_login(self.pilot_a)
-        response = self.client.get(reverse("trainings"))
+        with self.assertNumQueries(6):
+            response = self.client.get(reverse("trainings"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
         self.assertContains(response, TODAY.strftime("%A, %d. %B %Y"))
@@ -55,7 +57,8 @@ class TrainingListTests(TestCase):
         self.assertIsNotNone(hidden_update_button.search(str(response.content)))
 
         self.client.force_login(self.pilot_b)
-        response = self.client.get(reverse("trainings"))
+        with self.assertNumQueries(6):
+            response = self.client.get(reverse("trainings"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
         self.assertContains(response, TODAY.strftime("%A, %d. %B %Y"))
@@ -80,50 +83,56 @@ class TrainingUpdateTests(TestCase):
         self.info = "Training abgesagt"
 
     def test_form_is_prefilled(self):
-        response = self.client.get(
-            reverse("update_training", kwargs={"date": TODAY.isoformat()})
-        )
+        with self.assertNumQueries(3):
+            response = self.client.get(
+                reverse("update_training", kwargs={"date": TODAY.isoformat()})
+            )
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/update_training.html")
         self.assertContains(response, self.default_info)
 
-        response = self.client.post(
-            reverse("update_training", kwargs={"date": TODAY.isoformat()}),
-            data={"info": self.info},
-            follow=True,
-        )
+        with self.assertNumQueries(4 + 5):
+            response = self.client.post(
+                reverse("update_training", kwargs={"date": TODAY.isoformat()}),
+                data={"info": self.info},
+                follow=True,
+            )
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
         self.assertContains(response, self.info)
 
-        response = self.client.get(
-            reverse("update_training", kwargs={"date": TODAY.isoformat()})
-        )
+        with self.assertNumQueries(3):
+            response = self.client.get(
+                reverse("update_training", kwargs={"date": TODAY.isoformat()})
+            )
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/update_training.html")
         self.assertContains(response, self.info)
 
     def test_infos_are_shown_in_list(self):
-        response = self.client.get(reverse("trainings"))
+        with self.assertNumQueries(5):
+            response = self.client.get(reverse("trainings"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
         self.assertNotContains(response, self.default_info)
         self.assertNotContains(response, self.info)
 
-        response = self.client.post(
-            reverse("update_training", kwargs={"date": TODAY.isoformat()}),
-            data={"info": self.info},
-            follow=True,
-        )
+        with self.assertNumQueries(4 + 5):
+            response = self.client.post(
+                reverse("update_training", kwargs={"date": TODAY.isoformat()}),
+                data={"info": self.info},
+                follow=True,
+            )
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
         self.assertNotContains(response, self.default_info)
         self.assertContains(response, self.info)
 
     def test_training_not_found_404(self):
-        response = self.client.get(
-            reverse("update_training", kwargs={"date": TOMORROW.isoformat()}),
-        )
+        with self.assertNumQueries(3):
+            response = self.client.get(
+                reverse("update_training", kwargs={"date": TOMORROW.isoformat()}),
+            )
         self.assertEqual(response.status_code, 404)
         self.assertTemplateUsed(response, "404.html")
 
@@ -147,7 +156,8 @@ class SingupListTests(TestCase):
 
     def test_only_my_signups_are_shown(self):
         self.client.force_login(self.pilot_a)
-        response = self.client.get(reverse("my_signups"))
+        with self.assertNumQueries(4):
+            response = self.client.get(reverse("my_signups"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_signups.html")
         self.assertContains(response, TODAY.strftime("%a, %d. %B %Y"))
@@ -156,7 +166,8 @@ class SingupListTests(TestCase):
         self.assertNotContains(response, YESTERDAY.strftime("%a, %d. %B %Y"))
 
         self.client.force_login(self.pilot_b)
-        response = self.client.get(reverse("my_signups"))
+        with self.assertNumQueries(5):
+            response = self.client.get(reverse("my_signups"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_signups.html")
         self.assertContains(response, TOMORROW.strftime("%a, %d. %B %Y"))
@@ -183,61 +194,69 @@ class SignupCreateTests(TestCase):
         self.assertEqual(next_saturday.strftime("%A"), "Samstag")
 
         mocked_datetime.now.return_value = monday
-        response = self.client.get(reverse("signup"))
+        with self.assertNumQueries(2):
+            response = self.client.get(reverse("signup"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/signup.html")
         self.assertContains(response, saturday.date().isoformat())
 
         mocked_datetime.now.return_value = saturday
-        response = self.client.get(reverse("signup"))
+        with self.assertNumQueries(2):
+            response = self.client.get(reverse("signup"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/signup.html")
         self.assertContains(response, saturday.date().isoformat())
 
         mocked_datetime.now.return_value = sunday
-        response = self.client.get(reverse("signup"))
+        with self.assertNumQueries(2):
+            response = self.client.get(reverse("signup"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/signup.html")
         self.assertContains(response, next_saturday.date().isoformat())
 
     def test_successive_signups(self):
-        response = self.client.post(
-            reverse("signup"),
-            data={"date": TODAY.isoformat()},
-            follow=True,
-        )
+        with self.assertNumQueries(8):
+            response = self.client.post(
+                reverse("signup"),
+                data={"date": TODAY.isoformat()},
+                follow=True,
+            )
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/signup.html")
         self.assertContains(response, TOMORROW.isoformat())
         self.assertEqual(1, len(Signup.objects.all()))
 
     def test_cannot_signup_twice(self):
-        response = self.client.post(
-            reverse("signup"),
-            data={"date": datetime.now().date().isoformat()},
-            follow=True,
-        )
+        with self.assertNumQueries(8):
+            response = self.client.post(
+                reverse("signup"),
+                data={"date": datetime.now().date().isoformat()},
+                follow=True,
+            )
         self.assertEqual(1, len(Signup.objects.all()))
 
-        response = self.client.post(
-            reverse("signup"),
-            data={"date": datetime.now().date().isoformat()},
-            follow=True,
-        )
+        with self.assertNumQueries(5):
+            response = self.client.post(
+                reverse("signup"),
+                data={"date": datetime.now().date().isoformat()},
+                follow=True,
+            )
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/signup.html")
         self.assertContains(response, "alert-warning")
         self.assertEqual(1, len(Signup.objects.all()))
 
     def test_cannot_signup_for_past_training(self):
-        response = self.client.post(reverse("signup"), data={"date": "2004-12-01"})
+        with self.assertNumQueries(2):
+            response = self.client.post(reverse("signup"), data={"date": "2004-12-01"})
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/signup.html")
         self.assertContains(response, "alert-warning")
         self.assertEqual(0, len(Signup.objects.all()))
 
     def test_cannot_signup_more_than_a_year_ahead(self):
-        response = self.client.post(reverse("signup"), data={"date": "2048-12-01"})
+        with self.assertNumQueries(2):
+            response = self.client.post(reverse("signup"), data={"date": "2048-12-01"})
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/signup.html")
         self.assertContains(response, "alert-warning")
@@ -257,18 +276,20 @@ class SignupUpdateTests(TestCase):
         self.signup.save()
 
     def test_comment_is_in_form_and_can_be_updated(self):
-        response = self.client.get(
-            reverse("update_signup", kwargs={"date": TODAY.isoformat()})
-        )
+        with self.assertNumQueries(4):
+            response = self.client.get(
+                reverse("update_signup", kwargs={"date": TODAY.isoformat()})
+            )
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/update_signup.html")
         self.assertContains(response, 'value="Test comment"')
 
-        response = self.client.post(
-            reverse("update_signup", kwargs={"date": TODAY.isoformat()}),
-            data={"comment": "Updated comment"},
-            follow=True,
-        )
+        with self.assertNumQueries(11):
+            response = self.client.post(
+                reverse("update_signup", kwargs={"date": TODAY.isoformat()}),
+                data={"comment": "Updated comment"},
+                follow=True,
+            )
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
         self.signup.refresh_from_db()
@@ -280,11 +301,12 @@ class SignupUpdateTests(TestCase):
         signup = Signup(pilot=self.pilot, training=training)
         signup.save()
 
-        response = self.client.post(
-            reverse("update_signup", kwargs={"date": YESTERDAY.isoformat()}),
-            data={"comment": "Updated comment"},
-            follow=True,
-        )
+        with self.assertNumQueries(4):
+            response = self.client.post(
+                reverse("update_signup", kwargs={"date": YESTERDAY.isoformat()}),
+                data={"comment": "Updated comment"},
+                follow=True,
+            )
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/update_signup.html")
         self.assertContains(response, "alert-warning")
@@ -295,22 +317,24 @@ class SignupUpdateTests(TestCase):
         self.assertNotEqual(self.signup.status, Signup.Status.Canceled)
         first_signup_time = self.signup.signed_up_on
 
-        response = self.client.post(
-            reverse("update_signup", kwargs={"date": TODAY.isoformat()}),
-            data={"cancel": ""},
-            follow=True,
-        )
+        with self.assertNumQueries(4 + 1 + 6):
+            response = self.client.post(
+                reverse("update_signup", kwargs={"date": TODAY.isoformat()}),
+                data={"cancel": ""},
+                follow=True,
+            )
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
         self.signup.refresh_from_db()
         self.assertEqual(self.signup.status, Signup.Status.Canceled)
         self.assertEqual(self.signup.signed_up_on, first_signup_time)
 
-        response = self.client.post(
-            reverse("update_signup", kwargs={"date": TODAY.isoformat()}),
-            data={"resignup": ""},
-            follow=True,
-        )
+        with self.assertNumQueries(4 + 1 + 6):
+            response = self.client.post(
+                reverse("update_signup", kwargs={"date": TODAY.isoformat()}),
+                data={"resignup": ""},
+                follow=True,
+            )
         self.signup.refresh_from_db()
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
@@ -321,27 +345,31 @@ class SignupUpdateTests(TestCase):
         trainings_url = reverse("trainings")
         my_signups_url = reverse("my_signups")
 
-        response = self.client.get(trainings_url)
+        with self.assertNumQueries(6):
+            response = self.client.get(trainings_url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
         self.assertContains(response, "/update-signup/?next=" + trainings_url)
         self.assertNotContains(response, "/update-signup/?next=" + my_signups_url)
 
-        response = self.client.get(my_signups_url)
+        with self.assertNumQueries(4):
+            response = self.client.get(my_signups_url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_signups.html")
         self.assertContains(response, "/update-signup/?next=" + my_signups_url)
 
     def test_signup_not_found_404(self):
-        response = self.client.get(
-            reverse("update_signup", kwargs={"date": TOMORROW.isoformat()})
-        )
+        with self.assertNumQueries(3):
+            response = self.client.get(
+                reverse("update_signup", kwargs={"date": TOMORROW.isoformat()})
+            )
         self.assertEqual(response.status_code, 404)
         self.assertTemplateUsed(response, "404.html")
 
         Training(date=TOMORROW).save()
-        response = self.client.get(
-            reverse("update_signup", kwargs={"date": TOMORROW.isoformat()}),
-        )
+        with self.assertNumQueries(4):
+            response = self.client.get(
+                reverse("update_signup", kwargs={"date": TOMORROW.isoformat()}),
+            )
         self.assertEqual(response.status_code, 404)
         self.assertTemplateUsed(response, "404.html")

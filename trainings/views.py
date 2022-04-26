@@ -12,7 +12,9 @@ from .forms import TrainingUpdateForm, SignupCreateForm, SignupUpdateForm
 
 class TrainingListView(LoginRequiredMixin, generic.ListView):
     context_object_name = "trainings"
-    queryset = Training.objects.filter(date__gte=datetime.now())
+    queryset = Training.objects.filter(date__gte=datetime.now()).prefetch_related(
+        "signups__pilot"
+    )
     paginate_by = 3
     template_name = "trainings/list_trainings.html"
 
