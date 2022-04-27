@@ -156,7 +156,7 @@ class SingupListTests(TestCase):
 
     def test_only_my_signups_are_shown(self):
         self.client.force_login(self.pilot_a)
-        with self.assertNumQueries(4):
+        with self.assertNumQueries(3):
             response = self.client.get(reverse("my_signups"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_signups.html")
@@ -166,7 +166,7 @@ class SingupListTests(TestCase):
         self.assertNotContains(response, YESTERDAY.strftime("%a, %d. %B %Y"))
 
         self.client.force_login(self.pilot_b)
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(3):
             response = self.client.get(reverse("my_signups"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_signups.html")
@@ -352,7 +352,7 @@ class SignupUpdateTests(TestCase):
         self.assertContains(response, "/update-signup/?next=" + trainings_url)
         self.assertNotContains(response, "/update-signup/?next=" + my_signups_url)
 
-        with self.assertNumQueries(4):
+        with self.assertNumQueries(3):
             response = self.client.get(my_signups_url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_signups.html")

@@ -35,7 +35,7 @@ class SignupListView(LoginRequiredMixin, generic.ListView):
     def get_queryset(self):
         signups = Signup.objects.filter(pilot=self.request.user).order_by(
             "training__date"
-        )
+        ).select_related("training")
         today = datetime.now().date()
         future_signups = [signup for signup in signups if signup.training.date >= today]
         past_signups = [signup for signup in signups if signup.training.date < today]
