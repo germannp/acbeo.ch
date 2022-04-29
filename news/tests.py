@@ -50,19 +50,6 @@ class UserCreationTests(TestCase):
         self.assertContains(response, "Dieser Benutzername ist bereits vergeben.")
         self.assertEqual(1, len(User.objects.all()))
 
-    def test_forwarding_after_registration_for_login_required(self):
-        response = self.client.get(reverse("trainings"), follow=True)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "news/login.html")
-        self.assertContains(response, "/register/?next=/trainings/")
-
-        self.client.post(
-            "/register/?next=/trainings/", data=self.user_data, follow=True
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "news/login.html")
-        self.assertContains(response, 'name="next" value="/trainings/"')
-
 
 class PostDetailTests(TestCase):
     def test_post_not_found_404(self):
