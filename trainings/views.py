@@ -12,11 +12,16 @@ from .forms import TrainingUpdateForm, SignupCreateForm, SignupUpdateForm
 
 class TrainingListView(LoginRequiredMixin, generic.ListView):
     context_object_name = "trainings"
-    queryset = Training.objects.filter(date__gte=datetime.now()).prefetch_related(
-        "signups__pilot"
-    )
     paginate_by = 3
     template_name = "trainings/list_trainings.html"
+
+    def get_queryset(self):
+        trainings = Training.objects.filter(date__gte=datetime.now()).prefetch_related(
+            "signups__pilot"
+        )
+        for training in trainings:
+            training.select_signups()
+        return trainings
 
 
 class TrainingUpdateView(LoginRequiredMixin, generic.UpdateView):
@@ -33,11 +38,15 @@ class SignupListView(LoginRequiredMixin, generic.ListView):
     template_name = "trainings/list_signups.html"
 
     def get_queryset(self):
-        signups = Signup.objects.filter(pilot=self.request.user).order_by(
-            "training__date"
-        ).select_related("training")
+        signups = (
+            Signup.objects.filter(pilot=self.request.user)
+            .order_by("training__date")
+            .select_related("training")
+        )
         today = datetime.now().date()
         future_signups = [signup for signup in signups if signup.training.date >= today]
+        for signup in future_signups:
+            signup.training.select_signups()
         past_signups = [signup for signup in signups if signup.training.date < today]
         return {"future": future_signups, "past": past_signups}
 

@@ -8,6 +8,7 @@ from django.utils.translation import gettext_lazy as _
 
 class Training(models.Model):
     date = models.DateField(unique=True)
+    max_pilots = models.PositiveSmallIntegerField(default=11, blank=False, null=False)
     info = models.CharField(max_length=300, default="", blank=True)
 
     class Meta:
@@ -15,6 +16,10 @@ class Training(models.Model):
 
     def __str__(self):
         return f"{self.date}"
+
+    def select_signups(self):
+        for signup in self.signups.all()[: self.max_pilots]:
+            signup.select()
 
 
 class Signup(models.Model):
@@ -35,9 +40,17 @@ class Signup(models.Model):
     def __str__(self):
         return f"{self.pilot} for {self.training}"
 
+    def select(self):
+        if self.status == self.Status.Canceled:
+            return
+        self.status = self.Status.Selected
+        self.save()
+
     def cancel(self):
         self.status = self.Status.Canceled
+        # Not saving, because called before saving updates from form
 
     def resignup(self):
         self.signed_up_on = make_aware(datetime.now())
         self.status = self.Status.Waiting
+        # Not saving, because called before saving updates from form
