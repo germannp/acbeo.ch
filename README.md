@@ -34,4 +34,5 @@ can be edited directly. Normal pilot accounts can be registered over the website
 The Django project folder, `acbeo`, contains the settings. The code is organized in 
 two Django apps: `news` contains the front page and user management and `trainings` 
 the tool for organizing trainings. Within each app `url.py` contains paths to views, 
-which load and save models mapped to the database and render the data in templates.
+which load, manipulate, and save models mapped to the database, and render data and 
+forms in templates.
