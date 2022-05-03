@@ -171,7 +171,7 @@ class SingupListTests(TestCase):
 
     def test_only_my_signups_are_shown(self):
         self.client.force_login(self.pilot_a)
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(6):
             response = self.client.get(reverse("my_signups"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_signups.html")
@@ -181,7 +181,7 @@ class SingupListTests(TestCase):
         self.assertNotContains(response, YESTERDAY.strftime("%a, %d. %B %Y"))
 
         self.client.force_login(self.pilot_b)
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(6):
             response = self.client.get(reverse("my_signups"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_signups.html")
@@ -195,7 +195,7 @@ class SingupListTests(TestCase):
         self.assertEqual(self.signup.status, Signup.Status.Waiting)
 
         self.client.force_login(self.pilot_a)
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(6):
             response = self.client.get(reverse("my_signups"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_signups.html")
@@ -341,7 +341,7 @@ class SignupUpdateTests(TestCase):
         signup.refresh_from_db()
         self.assertNotEqual(signup.comment, "New comment")
 
-    def test_cancel_and_resignup(self):
+    def test_cancel_and_resignup_from_trainings_list(self):
         self.assertNotEqual(self.signup.status, Signup.Status.Canceled)
         first_signup_time = self.signup.signed_up_on
 
@@ -353,6 +353,7 @@ class SignupUpdateTests(TestCase):
             )
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertContains(response, "bi-x-octagon")
         self.signup.refresh_from_db()
         self.assertEqual(self.signup.status, Signup.Status.Canceled)
         self.assertEqual(self.signup.signed_up_on, first_signup_time)
@@ -363,9 +364,44 @@ class SignupUpdateTests(TestCase):
                 data={"resignup": ""},
                 follow=True,
             )
-        self.signup.refresh_from_db()
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertContains(response, "bi-cloud-check")
+        self.signup.refresh_from_db()
+        self.assertEqual(self.signup.status, Signup.Status.Selected)
+        self.assertGreater(self.signup.signed_up_on, first_signup_time)
+
+    def test_cancel_and_resignup_from_signups_list(self):
+        self.assertNotEqual(self.signup.status, Signup.Status.Canceled)
+        first_signup_time = self.signup.signed_up_on
+
+        with self.assertNumQueries(4 + 1 + 5):
+            response = self.client.post(
+                reverse("update_signup", kwargs={"date": TODAY.isoformat()})
+                + "?next="
+                + reverse("my_signups"),
+                data={"cancel": ""},
+                follow=True,
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/list_signups.html")
+        self.assertContains(response, "bi-x-octagon")
+        self.signup.refresh_from_db()
+        self.assertEqual(self.signup.status, Signup.Status.Canceled)
+        self.assertEqual(self.signup.signed_up_on, first_signup_time)
+
+        with self.assertNumQueries(4 + 1 + 5 + 1):
+            response = self.client.post(
+                reverse("update_signup", kwargs={"date": TODAY.isoformat()})
+                + "?next="
+                + reverse("my_signups"),
+                data={"resignup": ""},
+                follow=True,
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/list_signups.html")
+        self.assertContains(response, "bi-cloud-check")
+        self.signup.refresh_from_db()
         self.assertNotEqual(self.signup.status, Signup.Status.Canceled)
         self.assertGreater(self.signup.signed_up_on, first_signup_time)
 
@@ -380,7 +416,7 @@ class SignupUpdateTests(TestCase):
         self.assertContains(response, "/update-signup/?next=" + trainings_url)
         self.assertNotContains(response, "/update-signup/?next=" + my_signups_url)
 
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(6):
             response = self.client.get(my_signups_url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_signups.html")

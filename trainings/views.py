@@ -38,15 +38,21 @@ class SignupListView(LoginRequiredMixin, generic.ListView):
     template_name = "trainings/list_signups.html"
 
     def get_queryset(self):
+        today = datetime.now().date()
+        future_signups = (
+            Signup.objects.filter(pilot=self.request.user)
+            .filter(training__date__gte=today)
+            .select_related("training")
+        )
+        for signup in future_signups:
+            signup.training.select_signups()
+        # After selecting signups, they have to be refreshed from the DB
         signups = (
             Signup.objects.filter(pilot=self.request.user)
             .order_by("training__date")
             .select_related("training")
         )
-        today = datetime.now().date()
         future_signups = [signup for signup in signups if signup.training.date >= today]
-        for signup in future_signups:
-            signup.training.select_signups()
         past_signups = [signup for signup in signups if signup.training.date < today]
         return {"future": future_signups, "past": past_signups}
 
