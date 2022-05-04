@@ -413,7 +413,6 @@ class SignupUpdateTests(TestCase):
             response = self.client.get(trainings_url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
-        self.assertContains(response, "/update-signup/?next=" + trainings_url)
         self.assertNotContains(response, "/update-signup/?next=" + my_signups_url)
 
         with self.assertNumQueries(6):
@@ -421,6 +420,14 @@ class SignupUpdateTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_signups.html")
         self.assertContains(response, "/update-signup/?next=" + my_signups_url)
+
+        response = self.client.post(
+            reverse("update_signup", kwargs={"date": TODAY.isoformat()})
+            + "?next=http://danger.com",
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/list_trainings.html")
 
     def test_signup_not_found_404(self):
         with self.assertNumQueries(3):

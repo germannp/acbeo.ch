@@ -126,7 +126,7 @@ class SignupUpdateView(LoginRequiredMixin, generic.UpdateView):
         return signup
 
     def get_success_url(self):
-        next = self.request.GET.get("next", None)
-        if next:
+        next = self.request.GET.get("next")
+        if next == reverse_lazy("my_signups"):
             return next
         return reverse_lazy("trainings")
