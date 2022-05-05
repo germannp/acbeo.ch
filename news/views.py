@@ -15,7 +15,7 @@ class UserCreateView(SuccessMessageMixin, generic.CreateView):
 
 class PostListView(generic.ListView):
     context_object_name = "posts"
-    queryset = Post.objects.all().order_by("-created_on")
+    queryset = Post.objects.all()
     paginate_by = 3
     template_name = "news/index.html"
 

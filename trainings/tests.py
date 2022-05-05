@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 import locale
 import re
+from time import sleep
 from unittest import mock
 
 from django.contrib.auth.models import User
@@ -456,6 +457,7 @@ class SignupSelectionTests(TestCase):
         self.training.save()
         self.signup_a = Signup(pilot=pilot_a, training=self.training)
         self.signup_a.save()
+        sleep(0.001)
         self.signup_b = Signup(pilot=pilot_b, training=self.training)
         self.signup_b.save()
 
@@ -469,7 +471,7 @@ class SignupSelectionTests(TestCase):
             signup.refresh_from_db()
         self.assertEqual(self.signup_a.status, Signup.Status.Selected)
         self.assertEqual(self.signup_b.status, Signup.Status.Waiting)
-        self.assertLessEqual(self.signup_a.signed_up_on, self.signup_b.signed_up_on)
+        self.assertLess(self.signup_a.signed_up_on, self.signup_b.signed_up_on)
 
         self.signup_a.cancel()
         self.signup_a.save()
@@ -478,7 +480,7 @@ class SignupSelectionTests(TestCase):
             signup.refresh_from_db()
         self.assertEqual(self.signup_a.status, Signup.Status.Canceled)
         self.assertEqual(self.signup_b.status, Signup.Status.Selected)
-        self.assertLessEqual(self.signup_a.signed_up_on, self.signup_b.signed_up_on)
+        self.assertLess(self.signup_a.signed_up_on, self.signup_b.signed_up_on)
 
         self.signup_a.resignup()
         self.signup_a.save()
