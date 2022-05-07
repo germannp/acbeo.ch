@@ -87,8 +87,7 @@ class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateVi
         if Training.objects.filter(date=self.date).exists():
             training = Training.objects.get(date=self.date)
         else:
-            training = Training(date=self.date)
-            training.save()
+            training = Training.objects.create(date=self.date)
         pilot = self.request.user
         if Signup.objects.filter(pilot=pilot, training=training).exists():
             form.add_error(None, f"Du bist für {self.date} bereits eingeschrieben.")

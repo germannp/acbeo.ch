@@ -19,19 +19,16 @@ TOMORROW = TODAY + timedelta(days=1)
 
 class TrainingListTests(TestCase):
     def setUp(self):
-        self.pilot_a = User(username="Pilot A")
-        self.pilot_a.save()
-        self.pilot_b = User(username="Pilot B")
-        self.pilot_b.save()
+        self.pilot_a = User.objects.create(username="Pilot A")
+        self.pilot_b = User.objects.create(username="Pilot B")
 
         Training(date=YESTERDAY).save()
-        todays_training = Training(date=TODAY)
-        todays_training.save()
-        tomorrows_training = Training(date=TOMORROW)
-        tomorrows_training.save()
+        todays_training = Training.objects.create(date=TODAY)
+        tomorrows_training = Training.objects.create(date=TOMORROW)
 
-        self.signup = Signup(pilot=self.pilot_a, training=todays_training)
-        self.signup.save()
+        self.signup = Signup.objects.create(
+            pilot=self.pilot_a, training=todays_training
+        )
         Signup(pilot=self.pilot_b, training=tomorrows_training).save()
 
     def test_past_trainings_not_listed(self):
@@ -88,8 +85,7 @@ class TrainingListTests(TestCase):
 
 class TrainingUpdateTests(TestCase):
     def setUp(self):
-        self.pilot = User(username="Pilot")
-        self.pilot.save()
+        self.pilot = User.objects.create(username="Pilot")
         self.client.force_login(self.pilot)
 
         Training(date=TODAY).save()
@@ -154,20 +150,14 @@ class TrainingUpdateTests(TestCase):
 
 class SingupListTests(TestCase):
     def setUp(self):
-        self.pilot_a = User(username="Pilot A")
-        self.pilot_a.save()
-        todays_training = Training(date=TODAY)
-        todays_training.save()
-        self.signup = Signup(pilot=self.pilot_a, training=todays_training)
-        self.signup.save()
+        self.pilot_a = User.objects.create(username="Pilot A")
+        todays_training = Training.objects.create(date=TODAY)
+        self.signup = Signup.objects.create(pilot=self.pilot_a, training=todays_training)
 
-        self.pilot_b = User(username="Pilot B")
-        self.pilot_b.save()
-        tomorrows_training = Training(date=TOMORROW)
-        tomorrows_training.save()
+        self.pilot_b = User.objects.create(username="Pilot B")
+        tomorrows_training = Training.objects.create(date=TOMORROW)
         Signup(pilot=self.pilot_b, training=tomorrows_training).save()
-        yesterdays_training = Training(date=YESTERDAY)
-        yesterdays_training.save()
+        yesterdays_training = Training.objects.create(date=YESTERDAY)
         Signup(pilot=self.pilot_b, training=yesterdays_training).save()
 
     def test_only_my_signups_are_shown(self):
@@ -207,8 +197,7 @@ class SingupListTests(TestCase):
 
 class SignupCreateTests(TestCase):
     def setUp(self):
-        self.pilot = User(username="Pilot")
-        self.pilot.save()
+        self.pilot = User.objects.create(username="Pilot")
         self.client.force_login(self.pilot)
 
     @mock.patch("trainings.views.datetime")
@@ -294,15 +283,12 @@ class SignupCreateTests(TestCase):
 
 class SignupUpdateTests(TestCase):
     def setUp(self):
-        self.pilot = User(username="Pilot")
-        self.pilot.save()
+        self.pilot = User.objects.create(username="Pilot")
         self.client.force_login(self.pilot)
-        training = Training(date=TODAY)
-        training.save()
-        self.signup = Signup(
+        training = Training.objects.create(date=TODAY)
+        self.signup = Signup.objects.create(
             pilot=self.pilot, training=training, comment="Test comment"
         )
-        self.signup.save()
 
     def test_comment_is_in_form_and_can_be_updated(self):
         with self.assertNumQueries(4):
@@ -325,10 +311,8 @@ class SignupUpdateTests(TestCase):
         self.assertEqual(self.signup.comment, "Updated comment")
 
     def test_cannot_update_past_signup(self):
-        training = Training(date=YESTERDAY)
-        training.save()
-        signup = Signup(pilot=self.pilot, training=training)
-        signup.save()
+        training = Training.objects.create(date=YESTERDAY)
+        signup = Signup.objects.create(pilot=self.pilot, training=training)
 
         with self.assertNumQueries(4):
             response = self.client.post(
@@ -449,17 +433,12 @@ class SignupUpdateTests(TestCase):
 
 class SignupSelectionTests(TestCase):
     def setUp(self):
-        pilot_a = User(username="Pilot A")
-        pilot_a.save()
-        pilot_b = User(username="Pilot B")
-        pilot_b.save()
-        self.training = Training(date=TODAY, max_pilots=1)
-        self.training.save()
-        self.signup_a = Signup(pilot=pilot_a, training=self.training)
-        self.signup_a.save()
+        pilot_a = User.objects.create(username="Pilot A")
+        pilot_b = User.objects.create(username="Pilot B")
+        self.training = Training.objects.create(date=TODAY, max_pilots=1)
+        self.signup_a = Signup.objects.create(pilot=pilot_a, training=self.training)
         sleep(0.001)
-        self.signup_b = Signup(pilot=pilot_b, training=self.training)
-        self.signup_b.save()
+        self.signup_b = Signup.objects.create(pilot=pilot_b, training=self.training)
 
     def test_waiting_after_resignup(self):
         for signup in [self.signup_a, self.signup_b]:
