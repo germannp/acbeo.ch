@@ -60,7 +60,14 @@
     </nav>
 
     <div class="container">
+        <div class="col">
+            {% if messages %}
+            {% for message in messages %}<div class="alert my-4 alert-success">{{ message }}</div>{% endfor %}
+            {% endif %}        
+        </div>
+
         {% block content %} {% endblock content %}
+
     </div>
 
 </body>
