@@ -106,14 +106,6 @@ class SignupUpdateView(LoginRequiredMixin, generic.UpdateView):
     form_class = SignupUpdateForm
     template_name = "trainings/update_signup.html"
 
-    def form_valid(self, form):
-        if self.kwargs["date"] < datetime.now().date():
-            form.add_error(
-                None, "Vergangene Anmeldungen können nicht bearbeitet werden."
-            )
-            return super().form_invalid(form)
-        return super().form_valid(form)
-
     def get_object(self):
         pilot = self.request.user
         training = get_object_or_404(Training, date=self.kwargs["date"])
@@ -123,6 +115,14 @@ class SignupUpdateView(LoginRequiredMixin, generic.UpdateView):
         elif "resignup" in self.request.POST:
             signup.resignup()
         return signup
+
+    def form_valid(self, form):
+        if self.kwargs["date"] < datetime.now().date():
+            form.add_error(
+                None, "Vergangene Anmeldungen können nicht bearbeitet werden."
+            )
+            return super().form_invalid(form)
+        return super().form_valid(form)
 
     def get_success_url(self):
         next = self.request.GET.get("next")
