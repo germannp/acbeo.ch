@@ -154,6 +154,13 @@ class TrainingUpdateTests(TestCase):
         self.assertContains(response, self.info)
 
     def test_training_not_found_404(self):
+        with self.assertNumQueries(2):
+            response = self.client.get(
+                reverse("update_training", kwargs={"date": "2022-13-13"}),
+            )
+        self.assertEqual(response.status_code, 404)
+        self.assertTemplateUsed(response, "404.html")
+
         with self.assertNumQueries(3):
             response = self.client.get(
                 reverse("update_training", kwargs={"date": TOMORROW.isoformat()}),
@@ -307,6 +314,14 @@ class SignupCreateTests(TestCase):
         self.assertTemplateUsed(response, "trainings/signup.html")
         self.assertContains(response, "alert-warning")
         self.assertEqual(0, len(Signup.objects.all()))
+    
+    def test_cannot_signup_for_nonexistant_date_404(self):
+        with self.assertNumQueries(2):
+            response = self.client.get(
+                reverse("signup", kwargs={"date": "2022-13-13"}),
+            )
+        self.assertEqual(response.status_code, 404)
+        self.assertTemplateUsed(response, "404.html")
 
 
 class SignupUpdateTests(TestCase):
@@ -443,6 +458,13 @@ class SignupUpdateTests(TestCase):
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
 
     def test_signup_not_found_404(self):
+        with self.assertNumQueries(2):
+            response = self.client.get(
+                reverse("update_signup", kwargs={"date": "2022-13-13"})
+            )
+        self.assertEqual(response.status_code, 404)
+        self.assertTemplateUsed(response, "404.html")
+
         with self.assertNumQueries(3):
             response = self.client.get(
                 reverse("update_signup", kwargs={"date": TOMORROW.isoformat()})
