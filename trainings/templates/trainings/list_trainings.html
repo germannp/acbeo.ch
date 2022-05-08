@@ -10,7 +10,7 @@
     <div class="col left">
         {% for training in trainings %}
         <div class="card mb-4">
-            <h5 class="card-header">{{ training.date|date:"l, d. E Y" }} <a
+            <h5 class="card-header">{{ training.date|date:"l, j. E Y" }} <a
                     href="{% url 'update_training' date=training.date.isoformat %}"
                     class="btn btn-primary btn-sm bi bi-pencil-square"></a>
             </h5>

@@ -37,9 +37,15 @@ class TrainingListTests(TestCase):
             response = self.client.get(reverse("trainings"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
-        self.assertNotContains(response, YESTERDAY.strftime("%A, %d. %B %Y"))
-        self.assertContains(response, TODAY.strftime("%A, %d. %B %Y"))
-        self.assertContains(response, TOMORROW.strftime("%A, %d. %B %Y"))
+        self.assertNotContains(
+            response, YESTERDAY.strftime("%A, %d. %B %Y").replace(" 0", " ")
+        )
+        self.assertContains(
+            response, TODAY.strftime("%A, %d. %B %Y").replace(" 0", " ")
+        )
+        self.assertContains(
+            response, TOMORROW.strftime("%A, %d. %B %Y").replace(" 0", " ")
+        )
 
     def test_showing_either_signup_or_update_button(self):
         self.client.force_login(self.pilot_a)
@@ -47,8 +53,12 @@ class TrainingListTests(TestCase):
             response = self.client.get(reverse("trainings"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
-        self.assertContains(response, TODAY.strftime("%A, %d. %B %Y"))
-        self.assertContains(response, TOMORROW.strftime("%A, %d. %B %Y"))
+        self.assertContains(
+            response, TODAY.strftime("%A, %d. %B %Y").replace(" 0", " ")
+        )
+        self.assertContains(
+            response, TOMORROW.strftime("%A, %d. %B %Y").replace(" 0", " ")
+        )
         self.assertContains(response, f"{TODAY.isoformat()}/update")
         hidden_update_button = re.compile(
             "<!--.{0,100}" + TODAY.isoformat() + "\/signup.{0,100}-->", re.DOTALL
@@ -60,8 +70,12 @@ class TrainingListTests(TestCase):
             response = self.client.get(reverse("trainings"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
-        self.assertContains(response, TODAY.strftime("%A, %d. %B %Y"))
-        self.assertContains(response, TOMORROW.strftime("%A, %d. %B %Y"))
+        self.assertContains(
+            response, TODAY.strftime("%A, %d. %B %Y").replace(" 0", " ")
+        )
+        self.assertContains(
+            response, TOMORROW.strftime("%A, %d. %B %Y").replace(" 0", " ")
+        )
         self.assertContains(response, f"{TOMORROW.isoformat()}/update")
         hidden_update_button = re.compile(
             "<!--.{0,100}" + TOMORROW.isoformat() + "\/signup.{0,100}-->",
@@ -168,20 +182,32 @@ class SingupListTests(TestCase):
             response = self.client.get(reverse("my_signups"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_signups.html")
-        self.assertContains(response, TODAY.strftime("%a, %d. %B %Y"))
-        self.assertNotContains(response, TOMORROW.strftime("%a, %d. %B %Y"))
+        self.assertContains(
+            response, TODAY.strftime("%a, %d. %B %Y").replace(" 0", " ")
+        )
+        self.assertNotContains(
+            response, TOMORROW.strftime("%a, %d. %B %Y").replace(" 0", " ")
+        )
         self.assertNotContains(response, "Vergangene Trainings")
-        self.assertNotContains(response, YESTERDAY.strftime("%a, %d. %B %Y"))
+        self.assertNotContains(
+            response, YESTERDAY.strftime("%a, %d. %B %Y").replace(" 0", " ")
+        )
 
         self.client.force_login(self.pilot_b)
         with self.assertNumQueries(6):
             response = self.client.get(reverse("my_signups"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_signups.html")
-        self.assertContains(response, TOMORROW.strftime("%a, %d. %B %Y"))
-        self.assertNotContains(response, TODAY.strftime("%a, %d. %B %Y"))
+        self.assertContains(
+            response, TOMORROW.strftime("%a, %d. %B %Y").replace(" 0", " ")
+        )
+        self.assertNotContains(
+            response, TODAY.strftime("%a, %d. %B %Y").replace(" 0", " ")
+        )
         self.assertContains(response, "Vergangene Trainings")
-        self.assertContains(response, YESTERDAY.strftime("%a, %d. %B %Y"))
+        self.assertContains(
+            response, YESTERDAY.strftime("%a, %d. %B %Y").replace(" 0", " ")
+        )
 
     def test_list_signups_selects_signups(self):
         self.signup.refresh_from_db()
