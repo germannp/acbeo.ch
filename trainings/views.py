@@ -3,16 +3,16 @@ from datetime import datetime, timedelta
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.shortcuts import get_object_or_404
-from django.urls import reverse_lazy, resolve
+from django.urls import reverse_lazy
 from django.views import generic
 
+from . import forms
 from .models import Training, Signup
-from .forms import TrainingUpdateForm, SignupCreateForm, SignupUpdateForm
 
 
 class TrainingListView(LoginRequiredMixin, generic.ListView):
     context_object_name = "trainings"
-    paginate_by = 3
+    paginate_by = 4
     template_name = "trainings/list_trainings.html"
 
     def get_queryset(self):
@@ -23,14 +23,47 @@ class TrainingListView(LoginRequiredMixin, generic.ListView):
             training.select_signups()
         return trainings
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["day_after_tomorrow"] = datetime.now().date() + timedelta(days=2)
+        return context
+
 
 class TrainingUpdateView(LoginRequiredMixin, generic.UpdateView):
-    form_class = TrainingUpdateForm
+    form_class = forms.TrainingUpdateForm
     template_name = "trainings/update_training.html"
     success_url = reverse_lazy("trainings")
 
     def get_object(self):
         return get_object_or_404(Training.objects, date=self.kwargs["date"])
+
+
+class EmergencyMailView(LoginRequiredMixin, SuccessMessageMixin, generic.UpdateView):
+    form_class = forms.EmergencyMailForm
+    template_name = "trainings/emergency_mail.html"
+    success_url = reverse_lazy("trainings")
+    success_message = "Seepolizeimail abgesendet."
+
+    def get_object(self):
+        return get_object_or_404(Training.objects, date=self.kwargs["date"])
+
+    def form_valid(self, form):
+        today = datetime.now().date()
+        if form.instance.date < today:
+            form.add_error(
+                None,
+                "Seepolizeimail kann nicht für vergangene Trainings versandt werden.",
+            )
+            return super().form_invalid(form)
+        if form.instance.date > today + timedelta(days=2):
+            form.add_error(
+                None,
+                "Seepolizeimail kann höchstens drei Tage im Voraus versandt werden.",
+            )
+            return super().form_invalid(form)
+        form.sender = self.request.user
+        form.send_mail()
+        return super().form_valid(form)
 
 
 class SignupListView(LoginRequiredMixin, generic.ListView):
@@ -58,7 +91,7 @@ class SignupListView(LoginRequiredMixin, generic.ListView):
 
 
 class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateView):
-    form_class = SignupCreateForm
+    form_class = forms.SignupCreateForm
     template_name = "trainings/signup.html"
 
     def get_context_data(self, **kwargs):
@@ -103,7 +136,7 @@ class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateVi
 
 
 class SignupUpdateView(LoginRequiredMixin, generic.UpdateView):
-    form_class = SignupUpdateForm
+    form_class = forms.SignupUpdateForm
     template_name = "trainings/update_signup.html"
 
     def get_object(self):

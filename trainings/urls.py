@@ -32,4 +32,9 @@ urlpatterns = [
         views.TrainingUpdateView.as_view(),
         name="update_training",
     ),
+    path(
+        "<date:date>/emergency-mail/",
+        views.EmergencyMailView.as_view(),
+        name="emergency_mail",
+    ),
 ]

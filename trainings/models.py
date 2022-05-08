@@ -10,6 +10,14 @@ class Training(models.Model):
     date = models.DateField(unique=True)
     max_pilots = models.PositiveSmallIntegerField(default=11, blank=False, null=False)
     info = models.CharField(max_length=300, default="", blank=True)
+    emergency_mail_sender = models.ForeignKey(
+        User,
+        on_delete=models.SET_DEFAULT,
+        default=None,
+        blank=True,
+        null=True,
+        db_index=False,
+    )
 
     class Meta:
         ordering = ["date"]

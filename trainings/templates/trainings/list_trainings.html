@@ -13,6 +13,11 @@
             <h5 class="card-header">{{ training.date|date:"l, j. E Y" }} <a
                     href="{% url 'update_training' date=training.date.isoformat %}"
                     class="btn btn-primary btn-sm bi bi-pencil-square"></a>
+                {% if training.date <= day_after_tomorrow %}
+                <a href="{% url 'emergency_mail' date=training.date.isoformat %}"
+                    class="btn btn-primary btn-sm {% if training.emergency_mail_sender %}disabled{% endif %}">
+                    Seepolizeimail</a>
+                {% endif %}
             </h5>
             <div class="card-body">
                 {% if training.info %}

@@ -5,6 +5,7 @@ from time import sleep
 from unittest import mock
 
 from django.contrib.auth.models import User
+from django.core import mail
 from django.test import TestCase
 from django.urls import reverse
 
@@ -25,6 +26,8 @@ class TrainingListTests(TestCase):
         Training(date=YESTERDAY).save()
         todays_training = Training.objects.create(date=TODAY)
         tomorrows_training = Training.objects.create(date=TOMORROW)
+        Training.objects.create(date=TOMORROW + timedelta(days=1))
+        Training.objects.create(date=TOMORROW + timedelta(days=2))
 
         self.signup = Signup.objects.create(
             pilot=self.pilot_a, training=todays_training
@@ -96,6 +99,15 @@ class TrainingListTests(TestCase):
         self.signup.refresh_from_db()
         self.assertEqual(self.signup.status, Signup.Status.Selected)
 
+    def test_update_info_and_emergency_mail_buttons_shown(self):
+        self.client.force_login(self.pilot_a)
+        with self.assertNumQueries(7):
+            response = self.client.get(reverse("trainings"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertEqual(5, len(str(response.content).split("/update-training/")))
+        self.assertEqual(4, len(str(response.content).split("/emergency-mail/")))
+
 
 class TrainingUpdateTests(TestCase):
     def setUp(self):
@@ -164,6 +176,153 @@ class TrainingUpdateTests(TestCase):
         with self.assertNumQueries(3):
             response = self.client.get(
                 reverse("update_training", kwargs={"date": TOMORROW.isoformat()}),
+            )
+        self.assertEqual(response.status_code, 404)
+        self.assertTemplateUsed(response, "404.html")
+
+
+class EmergencyMailTests(TestCase):
+    def setUp(self):
+        self.pilot_a = User.objects.create(
+            username="Pilot A", first_name="Name A", email="sender@example.com"
+        )
+        self.client.force_login(self.pilot_a)
+        self.pilot_b = User.objects.create(username="Pilot B", first_name="Name B")
+        self.pilot_c = User.objects.create(username="Pilot C", first_name="Name C")
+
+        self.todays_training = Training.objects.create(date=TODAY)
+        self.signup_a_today = Signup.objects.create(
+            pilot=self.pilot_a, training=self.todays_training
+        )
+        Signup(pilot=self.pilot_b, training=self.todays_training).save()
+        Signup(pilot=self.pilot_c, training=self.todays_training).save()
+        self.todays_training.select_signups()
+
+        yesterdays_training = Training.objects.create(date=YESTERDAY)
+        Signup.objects.create(pilot=self.pilot_a, training=yesterdays_training).save()
+        Signup.objects.create(pilot=self.pilot_b, training=yesterdays_training).save()
+        yesterdays_training.select_signups()
+
+        self.in_a_week = TODAY + timedelta(days=7)
+        training_in_a_week = Training.objects.create(date=self.in_a_week)
+        Signup(pilot=self.pilot_a, training=training_in_a_week).save()
+        Signup(pilot=self.pilot_b, training=training_in_a_week).save()
+        training_in_a_week.select_signups()
+
+    def test_sending_emergency_mail(self):
+        with self.assertNumQueries(5 + 6):
+            response = self.client.post(
+                reverse("emergency_mail", kwargs={"date": TODAY.isoformat()}),
+                data={"start": "2", "end": "5", "emergency_contacts": ["1", "2"]},
+                follow=True,
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertContains(response, "Seepolizeimail abgesendet.")
+        self.assertEqual(1, len(mail.outbox))
+        self.assertTrue(TODAY.isoformat() in mail.outbox[0].subject)
+        self.assertEqual(mail.outbox[0].from_email, "info@example.com")
+        self.assertTrue(self.pilot_a.email in mail.outbox[0].to)
+        self.assertTrue("8:30 bis 20:00" in mail.outbox[0].body)
+        self.assertTrue(self.pilot_a.first_name in mail.outbox[0].body)
+        self.assertTrue(self.pilot_b.first_name in mail.outbox[0].body)
+        self.assertTrue(self.pilot_c.first_name not in mail.outbox[0].body)
+
+        self.todays_training.refresh_from_db()
+        self.assertTrue(self.todays_training.emergency_mail_sender == self.pilot_a)
+
+    def test_only_selected_signups_can_be_chosen(self):
+        with self.assertNumQueries(5):
+            response = self.client.get(
+                reverse("emergency_mail", kwargs={"date": TODAY.isoformat()})
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/emergency_mail.html")
+        self.assertContains(response, self.pilot_a.first_name)
+        self.assertContains(response, self.pilot_b.first_name)
+        self.assertContains(response, self.pilot_c.first_name)
+
+        self.signup_a_today.cancel()
+        self.signup_a_today.save()
+        with self.assertNumQueries(5):
+            response = self.client.get(
+                reverse("emergency_mail", kwargs={"date": TODAY.isoformat()})
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/emergency_mail.html")
+        self.assertNotContains(response, self.pilot_a.first_name)
+        self.assertContains(response, self.pilot_b.first_name)
+        self.assertContains(response, self.pilot_c.first_name)
+
+        with self.assertNumQueries(6):
+            response = self.client.post(
+                reverse("emergency_mail", kwargs={"date": TODAY.isoformat()}),
+                data={"start": "2", "end": "5", "emergency_contacts": ["1", "2"]},
+                follow=True,
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/emergency_mail.html")
+        self.assertContains(response, "Bitte eine gültige Auswahl treffen.")
+
+    def test_cannot_send_emergency_mail_for_past_or_far_ahead_trainings(self):
+        with self.assertNumQueries(6):
+            response = self.client.post(
+                reverse("emergency_mail", kwargs={"date": YESTERDAY.isoformat()}),
+                data={"start": "2", "end": "5", "emergency_contacts": ["4", "5"]},
+                follow=True,
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/emergency_mail.html")
+        self.assertContains(
+            response,
+            "Seepolizeimail kann nicht für vergangene Trainings versandt werden.",
+        )
+
+        with self.assertNumQueries(6):
+            response = self.client.post(
+                reverse("emergency_mail", kwargs={"date": self.in_a_week.isoformat()}),
+                data={"start": "2", "end": "5", "emergency_contacts": ["6", "7"]},
+                follow=True,
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/emergency_mail.html")
+        self.assertContains(
+            response,
+            "Seepolizeimail kann höchstens drei Tage im Voraus versandt werden.",
+        )
+
+    def test_exactly_two_emergency_contacts_must_be_selected(self):
+        with self.assertNumQueries(6):
+            response = self.client.post(
+                reverse("emergency_mail", kwargs={"date": TODAY.isoformat()}),
+                data={"start": "2", "end": "5", "emergency_contacts": ["1"]},
+                follow=True,
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/emergency_mail.html")
+        self.assertContains(response, "Bitte genau zwei Notfallkontakte ausgewählen.")
+
+        with self.assertNumQueries(6):
+            response = self.client.post(
+                reverse("emergency_mail", kwargs={"date": TODAY.isoformat()}),
+                data={"start": "2", "end": "5", "emergency_contacts": ["1", "2", "3"]},
+                follow=True,
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/emergency_mail.html")
+        self.assertContains(response, "Bitte genau zwei Notfallkontakte ausgewählen.")
+
+    def test_cannot_send_emergency_mail_for_non_existing_trainings_404(self):
+        with self.assertNumQueries(2):
+            response = self.client.get(
+                reverse("emergency_mail", kwargs={"date": "2022-13-13"})
+            )
+        self.assertEqual(response.status_code, 404)
+        self.assertTemplateUsed(response, "404.html")
+
+        with self.assertNumQueries(3):
+            response = self.client.get(
+                reverse("emergency_mail", kwargs={"date": TOMORROW.isoformat()})
             )
         self.assertEqual(response.status_code, 404)
         self.assertTemplateUsed(response, "404.html")
@@ -314,7 +473,7 @@ class SignupCreateTests(TestCase):
         self.assertTemplateUsed(response, "trainings/signup.html")
         self.assertContains(response, "alert-warning")
         self.assertEqual(0, len(Signup.objects.all()))
-    
+
     def test_cannot_signup_for_nonexistant_date_404(self):
         with self.assertNumQueries(2):
             response = self.client.get(
