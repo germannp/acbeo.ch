@@ -41,7 +41,7 @@ class Signup(models.Model):
         return f"{self.pilot} for {self.training}"
 
     def select(self):
-        if self.status == self.Status.Canceled:
+        if self.status != self.Status.Waiting:
             return
         self.status = self.Status.Selected
         self.save()

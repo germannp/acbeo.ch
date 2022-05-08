@@ -56,7 +56,7 @@ class TrainingListTests(TestCase):
         self.assertIsNotNone(hidden_update_button.search(str(response.content)))
 
         self.client.force_login(self.pilot_b)
-        with self.assertNumQueries(7):
+        with self.assertNumQueries(5):
             response = self.client.get(reverse("trainings"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
@@ -152,7 +152,9 @@ class SingupListTests(TestCase):
     def setUp(self):
         self.pilot_a = User.objects.create(username="Pilot A")
         todays_training = Training.objects.create(date=TODAY)
-        self.signup = Signup.objects.create(pilot=self.pilot_a, training=todays_training)
+        self.signup = Signup.objects.create(
+            pilot=self.pilot_a, training=todays_training
+        )
 
         self.pilot_b = User.objects.create(username="Pilot B")
         tomorrows_training = Training.objects.create(date=TOMORROW)
@@ -400,7 +402,7 @@ class SignupUpdateTests(TestCase):
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
         self.assertNotContains(response, "/update-signup/?next=" + my_signups_url)
 
-        with self.assertNumQueries(6):
+        with self.assertNumQueries(5):
             response = self.client.get(my_signups_url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_signups.html")
