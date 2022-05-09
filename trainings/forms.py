@@ -1,9 +1,13 @@
+import locale
+
 from django import forms
 from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
 from django.db import models
 
 from .models import Training, Signup
+
+locale.setlocale(locale.LC_TIME, "de_CH")
 
 
 class TrainingUpdateForm(forms.ModelForm):
@@ -43,16 +47,35 @@ class EmergencyMailForm(forms.ModelForm):
         return emergency_contacts
 
     def send_mail(self):
+        date = self.instance.date.strftime("%A, %d. %B").replace(" 0", " ")
         start = self.Start(int(self.cleaned_data["start"])).label
         end = self.End(int(self.cleaned_data["end"])).label
         contacts = self.cleaned_data["emergency_contacts"]
         send_mail(
-            subject=f"{self.instance.date}: Gleitschirm-Sicherheitstraining im östlichen Brienzerseebecken",
+            subject=f"{date}: Gleitschirm-Sicherheitstraining ueber dem Brienzersee",
             message=(
-                f"Von {start} bis {end}\n"
-                f"Notfallkontakte:\n"
+                "Was: Information über Gleitschirm Sicherheitstraining über dem "
+                "Brienzersee\n\n"
+
+                "Wo: Östliches Seebecken Brienzersee\n"
+                "Start: Axalp\n"
+                "Landung: Aaregg, Forsthaus\n\n"
+
+                "Zweck: Unter den entsprechenden Sicherheitsvorkehrungen werden "
+                "verschiedene Extremflugsituationen geübt. Wasserlandungen sind "
+                "nicht vorgesehen, aber jederzeit möglich. Ein eigenes, bemanntes "
+                "Boot steht für alle Fälle auf dem See bereit. \n\n"
+
+                f"Wann: {date} von {start} bis {end} (falls das Wetter passt).\n\n"
+
+                "Veranstalter: Acro Club Berner Oberland, acbeo.ch.\n\n"
+    
+                f"Ansprechpersonen:\n"
                 f"{contacts[0].pilot.first_name} {contacts[0].pilot.last_name}\n"
-                f"{contacts[1].pilot.first_name} {contacts[1].pilot.last_name}\n"
+                f"{contacts[1].pilot.first_name} {contacts[1].pilot.last_name}\n\n"
+
+                "Mit freundlichen Grüssen\n"
+                f"{self.sender.first_name} {self.sender.last_name}\n"
             ),
             from_email="info@example.com",
             recipient_list=["emergency@example.com", self.sender.email],

@@ -214,7 +214,9 @@ class EmergencyMailTests(TestCase):
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
         self.assertContains(response, "Seepolizeimail abgesendet.")
         self.assertEqual(1, len(mail.outbox))
-        self.assertTrue(TODAY.isoformat() in mail.outbox[0].subject)
+        self.assertTrue(
+            TODAY.strftime("%A, %d. %B").replace(" 0", " ") in mail.outbox[0].subject
+        )
         self.assertEqual(mail.outbox[0].from_email, "info@example.com")
         self.assertTrue(self.pilot_a.email in mail.outbox[0].to)
         self.assertTrue("8:30 bis 20:00" in mail.outbox[0].body)
