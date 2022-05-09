@@ -24,6 +24,9 @@ class Training(models.Model):
 
     def __str__(self):
         return f"{self.date}"
+    
+    def pilots(self):
+        return [signup.pilot for signup in self.signups.all()]
 
     def select_signups(self):
         for signup in self.signups.all()[: self.max_pilots]:

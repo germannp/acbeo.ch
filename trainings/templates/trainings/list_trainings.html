@@ -55,11 +55,9 @@
                         </tbody>
                     </table>
                 </div>
-                {% for signup in training.signups.all %}{% if signup.pilot == request.user %}
-                <!--{% endif %}{% endfor %}
+                {% if not request.user in training.pilots %}
                 <a href="{% url 'signup' date=training.date.isoformat %}" class="btn btn-primary">Einschreiben</a>
-                {% for signup in training.signups.all %}{% if signup.pilot == request.user %}-->
-                {% endif %}{% endfor %}
+                {% endif %}
             </div>
         </div>
         {% endfor %}

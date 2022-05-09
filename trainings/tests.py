@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 import locale
-import re
 from time import sleep
 from unittest import mock
 
@@ -63,10 +62,8 @@ class TrainingListTests(TestCase):
             response, TOMORROW.strftime("%A, %d. %B %Y").replace(" 0", " ")
         )
         self.assertContains(response, f"{TODAY.isoformat()}/update")
-        hidden_update_button = re.compile(
-            "<!--.{0,100}" + TODAY.isoformat() + "\/signup.{0,100}-->", re.DOTALL
-        )
-        self.assertIsNotNone(hidden_update_button.search(str(response.content)))
+        self.assertNotContains(response, f"{TODAY.isoformat()}/signup")
+        self.assertContains(response, f"{TOMORROW.isoformat()}/signup")
 
         self.client.force_login(self.pilot_b)
         with self.assertNumQueries(5):
@@ -80,11 +77,8 @@ class TrainingListTests(TestCase):
             response, TOMORROW.strftime("%A, %d. %B %Y").replace(" 0", " ")
         )
         self.assertContains(response, f"{TOMORROW.isoformat()}/update")
-        hidden_update_button = re.compile(
-            "<!--.{0,100}" + TOMORROW.isoformat() + "\/signup.{0,100}-->",
-            re.DOTALL,
-        )
-        self.assertIsNotNone(hidden_update_button.search(str(response.content)))
+        self.assertContains(response, f"{TODAY.isoformat()}/signup")
+        self.assertNotContains(response, f"{TOMORROW.isoformat()}/signup")
 
     def test_list_trainings_selects_signups(self):
         self.signup.refresh_from_db()
