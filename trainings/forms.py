@@ -53,26 +53,26 @@ class EmergencyMailForm(forms.ModelForm):
         end = self.End(int(self.cleaned_data["end"])).label
         contacts = self.cleaned_data["emergency_contacts"]
         html_message = (
-            "Was: Information über Gleitschirm Sicherheitstraining über dem "
+            "<b>Was</b>: Information über Gleitschirm Sicherheitstraining über dem "
             "Brienzersee\n\n"
 
-            "Geht an: Einsatzzentrale der Kantonspolizei in Thun. Bitte weiterleiten an "
-            "die Polizeiwachen Brienz und Meiringen, und die Seepolizei Brienzersee.\n\n"
+            "<b>Geht an</b>: Einsatzzentrale der Kantonspolizei in Thun. Bitte weiterleiten "
+            "an die Polizeiwachen Brienz und Meiringen, und die Seepolizei Brienzersee.\n\n"
 
-            "Wo: Östliches Seebecken Brienzersee\n"
+            "<b>Wo</b>: Östliches Seebecken Brienzersee\n"
             "Start: Axalp\n"
             "Landung: Aaregg, Forsthaus\n\n"
 
-            "Zweck: Unter den entsprechenden Sicherheitsvorkehrungen werden "
+            "<b>Zweck</b>: Unter den entsprechenden Sicherheitsvorkehrungen werden "
             "verschiedene Extremflugsituationen geübt. Wasserlandungen sind "
             "nicht vorgesehen, aber jederzeit möglich. Ein eigenes, bemanntes "
             "Boot steht für alle Fälle auf dem See bereit.\n\n"
 
-            f"Wann: {date} von {start} bis {end} (falls das Wetter passt).\n\n"
+            f"<b>Wann</b>: {date} von {start} bis {end} (falls das Wetter passt).\n\n"
 
-            "Veranstalter: Acro Club Berner Oberland, acbeo.ch.\n\n"
+            "<b>Veranstalter</b>: Acro Club Berner Oberland, acbeo.ch.\n\n"
 
-            f"Ansprechpersonen:\n"
+            f"<b>Ansprechpersonen</b>:\n"
             f"{contacts[0].pilot.first_name} {contacts[0].pilot.last_name}\n"
             f"{contacts[1].pilot.first_name} {contacts[1].pilot.last_name}\n\n"
 
