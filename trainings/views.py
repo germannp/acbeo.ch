@@ -86,7 +86,7 @@ class SignupListView(LoginRequiredMixin, generic.ListView):
             .select_related("training")
         )
         future_signups = [signup for signup in signups if signup.training.date >= today]
-        past_signups = [signup for signup in signups if signup.training.date < today]
+        past_signups = [signup for signup in signups if signup.training.date < today][::-1]
         return {"future": future_signups, "past": past_signups}
 
 
