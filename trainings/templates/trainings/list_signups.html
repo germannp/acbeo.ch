@@ -2,10 +2,11 @@
 
 {% block title %}Meine Trainings{% endblock title %}
 
+{% block headline %}Meine Trainings{% endblock headline %}
+
 {% block content %}
 
 <div class="row mt-2">
-    <h1>Meine Trainings</h1>
 
     <div class="col-md-12 left">
         {% for time, signups in future_and_past_signups.items %}

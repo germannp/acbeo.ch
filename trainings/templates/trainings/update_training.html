@@ -2,6 +2,8 @@
 
 {% block title %}Training bearbeiten{% endblock title %}
 
+{% block headline %}Training bearbeiten{% endblock headline %}
+
 {% block content %}
 
 <div class="col-xl-4 col-md-6">
@@ -14,7 +16,7 @@
     {% endif %}
 
     <div class="card my-4">
-        <h5 class="card-header">Training vom {{ form.instance.date|date:"D., j. E" }} bearbeiten</h5>
+        <h5 class="card-header">{{ form.instance.date|date:"l, j. E" }}</h5>
         <div class="card-body">
             <main class="form">
                 <form method="post">
