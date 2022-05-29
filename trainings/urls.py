@@ -19,21 +19,21 @@ register_converter(DateConverter, "date")
 
 urlpatterns = [
     path("", views.TrainingListView.as_view(), name="trainings"),
-    path("signup/", views.SignupCreateView.as_view(), name="signup"),
-    path("my-trainings/", views.SignupListView.as_view(), name="my_signups"),
-    path("<date:date>/signup/", views.SignupCreateView.as_view(), name="signup"),
+    path("einschreiben/", views.SignupCreateView.as_view(), name="signup"),
+    path("meine-trainings/", views.SignupListView.as_view(), name="my_signups"),
+    path("<date:date>/einschreiben/", views.SignupCreateView.as_view(), name="signup"),
     path(
-        "<date:date>/update-signup/",
+        "<date:date>/bearbeiten/",
         views.SignupUpdateView.as_view(),
         name="update_signup",
     ),
     path(
-        "<date:date>/update-training/",
+        "<date:date>/ansagen/",
         views.TrainingUpdateView.as_view(),
         name="update_training",
     ),
     path(
-        "<date:date>/emergency-mail/",
+        "<date:date>/seepolizeimail/",
         views.EmergencyMailView.as_view(),
         name="emergency_mail",
     ),
