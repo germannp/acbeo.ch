@@ -24,13 +24,13 @@ class TrainingListTests(TestCase):
         self.client.force_login(self.pilot_a)
 
         Training(date=YESTERDAY).save()
-        todays_training = Training.objects.create(date=TODAY)
+        self.todays_training = Training.objects.create(date=TODAY)
         tomorrows_training = Training.objects.create(date=TOMORROW)
         Training.objects.create(date=TOMORROW + timedelta(days=1))
         Training.objects.create(date=TOMORROW + timedelta(days=2))
 
         self.signup = Signup.objects.create(
-            pilot=self.pilot_a, training=todays_training
+            pilot=self.pilot_a, training=self.todays_training
         )
         Signup(pilot=self.pilot_b, training=tomorrows_training).save()
 
@@ -93,7 +93,7 @@ class TrainingListTests(TestCase):
         self.signup.refresh_from_db()
         self.assertEqual(self.signup.status, Signup.Status.Selected)
 
-    def test_update_info_and_emergency_mail_buttons_shown(self):
+    def test_update_info_and_emergency_mail_buttons_shown_and_disabled(self):
         with self.assertNumQueries(7):
             response = self.client.get(reverse("trainings"))
         self.assertEqual(response.status_code, 200)
@@ -112,6 +112,13 @@ class TrainingListTests(TestCase):
             response, reverse("emergency_mail", kwargs={"date": date})
         )
         self.assertContains(response, reverse("update_training", kwargs={"date": date}))
+
+        self.assertNotContains(response, "disabled")
+        self.todays_training.emergency_mail_sender = self.pilot_a
+        self.todays_training.save()
+        with self.assertNumQueries(6):
+            response = self.client.get(reverse("trainings"))
+        self.assertContains(response, "disabled")
 
 
 class TrainingUpdateTests(TestCase):
