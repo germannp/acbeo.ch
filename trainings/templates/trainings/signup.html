@@ -27,16 +27,34 @@
                     <div class="mb-3">
                         <label>Verbindlichkeit</label>
                         <div class="form-check">
-                            <input class="form-check-input" type="radio" name="is_certain" id="certain" value="True" required
-                                checked>
+                            <input class="form-check-input" type="radio" name="is_certain" id="certain" value="True"
+                                required checked>
                             <label class="form-check-label" for="certain">
                                 Ich komme sicher (100%)
                             </label>
                         </div>
                         <div class="form-check">
-                            <input class="form-check-input" type="radio" name="is_certain" id="uncertain" value="False" required>
+                            <input class="form-check-input" type="radio" name="is_certain" id="uncertain" value="False"
+                                required>
                             <label class="form-check-label" for="uncertain">
                                 Ich habe vor zu kommen (75%)
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label>Wetterwunsch</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="for_sketchy_weather"
+                                id="sketchy-weather-too" value="True" required checked>
+                            <label class="form-check-label" for="sketchy-weather-too">
+                                Auch bei kleiner Chance <i class="bi bi-cloud-haze2-fill"></i>
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="for_sketchy_weather"
+                                id="good-weather-only" value="False" required>
+                            <label class="form-check-label" for="good-weather-only">
+                                Nur bei sicher gutem Wetter <i class="bi bi-sun"></i>
                             </label>
                         </div>
                     </div>

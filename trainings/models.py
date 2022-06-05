@@ -49,6 +49,7 @@ class Signup(models.Model):
     status = models.IntegerField(choices=Status.choices, default=Status.Waiting)
     signed_up_on = models.DateTimeField(auto_now_add=True)
     is_certain = models.BooleanField(default=True)
+    for_sketchy_weather = models.BooleanField(default=True)
     comment = models.CharField(max_length=150, default="", blank=True)
 
     class Meta:

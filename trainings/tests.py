@@ -571,6 +571,27 @@ class SignupUpdateTests(TestCase):
         self.assertContains(response, "75%")
         self.assertEqual(self.signup.is_certain, False)
 
+    def test_for_sketchy_weather_can_be_updated(self):
+        with self.assertNumQueries(5):
+            response = self.client.get(reverse("update_signup", kwargs={"date": TODAY}))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/update_signup.html")
+        self.assertContains(response, 'name="for_sketchy_weather"')
+
+        self.assertEqual(self.signup.for_sketchy_weather, True)
+        with self.assertNumQueries(11):
+            response = self.client.post(
+                reverse("update_signup", kwargs={"date": TODAY}),
+                data={"for_sketchy_weather": "False"},
+                follow=True,
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.signup.refresh_from_db()
+        self.assertNotContains(response, "bi-cloud-haze2-fill")
+        self.assertContains(response, "bi-sun")
+        self.assertEqual(self.signup.for_sketchy_weather, False)
+
     def test_cannot_update_past_signup(self):
         training = Training.objects.create(date=YESTERDAY)
         signup = Signup.objects.create(pilot=self.pilot, training=training)
@@ -593,6 +614,7 @@ class SignupUpdateTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
         self.assertContains(response, "100%")
+        self.assertContains(response, "bi-cloud-haze2-fill")
         self.assertContains(response, "Test comment")
 
         self.assertNotEqual(self.signup.status, Signup.Status.Canceled)
@@ -600,7 +622,12 @@ class SignupUpdateTests(TestCase):
         with self.assertNumQueries(4 + 1 + 5):
             response = self.client.post(
                 reverse("update_signup", kwargs={"date": TODAY}),
-                data={"cancel": "", "is_certain": self.signup.is_certain},
+                data={
+                    "cancel": "",
+                    # I don't understand why I have to send the choices, but not comment
+                    "is_certain": self.signup.is_certain,
+                    "for_sketchy_weather": self.signup.for_sketchy_weather,
+                },
                 follow=True,
             )
         self.assertEqual(response.status_code, 200)
@@ -609,14 +636,20 @@ class SignupUpdateTests(TestCase):
         self.signup.refresh_from_db()
         self.assertEqual(self.signup.status, Signup.Status.Canceled)
         self.assertEqual(self.signup.signed_up_on, first_signup_time)
-        self.assertContains(response, "Test comment")
-        self.assertNotContains(response, "%")
         self.assertTrue(self.signup.is_certain)
+        self.assertTrue(self.signup.for_sketchy_weather)
+        self.assertNotContains(response, "%")
+        self.assertNotContains(response, "bi-cloud-haze2-fill")
+        self.assertContains(response, "Test comment")
 
         with self.assertNumQueries(4 + 1 + 5 + 1):
             response = self.client.post(
                 reverse("update_signup", kwargs={"date": TODAY}),
-                data={"resignup": "", "is_certain": self.signup.is_certain},
+                data={
+                    "resignup": "",
+                    "is_certain": self.signup.is_certain,
+                    "for_sketchy_weather": self.signup.for_sketchy_weather,
+                },
                 follow=True,
             )
         self.assertEqual(response.status_code, 200)
@@ -625,8 +658,11 @@ class SignupUpdateTests(TestCase):
         self.signup.refresh_from_db()
         self.assertEqual(self.signup.status, Signup.Status.Selected)
         self.assertGreater(self.signup.signed_up_on, first_signup_time)
-        self.assertContains(response, "Test comment")
+        self.assertTrue(self.signup.is_certain)
+        self.assertTrue(self.signup.for_sketchy_weather)
         self.assertContains(response, "100%")
+        self.assertContains(response, "bi-cloud-haze2-fill")
+        self.assertContains(response, "Test comment")
 
     def test_cancel_and_resignup_from_signups_list(self):
         self.assertNotEqual(self.signup.status, Signup.Status.Canceled)
