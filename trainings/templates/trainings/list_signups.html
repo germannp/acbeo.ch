@@ -20,16 +20,18 @@
                 <table class="table table-hover">
                     <thead>
                         <tr>
+                            <th scope="col">#</th>
                             <th class="col-xl-2 col-lg-3" scope="col">Datum</th>
                             <th class="col-sm-1" scope="col">Status</th>
                             <th scope="col">Trainingsinfo</th>
                             <th scope="col">Mein Kommentar</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="table-group-divider">
                         {% for signup in signups %}
                         <tr>
-                            <td>{{ signup.training.date|date:"D., j. E Y" }}
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ signup.training.date | date:"D., j. E Y" }}
                                 {% if time == "future" %}
                                 <a href="{% url 'update_signup' date=signup.training.date.isoformat %}?next={% url 'my_signups' %}"
                                     class="btn btn-primary btn-sm bi bi-pencil-square" /a>

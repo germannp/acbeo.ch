@@ -11,7 +11,7 @@
     <div class="col left">
         {% for training in trainings %}
         <div class="card mb-4">
-            <h5 class="card-header">{{ training.date|date:"l, j. E Y" }} <a
+            <h5 class="card-header">{{ training.date | date:"l, j. E Y" }} <a
                     href="{% url 'update_training' date=training.date.isoformat %}"
                     class="btn btn-primary btn-sm bi bi-pencil-square"></a>
                 {% if training.date <= day_after_tomorrow %}
@@ -28,14 +28,17 @@
                     <table class="table table-hover">
                         <thead>
                             <tr>
-                                <th class="col-xl-2 col-lg-3 col-sm-4" scope="col">Pilot·in</th>
-                                <th class="col-sm-7" scope="col">Status</th>
+                                <th scope="col">#</th>
+                                <th class="col-xl-2 col-lg-3 col-sm-4 col-xs-8" scope="col">Pilot·in</th>
+                                <th class="col-sm-4" scope="col">Status</th>
+                                <th class="col-sm-4" scope="col">Eingeschrieben seit</th>
                                 <th scope="col">Kommentar</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody class="table-group-divider">
                             {% for signup in training.signups.all %}
                             <tr>
+                                <td>{{ forloop.counter }}</td>
                                 <td>{{ signup.pilot.first_name }} {{ signup.pilot.last_name }}
                                     {% if signup.pilot == request.user %}
                                     <a href="{% url 'update_signup' date=training.date.isoformat %}"
@@ -50,6 +53,7 @@
                                     {% if signup.get_status_display == 'Canceled' %}<i
                                         class="bi bi-x-octagon text-danger"></i>{% endif %}
                                 </td>
+                                <td>{{ signup.signed_up_on | date:"D., j. E G:i" }}</td>
                                 <td>{{ signup.comment | safe }}</td>
                             </tr>
                             {% endfor %}
