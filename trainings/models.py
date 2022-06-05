@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from django.contrib.auth.models import User
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.utils.timezone import make_aware
 from django.utils.translation import gettext_lazy as _
@@ -8,7 +9,12 @@ from django.utils.translation import gettext_lazy as _
 
 class Training(models.Model):
     date = models.DateField(unique=True)
-    max_pilots = models.PositiveSmallIntegerField(default=11, blank=False, null=False)
+    max_pilots = models.PositiveSmallIntegerField(
+        default=11,
+        blank=False,
+        null=False,
+        validators=[MinValueValidator(6), MaxValueValidator(21)],
+    )
     info = models.CharField(max_length=300, default="", blank=True)
     emergency_mail_sender = models.ForeignKey(
         User,

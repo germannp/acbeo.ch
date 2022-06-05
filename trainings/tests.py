@@ -126,7 +126,8 @@ class TrainingUpdateTests(TestCase):
         self.pilot = User.objects.create(username="Pilot")
         self.client.force_login(self.pilot)
 
-        Training(date=TODAY).save()
+        self.max_pilots = 13
+        Training(date=TODAY, max_pilots=self.max_pilots).save()
 
         self.default_info = "Training findet statt"
         self.info = "Training abgesagt"
@@ -139,11 +140,12 @@ class TrainingUpdateTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/update_training.html")
         self.assertContains(response, self.default_info)
+        self.assertContains(response, self.max_pilots)
 
         with self.assertNumQueries(4 + 4):
             response = self.client.post(
                 reverse("update_training", kwargs={"date": TODAY}),
-                data={"info": self.info},
+                data={"info": self.info, "max_pilots": self.max_pilots},
                 follow=True,
             )
         self.assertEqual(response.status_code, 200)
@@ -157,6 +159,29 @@ class TrainingUpdateTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/update_training.html")
         self.assertContains(response, self.info)
+    
+    def test_max_pilots_range(self):
+        with self.assertNumQueries(3):
+            response = self.client.post(
+                reverse("update_training", kwargs={"date": TODAY}),
+                data={"info": self.info, "max_pilots": 5},
+                follow=True,
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/update_training.html")
+        self.assertContains(response, self.info)
+        self.assertContains(response, "alert-warning")
+
+        with self.assertNumQueries(3):
+            response = self.client.post(
+                reverse("update_training", kwargs={"date": TODAY}),
+                data={"info": self.info, "max_pilots": 22},
+                follow=True,
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/update_training.html")
+        self.assertContains(response, self.info)
+        self.assertContains(response, "alert-warning")
 
     def test_infos_are_shown_in_list(self):
         with self.assertNumQueries(4):
@@ -169,7 +194,7 @@ class TrainingUpdateTests(TestCase):
         with self.assertNumQueries(4 + 4):
             response = self.client.post(
                 reverse("update_training", kwargs={"date": TODAY}),
-                data={"info": self.info},
+                data={"info": self.info, "max_pilots": self.max_pilots},
                 follow=True,
             )
         self.assertEqual(response.status_code, 200)
