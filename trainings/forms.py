@@ -14,7 +14,7 @@ locale.setlocale(locale.LC_TIME, "de_CH")
 class TrainingUpdateForm(forms.ModelForm):
     class Meta:
         model = Training
-        fields = ["info"]
+        fields = ["info", "max_pilots"]
 
 
 class EmergencyMailForm(forms.ModelForm):

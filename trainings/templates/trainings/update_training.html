@@ -26,6 +26,12 @@
                             value="{{ form.info.value | default:'Training findet statt, Treffpunkt 9 Uhr Aaregg.' }}">
                         <label for="floatingInput">Infos</label>
                     </div>
+                    <div class="row mb-3">
+                        <label class="col-sm-6 col-form-label">Max. Pilot·innen</label>
+                        <div class="col-sm-6">
+                            <input type="number" class="form-control" name="max_pilots" value={{ form.max_pilots.value }}>
+                        </div>
+                    </div>
                     <div class="btn-group">
                         <button class="btn btn-primary" type="submit">Speichern</button>
                         <div class="btn-group">
