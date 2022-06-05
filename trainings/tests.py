@@ -159,7 +159,7 @@ class TrainingUpdateTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/update_training.html")
         self.assertContains(response, self.info)
-    
+
     def test_max_pilots_range(self):
         with self.assertNumQueries(3):
             response = self.client.post(
@@ -525,8 +525,15 @@ class SignupUpdateTests(TestCase):
             pilot=self.pilot, training=training, comment="Test comment"
         )
 
+    def test_day_is_displayed(self):
+        with self.assertNumQueries(5):
+            response = self.client.get(reverse("update_signup", kwargs={"date": TODAY}))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/update_signup.html")
+        self.assertContains(response, TODAY.strftime("%A, %d. %B").replace(" 0", " "))
+
     def test_comment_is_in_form_and_can_be_updated(self):
-        with self.assertNumQueries(4):
+        with self.assertNumQueries(5):
             response = self.client.get(reverse("update_signup", kwargs={"date": TODAY}))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/update_signup.html")
@@ -541,13 +548,34 @@ class SignupUpdateTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
         self.signup.refresh_from_db()
+        self.assertContains(response, "Updated comment")
         self.assertEqual(self.signup.comment, "Updated comment")
+
+    def test_is_certain_can_be_updated(self):
+        with self.assertNumQueries(5):
+            response = self.client.get(reverse("update_signup", kwargs={"date": TODAY}))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/update_signup.html")
+        self.assertContains(response, 'name="is_certain"')
+
+        self.assertEqual(self.signup.is_certain, True)
+        with self.assertNumQueries(11):
+            response = self.client.post(
+                reverse("update_signup", kwargs={"date": TODAY}),
+                data={"is_certain": "False"},
+                follow=True,
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.signup.refresh_from_db()
+        self.assertContains(response, "75%")
+        self.assertEqual(self.signup.is_certain, False)
 
     def test_cannot_update_past_signup(self):
         training = Training.objects.create(date=YESTERDAY)
         signup = Signup.objects.create(pilot=self.pilot, training=training)
 
-        with self.assertNumQueries(4):
+        with self.assertNumQueries(5):
             response = self.client.post(
                 reverse("update_signup", kwargs={"date": YESTERDAY}),
                 data={"comment": "Updated comment"},
@@ -560,13 +588,19 @@ class SignupUpdateTests(TestCase):
         self.assertNotEqual(signup.comment, "New comment")
 
     def test_cancel_and_resignup_from_trainings_list(self):
+        with self.assertNumQueries(6):
+            response = self.client.get(reverse("trainings"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertContains(response, "100%")
+        self.assertContains(response, "Test comment")
+
         self.assertNotEqual(self.signup.status, Signup.Status.Canceled)
         first_signup_time = self.signup.signed_up_on
-
         with self.assertNumQueries(4 + 1 + 5):
             response = self.client.post(
                 reverse("update_signup", kwargs={"date": TODAY}),
-                data={"cancel": ""},
+                data={"cancel": "", "is_certain": self.signup.is_certain},
                 follow=True,
             )
         self.assertEqual(response.status_code, 200)
@@ -575,11 +609,14 @@ class SignupUpdateTests(TestCase):
         self.signup.refresh_from_db()
         self.assertEqual(self.signup.status, Signup.Status.Canceled)
         self.assertEqual(self.signup.signed_up_on, first_signup_time)
+        self.assertContains(response, "Test comment")
+        self.assertNotContains(response, "%")
+        self.assertTrue(self.signup.is_certain)
 
         with self.assertNumQueries(4 + 1 + 5 + 1):
             response = self.client.post(
                 reverse("update_signup", kwargs={"date": TODAY}),
-                data={"resignup": ""},
+                data={"resignup": "", "is_certain": self.signup.is_certain},
                 follow=True,
             )
         self.assertEqual(response.status_code, 200)
@@ -588,6 +625,8 @@ class SignupUpdateTests(TestCase):
         self.signup.refresh_from_db()
         self.assertEqual(self.signup.status, Signup.Status.Selected)
         self.assertGreater(self.signup.signed_up_on, first_signup_time)
+        self.assertContains(response, "Test comment")
+        self.assertContains(response, "100%")
 
     def test_cancel_and_resignup_from_signups_list(self):
         self.assertNotEqual(self.signup.status, Signup.Status.Canceled)

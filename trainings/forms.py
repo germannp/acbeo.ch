@@ -52,6 +52,7 @@ class EmergencyMailForm(forms.ModelForm):
         start = self.Start(int(self.cleaned_data["start"])).label
         end = self.End(int(self.cleaned_data["end"])).label
         contacts = self.cleaned_data["emergency_contacts"]
+        # fmt: off
         html_message = (
             "<b>Was</b>: Information über Gleitschirm Sicherheitstraining über dem "
             "Brienzersee\n\n"
@@ -79,6 +80,7 @@ class EmergencyMailForm(forms.ModelForm):
             "Mit freundlichen Grüssen\n"
             f"{self.sender.first_name} {self.sender.last_name}\n"
         )
+        # fmt: on
         send_mail(
             subject=f"{date}: Gleitschirm-Sicherheitstraining ueber dem Brienzersee",
             message=strip_tags(html_message),

@@ -16,10 +16,28 @@
     {% endif %}
 
     <div class="card my-4">
+        <h5 class="card-header">{{ form.instance.training.date | date:"l, j. E" }}</h5>
         <div class="card-body">
             <main class="form">
                 <form method="post">
                     {% csrf_token %}
+                    <div class="mb-3">
+                        <label>Verbindlichkeit</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="is_certain" id="certain" value="True"
+                                required {% if form.instance.is_certain %}checked{% endif %}>
+                            <label class="form-check-label" for="certain">
+                                Ich komme sicher (100%)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="is_certain" id="uncertain" value="False"
+                                required {% if not form.instance.is_certain %}checked{% endif %}>
+                            <label class="form-check-label" for="uncertain">
+                                Ich habe vor zu kommen (75%)
+                            </label>
+                        </div>
+                    </div>
                     <div class="form-floating mb-3">
                         <input type="text" name="comment" class="form-control" placeholder="text"
                             value="{{ form.comment.value }}">

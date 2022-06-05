@@ -30,7 +30,7 @@ class Training(models.Model):
 
     def __str__(self):
         return f"{self.date}"
-    
+
     def pilots(self):
         return [signup.pilot for signup in self.signups.all()]
 
@@ -47,8 +47,9 @@ class Signup(models.Model):
         Training, on_delete=models.CASCADE, related_name="signups"
     )
     status = models.IntegerField(choices=Status.choices, default=Status.Waiting)
-    comment = models.CharField(max_length=150, default="", blank=True)
     signed_up_on = models.DateTimeField(auto_now_add=True)
+    is_certain = models.BooleanField(default=True)
+    comment = models.CharField(max_length=150, default="", blank=True)
 
     class Meta:
         unique_together = (("pilot", "training"),)
