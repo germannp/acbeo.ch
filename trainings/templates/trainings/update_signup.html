@@ -11,11 +11,11 @@
         {% if form.errors %}
         {% for error_list in form.errors.values %}
         {% for error in error_list %}
-        <div class="alert my-4 alert-warning">{{ error }}</div>
+        <div class="alert mb-4 alert-warning">{{ error }}</div>
         {% endfor %}
         {% endfor %}
         {% endif %}
-    
+
         <div class="card mb-4">
             <h5 class="card-header">{{ form.instance.training.date | date:"l, j. E" }}</h5>
             <div class="card-body">
@@ -36,6 +36,41 @@
                                     required {% if not form.instance.is_certain %}checked{% endif %}>
                                 <label class="form-check-label" for="uncertain">
                                     Ich habe vor zu kommen (75%)
+                                </label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label>Zeitplan</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="for_time" id="whole-day"
+                                    value="{{ form.instance.Time.WholeDay }}" required 
+                                    {% if form.instance.for_time == form.instance.Time.WholeDay %}checked{% endif %}>
+                                <label class="form-check-label" for="whole-day">
+                                    Ich komme den ganzen Tag
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="for_time" id="arrive-late"
+                                    value="{{ form.instance.Time.ArriveLate }}" required
+                                    {% if form.instance.for_time == form.instance.Time.ArriveLate %}checked{% endif %}>
+                                <label class="form-check-label" for="arrive-late">
+                                    Ich komme später
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="for_time" id="leave-early"
+                                    value="{{ form.instance.Time.LeaveEarly }}" required
+                                    {% if form.instance.for_time == form.instance.Time.LeaveEarly %}checked{% endif %}>
+                                <label class="form-check-label" for="leave-early">
+                                    Ich gehe früher
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="for_time" id="individually"
+                                    value="{{ form.instance.Time.Individually }}" required
+                                    {% if form.instance.for_time == form.instance.Time.Individually %}checked{% endif %}>
+                                <label class="form-check-label" for="individually">
+                                    Ich komme und gehe individuell
                                 </label>
                             </div>
                         </div>
