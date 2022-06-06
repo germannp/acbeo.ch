@@ -54,23 +54,18 @@ class SignupSelectionTests(TestCase):
         self.assertEqual(self.signup_a.status, Signup.Status.Waiting)
         self.assertEqual(self.signup_b.status, Signup.Status.Selected)
         self.assertGreater(self.signup_a.signed_up_on, self.signup_b.signed_up_on)
-    
+
     def test_waiting_after_switching_to_uncertain(self):
+        self.training.select_signups()
         for signup in [self.signup_a, self.signup_b]:
             self.assertTrue(signup.is_certain)
 
-        self.training.select_signups()
-        for signup in [self.signup_a, self.signup_b]:
-            signup.refresh_from_db()
-        self.assertEqual(self.signup_a.status, Signup.Status.Selected)
-        self.assertEqual(self.signup_b.status, Signup.Status.Waiting)
-        self.assertLess(self.signup_a.signed_up_on, self.signup_b.signed_up_on)
-        
         self.signup_a.update_is_certain(False)
         self.signup_a.save()
         self.training.select_signups()
         for signup in [self.signup_a, self.signup_b]:
             signup.refresh_from_db()
+        self.assertFalse(self.signup_a.is_certain)
         self.assertEqual(self.signup_a.status, Signup.Status.Waiting)
         self.assertEqual(self.signup_b.status, Signup.Status.Selected)
         time_of_update_to_uncertain = self.signup_a.signed_up_on
@@ -81,9 +76,43 @@ class SignupSelectionTests(TestCase):
         self.training.select_signups()
         for signup in [self.signup_a, self.signup_b]:
             signup.refresh_from_db()
+        self.assertTrue(self.signup_a.is_certain)
         self.assertEqual(self.signup_a.status, Signup.Status.Waiting)
         self.assertEqual(self.signup_b.status, Signup.Status.Selected)
         self.assertEqual(time_of_update_to_uncertain, self.signup_a.signed_up_on)
+
+    def test_waiting_after_switchting_from_whole_day(self):
+        self.training.select_signups()
+        for signup in [self.signup_a, self.signup_b]:
+            self.assertEqual(signup.for_time, Signup.Time.WholeDay)
+
+        self.signup_a.update_for_time(Signup.Time.ArriveLate)
+        self.signup_a.save()
+        self.training.select_signups()
+        for signup in [self.signup_a, self.signup_b]:
+            signup.refresh_from_db()
+        self.assertEqual(self.signup_a.status, Signup.Status.Waiting)
+        self.assertEqual(self.signup_b.status, Signup.Status.Selected)
+        time_of_update_to_arrive_late = self.signup_a.signed_up_on
+        self.assertGreater(time_of_update_to_arrive_late, self.signup_b.signed_up_on)
+
+        self.signup_a.update_for_time(Signup.Time.LeaveEarly)
+        self.signup_a.save()
+        self.training.select_signups()
+        for signup in [self.signup_a, self.signup_b]:
+            signup.refresh_from_db()
+        self.assertEqual(self.signup_a.status, Signup.Status.Waiting)
+        self.assertEqual(self.signup_b.status, Signup.Status.Selected)
+        self.assertEqual(time_of_update_to_arrive_late, self.signup_a.signed_up_on)
+
+        self.signup_a.update_for_time(Signup.Time.WholeDay)
+        self.signup_a.save()
+        self.training.select_signups()
+        for signup in [self.signup_a, self.signup_b]:
+            signup.refresh_from_db()
+        self.assertEqual(self.signup_a.status, Signup.Status.Waiting)
+        self.assertEqual(self.signup_b.status, Signup.Status.Selected)
+        self.assertEqual(time_of_update_to_arrive_late, self.signup_a.signed_up_on)
 
     def test_stay_selected_when_max_pilots_is_reduced(self):
         for signup in [self.signup_a, self.signup_b]:
@@ -553,7 +582,9 @@ class SignupCreateViewTests(TestCase):
     def test_successive_signups(self):
         with self.assertNumQueries(8):
             response = self.client.post(
-                reverse("signup"), data={"date": TODAY}, follow=True
+                reverse("signup"),
+                data={"date": TODAY, "for_time": Signup.Time.WholeDay},
+                follow=True,
             )
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/signup.html")
@@ -563,13 +594,17 @@ class SignupCreateViewTests(TestCase):
     def test_cannot_signup_twice(self):
         with self.assertNumQueries(8):
             response = self.client.post(
-                reverse("signup"), data={"date": datetime.now().date()}, follow=True
+                reverse("signup"),
+                data={"date": datetime.now().date(), "for_time": Signup.Time.WholeDay},
+                follow=True,
             )
         self.assertEqual(1, len(Signup.objects.all()))
 
         with self.assertNumQueries(5):
             response = self.client.post(
-                reverse("signup"), data={"date": datetime.now().date()}, follow=True
+                reverse("signup"),
+                data={"date": datetime.now().date(), "for_time": Signup.Time.WholeDay},
+                follow=True,
             )
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/signup.html")
@@ -627,7 +662,7 @@ class SignupUpdateViewTests(TestCase):
         with self.assertNumQueries(11):
             response = self.client.post(
                 reverse("update_signup", kwargs={"date": TODAY}),
-                data={"comment": "Updated comment"},
+                data={"for_time": self.signup.for_time, "comment": "Updated comment"},
                 follow=True,
             )
         self.assertEqual(response.status_code, 200)
@@ -643,7 +678,7 @@ class SignupUpdateViewTests(TestCase):
         with self.assertNumQueries(5):
             response = self.client.post(
                 reverse("update_signup", kwargs={"date": YESTERDAY}),
-                data={"comment": "Updated comment"},
+                data={"for_time": self.signup.for_time, "comment": "Updated comment"},
                 follow=True,
             )
         self.assertEqual(response.status_code, 200)
@@ -668,6 +703,7 @@ class SignupUpdateViewTests(TestCase):
                     "cancel": "",
                     # I don't understand why I have to send the choices, but not comment
                     "is_certain": self.signup.is_certain,
+                    "for_time": self.signup.for_time,
                     "for_sketchy_weather": self.signup.for_sketchy_weather,
                 },
                 follow=True,
@@ -685,6 +721,7 @@ class SignupUpdateViewTests(TestCase):
                 data={
                     "resignup": "",
                     "is_certain": self.signup.is_certain,
+                    "for_time": self.signup.for_time,
                     "for_sketchy_weather": self.signup.for_sketchy_weather,
                 },
                 follow=True,
@@ -703,7 +740,11 @@ class SignupUpdateViewTests(TestCase):
                 reverse("update_signup", kwargs={"date": TODAY})
                 + "?next="
                 + reverse("my_signups"),
-                data={"cancel": "", "is_certain": self.signup.is_certain},
+                data={
+                    "cancel": "",
+                    "is_certain": self.signup.is_certain,
+                    "for_time": self.signup.for_time,
+                },
                 follow=True,
             )
         self.assertEqual(response.status_code, 200)
@@ -715,7 +756,7 @@ class SignupUpdateViewTests(TestCase):
                 reverse("update_signup", kwargs={"date": TODAY})
                 + "?next="
                 + reverse("my_signups"),
-                data={"resignup": ""},
+                data={"resignup": "", "for_time": self.signup.for_time},
                 follow=True,
             )
         self.assertEqual(response.status_code, 200)
@@ -738,22 +779,35 @@ class SignupUpdateViewTests(TestCase):
         with self.assertNumQueries(11):
             response = self.client.post(
                 reverse("update_signup", kwargs={"date": TODAY}),
-                data={"is_certain": False},
+                data={"is_certain": False, "for_time": self.signup.for_time},
                 follow=True,
             )
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
         self.assertContains(response, "75%")
+    
+    def test_update_for_time(self):
+        with self.assertNumQueries(6):
+            response = self.client.get(reverse("trainings"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertContains(response, "Ganzer Tag")
 
-        with self.assertNumQueries(10):
+        with self.assertNumQueries(5):
+            response = self.client.get(reverse("update_signup", kwargs={"date": TODAY}))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/update_signup.html")
+        self.assertContains(response, 'name="for_time"')
+
+        with self.assertNumQueries(11):
             response = self.client.post(
                 reverse("update_signup", kwargs={"date": TODAY}),
-                data={"is_certain": True},
+                data={"is_certain": self.signup.is_certain, "for_time": Signup.Time.ArriveLate},
                 follow=True,
             )
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
-        self.assertContains(response, "100%")
+        self.assertContains(response, "Kommt später")
 
     def test_update_for_sketchy_weather(self):
         with self.assertNumQueries(6):
@@ -775,6 +829,7 @@ class SignupUpdateViewTests(TestCase):
                 data={
                     "is_certain": self.signup.is_certain,
                     "for_sketchy_weather": "False",
+                    "for_time": self.signup.for_time,
                 },
                 follow=True,
             )
@@ -812,6 +867,7 @@ class SignupUpdateViewTests(TestCase):
         response = self.client.post(
             reverse("update_signup", kwargs={"date": TODAY})
             + "?next=http://danger.com",
+            data={"for_time": Signup.Time.WholeDay},
             follow=True,
         )
         self.assertEqual(response.status_code, 200)

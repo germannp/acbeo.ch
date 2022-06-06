@@ -23,6 +23,9 @@
                             <th scope="col">#</th>
                             <th class="col-xl-2 col-lg-3" scope="col">Datum</th>
                             <th class="col-sm-1" scope="col">Status</th>
+                            <th scope="col">Verbindlichkeit</th>
+                            <th scope="col">Zeitplan</th>
+                            <th scope="col">Wetterwunsch</th>
                             <th scope="col">Trainingsinfo</th>
                             <th scope="col">Mein Kommentar</th>
                         </tr>
@@ -44,6 +47,26 @@
                                     class="bi bi-hourglass-split text-warning"></i>{% endif %}
                                 {% if signup.get_status_display == 'Canceled' %}<i
                                     class="bi bi-x-octagon text-danger"></i>{% endif %}
+                            </td>
+                            <td>
+                                {% if signup.get_status_display != 'Canceled' %}
+                                {% if signup.is_certain %}100%{% else %}75%{% endif %}
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if signup.for_time == signup.Time.WholeDay %}Ganzer Tag{% endif %}
+                                {% if signup.for_time == signup.Time.ArriveLate %}Komme später{% endif %}
+                                {% if signup.for_time == signup.Time.LeaveEarly %}Gehe früher{% endif %}
+                                {% if signup.for_time == signup.Time.Individually %}Individuell{% endif %}
+                            </td>
+                            <td>
+                                {% if signup.get_status_display != 'Canceled' %}
+                                    {% if signup.for_sketchy_weather %}
+                                        <i class="bi bi-cloud-haze2-fill"></i>
+                                    {% else %}
+                                        <i class="bi bi-sun"></i>
+                                    {% endif %}
+                                {% endif %}
                             </td>
                             <td>{{ signup.training.info | safe }}</td>
                             <td>{{ signup.comment | safe }}</td>

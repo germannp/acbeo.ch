@@ -106,3 +106,4 @@ class SignupUpdateForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         self.instance.update_is_certain(cleaned_data["is_certain"])
+        self.instance.update_for_time(cleaned_data["for_time"])
