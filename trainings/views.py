@@ -35,7 +35,7 @@ class TrainingUpdateView(LoginRequiredMixin, generic.UpdateView):
     success_url = reverse_lazy("trainings")
 
     def get_object(self):
-        return get_object_or_404(Training.objects, date=self.kwargs["date"])
+        return get_object_or_404(Training, date=self.kwargs["date"])
 
 
 class EmergencyMailView(LoginRequiredMixin, SuccessMessageMixin, generic.UpdateView):
@@ -45,7 +45,7 @@ class EmergencyMailView(LoginRequiredMixin, SuccessMessageMixin, generic.UpdateV
     success_message = "Seepolizeimail abgesendet."
 
     def get_object(self):
-        return get_object_or_404(Training.objects, date=self.kwargs["date"])
+        return get_object_or_404(Training, date=self.kwargs["date"])
 
     def form_valid(self, form):
         today = datetime.now().date()
@@ -142,7 +142,7 @@ class SignupUpdateView(LoginRequiredMixin, generic.UpdateView):
     def get_object(self):
         pilot = self.request.user
         training = get_object_or_404(Training, date=self.kwargs["date"])
-        signup = get_object_or_404(Signup.objects, pilot=pilot, training=training)
+        signup = get_object_or_404(Signup, pilot=pilot, training=training)
         if "cancel" in self.request.POST:
             signup.cancel()
         elif "resignup" in self.request.POST:
