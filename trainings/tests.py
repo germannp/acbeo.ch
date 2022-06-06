@@ -17,7 +17,92 @@ YESTERDAY = TODAY - timedelta(days=1)
 TOMORROW = TODAY + timedelta(days=1)
 
 
-class TrainingListTests(TestCase):
+class SignupSelectionTests(TestCase):
+    def setUp(self):
+        pilot_a = User.objects.create(username="Pilot A")
+        pilot_b = User.objects.create(username="Pilot B")
+        self.training = Training.objects.create(date=TODAY, max_pilots=1)
+        self.signup_a = Signup.objects.create(pilot=pilot_a, training=self.training)
+        sleep(0.001)
+        self.signup_b = Signup.objects.create(pilot=pilot_b, training=self.training)
+
+    def test_waiting_after_resignup(self):
+        for signup in [self.signup_a, self.signup_b]:
+            self.assertEqual(signup.status, Signup.Status.Waiting)
+
+        self.training.select_signups()
+        for signup in [self.signup_a, self.signup_b]:
+            signup.refresh_from_db()
+        self.assertEqual(self.signup_a.status, Signup.Status.Selected)
+        self.assertEqual(self.signup_b.status, Signup.Status.Waiting)
+        self.assertLess(self.signup_a.signed_up_on, self.signup_b.signed_up_on)
+
+        self.signup_a.cancel()
+        self.signup_a.save()
+        self.training.select_signups()
+        for signup in [self.signup_a, self.signup_b]:
+            signup.refresh_from_db()
+        self.assertEqual(self.signup_a.status, Signup.Status.Canceled)
+        self.assertEqual(self.signup_b.status, Signup.Status.Selected)
+        self.assertLess(self.signup_a.signed_up_on, self.signup_b.signed_up_on)
+
+        self.signup_a.resignup()
+        self.signup_a.save()
+        self.training.select_signups()
+        for signup in [self.signup_a, self.signup_b]:
+            signup.refresh_from_db()
+        self.assertEqual(self.signup_a.status, Signup.Status.Waiting)
+        self.assertEqual(self.signup_b.status, Signup.Status.Selected)
+        self.assertGreater(self.signup_a.signed_up_on, self.signup_b.signed_up_on)
+    
+    def test_waiting_after_switching_to_uncertain(self):
+        for signup in [self.signup_a, self.signup_b]:
+            self.assertTrue(signup.is_certain)
+
+        self.training.select_signups()
+        for signup in [self.signup_a, self.signup_b]:
+            signup.refresh_from_db()
+        self.assertEqual(self.signup_a.status, Signup.Status.Selected)
+        self.assertEqual(self.signup_b.status, Signup.Status.Waiting)
+        self.assertLess(self.signup_a.signed_up_on, self.signup_b.signed_up_on)
+        
+        self.signup_a.update_is_certain(False)
+        self.signup_a.save()
+        self.training.select_signups()
+        for signup in [self.signup_a, self.signup_b]:
+            signup.refresh_from_db()
+        self.assertEqual(self.signup_a.status, Signup.Status.Waiting)
+        self.assertEqual(self.signup_b.status, Signup.Status.Selected)
+        time_of_update_to_uncertain = self.signup_a.signed_up_on
+        self.assertGreater(time_of_update_to_uncertain, self.signup_b.signed_up_on)
+
+        self.signup_a.update_is_certain(True)
+        self.signup_a.save()
+        self.training.select_signups()
+        for signup in [self.signup_a, self.signup_b]:
+            signup.refresh_from_db()
+        self.assertEqual(self.signup_a.status, Signup.Status.Waiting)
+        self.assertEqual(self.signup_b.status, Signup.Status.Selected)
+        self.assertEqual(time_of_update_to_uncertain, self.signup_a.signed_up_on)
+
+    def test_stay_selected_when_max_pilots_is_reduced(self):
+        for signup in [self.signup_a, self.signup_b]:
+            self.assertEqual(signup.status, Signup.Status.Waiting)
+
+        self.training.max_pilots = 2
+        self.training.select_signups()
+        for signup in [self.signup_a, self.signup_b]:
+            signup.refresh_from_db()
+            self.assertEqual(signup.status, Signup.Status.Selected)
+
+        self.training.max_pilots = 1
+        self.training.select_signups()
+        for signup in [self.signup_a, self.signup_b]:
+            signup.refresh_from_db()
+            self.assertEqual(signup.status, Signup.Status.Selected)
+
+
+class TrainingListViewTests(TestCase):
     def setUp(self):
         self.pilot_a = User.objects.create(username="Pilot A")
         self.pilot_b = User.objects.create(username="Pilot B")
@@ -121,7 +206,7 @@ class TrainingListTests(TestCase):
         self.assertContains(response, "disabled")
 
 
-class TrainingUpdateTests(TestCase):
+class TrainingUpdateViewTests(TestCase):
     def setUp(self):
         self.pilot = User.objects.create(username="Pilot")
         self.client.force_login(self.pilot)
@@ -218,7 +303,7 @@ class TrainingUpdateTests(TestCase):
         self.assertTemplateUsed(response, "404.html")
 
 
-class EmergencyMailTests(TestCase):
+class EmergencyMailViewTests(TestCase):
     def setUp(self):
         self.pilot_a = User.objects.create(
             username="Pilot A", first_name="Name A", email="sender@example.com"
@@ -367,7 +452,7 @@ class EmergencyMailTests(TestCase):
         self.assertTemplateUsed(response, "404.html")
 
 
-class SingupListTests(TestCase):
+class SingupListViewTests(TestCase):
     def setUp(self):
         self.pilot_a = User.objects.create(username="Pilot A")
         todays_training = Training.objects.create(date=TODAY)
@@ -428,7 +513,7 @@ class SingupListTests(TestCase):
         self.assertEqual(self.signup.status, Signup.Status.Selected)
 
 
-class SignupCreateTests(TestCase):
+class SignupCreateViewTests(TestCase):
     def setUp(self):
         self.pilot = User.objects.create(username="Pilot")
         self.client.force_login(self.pilot)
@@ -516,7 +601,7 @@ class SignupCreateTests(TestCase):
         self.assertTemplateUsed(response, "404.html")
 
 
-class SignupUpdateTests(TestCase):
+class SignupUpdateViewTests(TestCase):
     def setUp(self):
         self.pilot = User.objects.create(username="Pilot")
         self.client.force_login(self.pilot)
@@ -551,47 +636,6 @@ class SignupUpdateTests(TestCase):
         self.assertContains(response, "Updated comment")
         self.assertEqual(self.signup.comment, "Updated comment")
 
-    def test_is_certain_can_be_updated(self):
-        with self.assertNumQueries(5):
-            response = self.client.get(reverse("update_signup", kwargs={"date": TODAY}))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "trainings/update_signup.html")
-        self.assertContains(response, 'name="is_certain"')
-
-        self.assertEqual(self.signup.is_certain, True)
-        with self.assertNumQueries(11):
-            response = self.client.post(
-                reverse("update_signup", kwargs={"date": TODAY}),
-                data={"is_certain": "False"},
-                follow=True,
-            )
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "trainings/list_trainings.html")
-        self.signup.refresh_from_db()
-        self.assertContains(response, "75%")
-        self.assertEqual(self.signup.is_certain, False)
-
-    def test_for_sketchy_weather_can_be_updated(self):
-        with self.assertNumQueries(5):
-            response = self.client.get(reverse("update_signup", kwargs={"date": TODAY}))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "trainings/update_signup.html")
-        self.assertContains(response, 'name="for_sketchy_weather"')
-
-        self.assertEqual(self.signup.for_sketchy_weather, True)
-        with self.assertNumQueries(11):
-            response = self.client.post(
-                reverse("update_signup", kwargs={"date": TODAY}),
-                data={"for_sketchy_weather": "False"},
-                follow=True,
-            )
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "trainings/list_trainings.html")
-        self.signup.refresh_from_db()
-        self.assertNotContains(response, "bi-cloud-haze2-fill")
-        self.assertContains(response, "bi-sun")
-        self.assertEqual(self.signup.for_sketchy_weather, False)
-
     def test_cannot_update_past_signup(self):
         training = Training.objects.create(date=YESTERDAY)
         signup = Signup.objects.create(pilot=self.pilot, training=training)
@@ -617,8 +661,6 @@ class SignupUpdateTests(TestCase):
         self.assertContains(response, "bi-cloud-haze2-fill")
         self.assertContains(response, "Test comment")
 
-        self.assertNotEqual(self.signup.status, Signup.Status.Canceled)
-        first_signup_time = self.signup.signed_up_on
         with self.assertNumQueries(4 + 1 + 5):
             response = self.client.post(
                 reverse("update_signup", kwargs={"date": TODAY}),
@@ -633,11 +675,6 @@ class SignupUpdateTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
         self.assertContains(response, "bi-x-octagon")
-        self.signup.refresh_from_db()
-        self.assertEqual(self.signup.status, Signup.Status.Canceled)
-        self.assertEqual(self.signup.signed_up_on, first_signup_time)
-        self.assertTrue(self.signup.is_certain)
-        self.assertTrue(self.signup.for_sketchy_weather)
         self.assertNotContains(response, "%")
         self.assertNotContains(response, "bi-cloud-haze2-fill")
         self.assertContains(response, "Test comment")
@@ -655,33 +692,23 @@ class SignupUpdateTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
         self.assertContains(response, "bi-cloud-check")
-        self.signup.refresh_from_db()
-        self.assertEqual(self.signup.status, Signup.Status.Selected)
-        self.assertGreater(self.signup.signed_up_on, first_signup_time)
         self.assertTrue(self.signup.is_certain)
-        self.assertTrue(self.signup.for_sketchy_weather)
         self.assertContains(response, "100%")
         self.assertContains(response, "bi-cloud-haze2-fill")
         self.assertContains(response, "Test comment")
 
     def test_cancel_and_resignup_from_signups_list(self):
-        self.assertNotEqual(self.signup.status, Signup.Status.Canceled)
-        first_signup_time = self.signup.signed_up_on
-
         with self.assertNumQueries(4 + 1 + 5):
             response = self.client.post(
                 reverse("update_signup", kwargs={"date": TODAY})
                 + "?next="
                 + reverse("my_signups"),
-                data={"cancel": ""},
+                data={"cancel": "", "is_certain": self.signup.is_certain},
                 follow=True,
             )
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_signups.html")
         self.assertContains(response, "bi-x-octagon")
-        self.signup.refresh_from_db()
-        self.assertEqual(self.signup.status, Signup.Status.Canceled)
-        self.assertEqual(self.signup.signed_up_on, first_signup_time)
 
         with self.assertNumQueries(4 + 1 + 5 + 1):
             response = self.client.post(
@@ -694,9 +721,67 @@ class SignupUpdateTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_signups.html")
         self.assertContains(response, "bi-cloud-check")
-        self.signup.refresh_from_db()
-        self.assertNotEqual(self.signup.status, Signup.Status.Canceled)
-        self.assertGreater(self.signup.signed_up_on, first_signup_time)
+
+    def test_update_is_certain(self):
+        with self.assertNumQueries(6):
+            response = self.client.get(reverse("trainings"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertContains(response, "100%")
+
+        with self.assertNumQueries(5):
+            response = self.client.get(reverse("update_signup", kwargs={"date": TODAY}))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/update_signup.html")
+        self.assertContains(response, 'name="is_certain"')
+
+        with self.assertNumQueries(11):
+            response = self.client.post(
+                reverse("update_signup", kwargs={"date": TODAY}),
+                data={"is_certain": False},
+                follow=True,
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertContains(response, "75%")
+
+        with self.assertNumQueries(10):
+            response = self.client.post(
+                reverse("update_signup", kwargs={"date": TODAY}),
+                data={"is_certain": True},
+                follow=True,
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertContains(response, "100%")
+
+    def test_update_for_sketchy_weather(self):
+        with self.assertNumQueries(6):
+            response = self.client.get(reverse("trainings"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertContains(response, "bi-cloud-haze2-fill")
+        self.assertNotContains(response, "bi-sun")
+
+        with self.assertNumQueries(5):
+            response = self.client.get(reverse("update_signup", kwargs={"date": TODAY}))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/update_signup.html")
+        self.assertContains(response, 'name="for_sketchy_weather"')
+
+        with self.assertNumQueries(10):
+            response = self.client.post(
+                reverse("update_signup", kwargs={"date": TODAY}),
+                data={
+                    "is_certain": self.signup.is_certain,
+                    "for_sketchy_weather": "False",
+                },
+                follow=True,
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertNotContains(response, "bi-cloud-haze2-fill")
+        self.assertContains(response, "bi-sun")
 
     def test_next_urls(self):
         trainings_url = reverse("trainings")
@@ -754,60 +839,3 @@ class SignupUpdateTests(TestCase):
             )
         self.assertEqual(response.status_code, 404)
         self.assertTemplateUsed(response, "404.html")
-
-
-class SignupSelectionTests(TestCase):
-    def setUp(self):
-        pilot_a = User.objects.create(username="Pilot A")
-        pilot_b = User.objects.create(username="Pilot B")
-        self.training = Training.objects.create(date=TODAY, max_pilots=1)
-        self.signup_a = Signup.objects.create(pilot=pilot_a, training=self.training)
-        sleep(0.001)
-        self.signup_b = Signup.objects.create(pilot=pilot_b, training=self.training)
-
-    def test_waiting_after_resignup(self):
-        for signup in [self.signup_a, self.signup_b]:
-            signup.refresh_from_db()
-            self.assertEqual(signup.status, Signup.Status.Waiting)
-
-        self.training.select_signups()
-        for signup in [self.signup_a, self.signup_b]:
-            signup.refresh_from_db()
-        self.assertEqual(self.signup_a.status, Signup.Status.Selected)
-        self.assertEqual(self.signup_b.status, Signup.Status.Waiting)
-        self.assertLess(self.signup_a.signed_up_on, self.signup_b.signed_up_on)
-
-        self.signup_a.cancel()
-        self.signup_a.save()
-        self.training.select_signups()
-        for signup in [self.signup_a, self.signup_b]:
-            signup.refresh_from_db()
-        self.assertEqual(self.signup_a.status, Signup.Status.Canceled)
-        self.assertEqual(self.signup_b.status, Signup.Status.Selected)
-        self.assertLess(self.signup_a.signed_up_on, self.signup_b.signed_up_on)
-
-        self.signup_a.resignup()
-        self.signup_a.save()
-        self.training.select_signups()
-        for signup in [self.signup_a, self.signup_b]:
-            signup.refresh_from_db()
-        self.assertEqual(self.signup_a.status, Signup.Status.Waiting)
-        self.assertEqual(self.signup_b.status, Signup.Status.Selected)
-        self.assertGreater(self.signup_a.signed_up_on, self.signup_b.signed_up_on)
-
-    def test_stay_selected_when_max_pilots_is_reduced(self):
-        for signup in [self.signup_a, self.signup_b]:
-            signup.refresh_from_db()
-            self.assertEqual(signup.status, Signup.Status.Waiting)
-
-        self.training.max_pilots = 2
-        self.training.select_signups()
-        for signup in [self.signup_a, self.signup_b]:
-            signup.refresh_from_db()
-            self.assertEqual(signup.status, Signup.Status.Selected)
-
-        self.training.max_pilots = 1
-        self.training.select_signups()
-        for signup in [self.signup_a, self.signup_b]:
-            signup.refresh_from_db()
-            self.assertEqual(signup.status, Signup.Status.Selected)

@@ -73,3 +73,12 @@ class Signup(models.Model):
         self.signed_up_on = make_aware(datetime.now())
         self.status = self.Status.Waiting
         # Not saving, because called before saving updates from form
+    
+    def update_is_certain(self, new_value):
+        if self.is_certain == new_value:
+            return
+        if new_value:
+            return
+        self.signed_up_on = make_aware(datetime.now())
+        self.status = self.Status.Waiting
+        # Not saving, because called before saving updates from form

@@ -102,3 +102,7 @@ class SignupUpdateForm(forms.ModelForm):
     class Meta:
         model = Signup
         exclude = ["pilot", "training", "status"]
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        self.instance.update_is_certain(cleaned_data["is_certain"])
