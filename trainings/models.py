@@ -15,6 +15,7 @@ class Training(models.Model):
         null=False,
         validators=[MinValueValidator(6), MaxValueValidator(21)],
     )
+    priority_date = models.DateField(default=datetime.fromisoformat("2010-04-09").date())
     info = models.CharField(max_length=300, default="", blank=True)
     emergency_mail_sender = models.ForeignKey(
         User,
@@ -35,7 +36,11 @@ class Training(models.Model):
         return [signup.pilot for signup in self.signups.all()]
 
     def select_signups(self):
-        for signup in self.signups.all()[: self.max_pilots]:
+        signups = self.signups.all()
+        if datetime.now().date() <= self.priority_date:
+            signups = [signup for signup in signups if signup.has_priority()]
+
+        for signup in signups[: self.max_pilots]:
             signup.select()
 
 
@@ -60,6 +65,9 @@ class Signup(models.Model):
 
     def __str__(self):
         return f"{self.pilot} for {self.training}"
+    
+    def has_priority(self):
+        return self.is_certain and self.for_time == self.Time.WholeDay
 
     def select(self):
         if self.status != self.Status.Waiting:

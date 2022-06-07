@@ -32,6 +32,11 @@
                             <input type="number" class="form-control" name="max_pilots" value={{ form.max_pilots.value }}>
                         </div>
                     </div>
+                    <div class="form-floating mb-3">
+                        <input type="date" class="form-control" name="priority_date"
+                            value="{{ form.instance.priority_date.isoformat }}" required>
+                        <label>Datum Vorrang (bis und mit)</label>
+                    </div>
                     <div class="btn-group">
                         <button class="btn btn-primary" type="submit">Speichern</button>
                         <div class="btn-group">

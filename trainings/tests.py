@@ -17,16 +17,15 @@ YESTERDAY = TODAY - timedelta(days=1)
 TOMORROW = TODAY + timedelta(days=1)
 
 
-class SignupSelectionTests(TestCase):
+class TrainingTests(TestCase):
     def setUp(self):
         pilot_a = User.objects.create(username="Pilot A")
         pilot_b = User.objects.create(username="Pilot B")
-        self.training = Training.objects.create(date=TODAY, max_pilots=1)
+        self.training = Training.objects.create(date=TOMORROW, max_pilots=1)
         self.signup_a = Signup.objects.create(pilot=pilot_a, training=self.training)
-        sleep(0.001)
         self.signup_b = Signup.objects.create(pilot=pilot_b, training=self.training)
 
-    def test_waiting_after_resignup(self):
+    def test_stay_selected_when_max_pilots_is_reduced(self):
         for signup in [self.signup_a, self.signup_b]:
             self.assertEqual(signup.status, Signup.Status.Waiting)
 
@@ -35,88 +34,6 @@ class SignupSelectionTests(TestCase):
             signup.refresh_from_db()
         self.assertEqual(self.signup_a.status, Signup.Status.Selected)
         self.assertEqual(self.signup_b.status, Signup.Status.Waiting)
-        self.assertLess(self.signup_a.signed_up_on, self.signup_b.signed_up_on)
-
-        self.signup_a.cancel()
-        self.signup_a.save()
-        self.training.select_signups()
-        for signup in [self.signup_a, self.signup_b]:
-            signup.refresh_from_db()
-        self.assertEqual(self.signup_a.status, Signup.Status.Canceled)
-        self.assertEqual(self.signup_b.status, Signup.Status.Selected)
-        self.assertLess(self.signup_a.signed_up_on, self.signup_b.signed_up_on)
-
-        self.signup_a.resignup()
-        self.signup_a.save()
-        self.training.select_signups()
-        for signup in [self.signup_a, self.signup_b]:
-            signup.refresh_from_db()
-        self.assertEqual(self.signup_a.status, Signup.Status.Waiting)
-        self.assertEqual(self.signup_b.status, Signup.Status.Selected)
-        self.assertGreater(self.signup_a.signed_up_on, self.signup_b.signed_up_on)
-
-    def test_waiting_after_switching_to_uncertain(self):
-        self.training.select_signups()
-        for signup in [self.signup_a, self.signup_b]:
-            self.assertTrue(signup.is_certain)
-
-        self.signup_a.update_is_certain(False)
-        self.signup_a.save()
-        self.training.select_signups()
-        for signup in [self.signup_a, self.signup_b]:
-            signup.refresh_from_db()
-        self.assertFalse(self.signup_a.is_certain)
-        self.assertEqual(self.signup_a.status, Signup.Status.Waiting)
-        self.assertEqual(self.signup_b.status, Signup.Status.Selected)
-        time_of_update_to_uncertain = self.signup_a.signed_up_on
-        self.assertGreater(time_of_update_to_uncertain, self.signup_b.signed_up_on)
-
-        self.signup_a.update_is_certain(True)
-        self.signup_a.save()
-        self.training.select_signups()
-        for signup in [self.signup_a, self.signup_b]:
-            signup.refresh_from_db()
-        self.assertTrue(self.signup_a.is_certain)
-        self.assertEqual(self.signup_a.status, Signup.Status.Waiting)
-        self.assertEqual(self.signup_b.status, Signup.Status.Selected)
-        self.assertEqual(time_of_update_to_uncertain, self.signup_a.signed_up_on)
-
-    def test_waiting_after_switchting_from_whole_day(self):
-        self.training.select_signups()
-        for signup in [self.signup_a, self.signup_b]:
-            self.assertEqual(signup.for_time, Signup.Time.WholeDay)
-
-        self.signup_a.update_for_time(Signup.Time.ArriveLate)
-        self.signup_a.save()
-        self.training.select_signups()
-        for signup in [self.signup_a, self.signup_b]:
-            signup.refresh_from_db()
-        self.assertEqual(self.signup_a.status, Signup.Status.Waiting)
-        self.assertEqual(self.signup_b.status, Signup.Status.Selected)
-        time_of_update_to_arrive_late = self.signup_a.signed_up_on
-        self.assertGreater(time_of_update_to_arrive_late, self.signup_b.signed_up_on)
-
-        self.signup_a.update_for_time(Signup.Time.LeaveEarly)
-        self.signup_a.save()
-        self.training.select_signups()
-        for signup in [self.signup_a, self.signup_b]:
-            signup.refresh_from_db()
-        self.assertEqual(self.signup_a.status, Signup.Status.Waiting)
-        self.assertEqual(self.signup_b.status, Signup.Status.Selected)
-        self.assertEqual(time_of_update_to_arrive_late, self.signup_a.signed_up_on)
-
-        self.signup_a.update_for_time(Signup.Time.WholeDay)
-        self.signup_a.save()
-        self.training.select_signups()
-        for signup in [self.signup_a, self.signup_b]:
-            signup.refresh_from_db()
-        self.assertEqual(self.signup_a.status, Signup.Status.Waiting)
-        self.assertEqual(self.signup_b.status, Signup.Status.Selected)
-        self.assertEqual(time_of_update_to_arrive_late, self.signup_a.signed_up_on)
-
-    def test_stay_selected_when_max_pilots_is_reduced(self):
-        for signup in [self.signup_a, self.signup_b]:
-            self.assertEqual(signup.status, Signup.Status.Waiting)
 
         self.training.max_pilots = 2
         self.training.select_signups()
@@ -129,6 +46,129 @@ class SignupSelectionTests(TestCase):
         for signup in [self.signup_a, self.signup_b]:
             signup.refresh_from_db()
             self.assertEqual(signup.status, Signup.Status.Selected)
+
+    def test_only_with_priority_selected_before_priority_date(self):
+        self.signup_b.update_is_certain(False)
+        self.signup_b.save()
+        self.assertTrue(self.signup_a.has_priority())
+        self.assertFalse(self.signup_b.has_priority())
+
+        self.training.max_pilots = 2
+        self.training.priority_date = TOMORROW
+        self.training.select_signups()
+        for signup in [self.signup_a, self.signup_b]:
+            signup.refresh_from_db()
+        self.assertEqual(self.signup_a.status, Signup.Status.Selected)
+        self.assertEqual(self.signup_b.status, Signup.Status.Waiting)
+
+        self.training.priority_date = TODAY
+        self.training.select_signups()
+        for signup in [self.signup_a, self.signup_b]:
+            signup.refresh_from_db()
+        self.assertEqual(self.signup_a.status, Signup.Status.Selected)
+        self.assertEqual(self.signup_b.status, Signup.Status.Waiting)
+
+        self.training.priority_date = YESTERDAY
+        self.training.select_signups()
+        for signup in [self.signup_a, self.signup_b]:
+            signup.refresh_from_db()
+            self.assertEqual(signup.status, Signup.Status.Selected)
+
+    def test_stay_selected_when_priority_date_is_moved(self):
+        self.signup_b.update_is_certain(False)
+        self.signup_b.save()
+        self.assertTrue(self.signup_a.has_priority())
+        self.assertFalse(self.signup_b.has_priority())
+
+        self.training.max_pilots = 2
+        self.training.priority_date = YESTERDAY
+        self.training.select_signups()
+        for signup in [self.signup_a, self.signup_b]:
+            signup.refresh_from_db()
+            self.assertEqual(signup.status, Signup.Status.Selected)
+
+        self.training.priority_date = TOMORROW
+        self.training.select_signups()
+        for signup in [self.signup_a, self.signup_b]:
+            signup.refresh_from_db()
+            self.assertEqual(signup.status, Signup.Status.Selected)
+
+
+class SignupTests(TestCase):
+    def setUp(self):
+        pilot = User.objects.create(username="Pilot")
+        training = Training.objects.create(date=TOMORROW, priority_date=TOMORROW)
+        self.signup = Signup.objects.create(
+            pilot=pilot, training=training, status=Signup.Status.Selected
+        )
+        self.time_selected = self.signup.signed_up_on
+        sleep(0.001)
+
+    def test_resignup_sets_to_waiting_list(self):
+        self.assertEqual(self.signup.status, Signup.Status.Selected)
+
+        self.signup.cancel()
+        time_of_cancelation = self.signup.signed_up_on
+        self.assertEqual(self.time_selected, time_of_cancelation)
+        self.assertEqual(self.signup.status, Signup.Status.Canceled)
+
+        sleep(0.001)
+        self.signup.resignup()
+        self.assertLess(time_of_cancelation, self.signup.signed_up_on)
+        self.assertEqual(self.signup.status, Signup.Status.Waiting)
+
+    def test_update_is_certain_sets_to_waiting_list_and_removes_priority(self):
+        self.assertEqual(self.signup.status, Signup.Status.Selected)
+        self.assertTrue(self.signup.has_priority())
+
+        self.signup.update_is_certain(False)
+        time_of_update_to_uncertain = self.signup.signed_up_on
+        self.assertLess(self.time_selected, time_of_update_to_uncertain)
+        self.assertEqual(self.signup.status, Signup.Status.Waiting)
+        self.assertFalse(self.signup.has_priority())
+
+        sleep(0.001)
+        self.signup.update_is_certain(True)
+        self.assertEqual(time_of_update_to_uncertain, self.signup.signed_up_on)
+        self.assertEqual(self.signup.status, Signup.Status.Waiting)
+        self.assertTrue(self.signup.has_priority())
+
+    def test_update_for_time_sets_to_waiting_list_and_removes_priority(self):
+        self.assertEqual(self.signup.status, Signup.Status.Selected)
+        self.assertTrue(self.signup.has_priority())
+
+        self.signup.update_for_time(Signup.Time.ArriveLate)
+        time_of_update_to_arrive_late = self.signup.signed_up_on
+        self.assertLess(self.time_selected, time_of_update_to_arrive_late)
+        self.assertEqual(self.signup.status, Signup.Status.Waiting)
+        self.assertFalse(self.signup.has_priority())
+
+        sleep(0.001)
+        self.signup.update_for_time(Signup.Time.LeaveEarly)
+        self.assertEqual(time_of_update_to_arrive_late, self.signup.signed_up_on)
+        self.assertEqual(self.signup.status, Signup.Status.Waiting)
+        self.assertFalse(self.signup.has_priority())
+
+        sleep(0.001)
+        self.signup.update_for_time(Signup.Time.Individually)
+        self.assertEqual(time_of_update_to_arrive_late, self.signup.signed_up_on)
+        self.assertEqual(self.signup.status, Signup.Status.Waiting)
+        self.assertFalse(self.signup.has_priority())
+
+        sleep(0.001)
+        self.signup.update_for_time(Signup.Time.WholeDay)
+        self.assertEqual(time_of_update_to_arrive_late, self.signup.signed_up_on)
+        self.assertEqual(self.signup.status, Signup.Status.Waiting)
+        self.assertTrue(self.signup.has_priority())
+
+    def test_for_sketchy_weather_does_not_affect_status_and_priority(self):
+        self.assertTrue(self.signup.for_sketchy_weather)
+        self.assertEqual(self.signup.status, Signup.Status.Selected)
+        self.assertTrue(self.signup.has_priority())
+
+        self.signup.for_sketchy_weather = False
+        self.assertEqual(self.signup.status, Signup.Status.Selected)
+        self.assertTrue(self.signup.has_priority())
 
 
 class TrainingListViewTests(TestCase):
@@ -239,12 +279,10 @@ class TrainingUpdateViewTests(TestCase):
     def setUp(self):
         self.pilot = User.objects.create(username="Pilot")
         self.client.force_login(self.pilot)
-
-        self.max_pilots = 13
-        Training(date=TODAY, max_pilots=self.max_pilots).save()
+        self.training = Training.objects.create(date=TODAY)
 
         self.default_info = "Training findet statt"
-        self.info = "Training abgesagt"
+        self.new_info = "Training abgesagt"
 
     def test_form_is_prefilled(self):
         with self.assertNumQueries(3):
@@ -253,68 +291,61 @@ class TrainingUpdateViewTests(TestCase):
             )
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/update_training.html")
+        self.assertContains(response, self.training.max_pilots)
+        self.assertContains(response, self.training.priority_date.isoformat())
         self.assertContains(response, self.default_info)
-        self.assertContains(response, self.max_pilots)
 
-        with self.assertNumQueries(4 + 4):
-            response = self.client.post(
-                reverse("update_training", kwargs={"date": TODAY}),
-                data={"info": self.info, "max_pilots": self.max_pilots},
-                follow=True,
-            )
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "trainings/list_trainings.html")
-        self.assertContains(response, self.info)
-
-        with self.assertNumQueries(3):
-            response = self.client.get(
-                reverse("update_training", kwargs={"date": TODAY})
-            )
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "trainings/update_training.html")
-        self.assertContains(response, self.info)
-
-    def test_max_pilots_range(self):
-        with self.assertNumQueries(3):
-            response = self.client.post(
-                reverse("update_training", kwargs={"date": TODAY}),
-                data={"info": self.info, "max_pilots": 5},
-                follow=True,
-            )
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "trainings/update_training.html")
-        self.assertContains(response, self.info)
-        self.assertContains(response, "alert-warning")
-
-        with self.assertNumQueries(3):
-            response = self.client.post(
-                reverse("update_training", kwargs={"date": TODAY}),
-                data={"info": self.info, "max_pilots": 22},
-                follow=True,
-            )
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "trainings/update_training.html")
-        self.assertContains(response, self.info)
-        self.assertContains(response, "alert-warning")
-
-    def test_infos_are_shown_in_list(self):
+    def test_update_training(self):
         with self.assertNumQueries(4):
             response = self.client.get(reverse("trainings"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
         self.assertNotContains(response, self.default_info)
-        self.assertNotContains(response, self.info)
+        self.assertNotContains(response, self.new_info)
 
+        new_max_pilots = self.training.max_pilots - 1
+        new_priority_date = self.training.priority_date - timedelta(days=1)
         with self.assertNumQueries(4 + 4):
             response = self.client.post(
                 reverse("update_training", kwargs={"date": TODAY}),
-                data={"info": self.info, "max_pilots": self.max_pilots},
+                data={
+                    "info": self.new_info,
+                    "max_pilots": new_max_pilots,
+                    "priority_date": new_priority_date,
+                },
                 follow=True,
             )
+        self.training.refresh_from_db()
+        self.assertEqual(self.training.info, self.new_info)
+        self.assertEqual(self.training.max_pilots, new_max_pilots)
+        self.assertEqual(self.training.priority_date, new_priority_date)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
         self.assertNotContains(response, self.default_info)
-        self.assertContains(response, self.info)
+        self.assertContains(response, self.new_info)
+
+    def test_max_pilots_range(self):
+        with self.assertNumQueries(3):
+            response = self.client.post(
+                reverse("update_training", kwargs={"date": TODAY}),
+                data={"info": self.new_info, "max_pilots": 5},
+                follow=True,
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/update_training.html")
+        self.assertContains(response, self.new_info)
+        self.assertContains(response, "alert-warning")
+
+        with self.assertNumQueries(3):
+            response = self.client.post(
+                reverse("update_training", kwargs={"date": TODAY}),
+                data={"info": self.new_info, "max_pilots": 22},
+                follow=True,
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/update_training.html")
+        self.assertContains(response, self.new_info)
+        self.assertContains(response, "alert-warning")
 
     def test_training_not_found_404(self):
         with self.assertNumQueries(2):
@@ -547,37 +578,61 @@ class SignupCreateViewTests(TestCase):
         self.pilot = User.objects.create(username="Pilot")
         self.client.force_login(self.pilot)
 
+        self.monday = datetime(2007, 1, 1)
+        self.assertEqual(self.monday.strftime("%A"), "Montag")
+        self.wednesday = datetime(2007, 1, 3)
+        self.assertEqual(self.wednesday.strftime("%A"), "Mittwoch")
+        self.saturday = datetime(2007, 1, 6)
+        self.assertEqual(self.saturday.strftime("%A"), "Samstag")
+        self.sunday = datetime(2007, 1, 7)
+        self.assertEqual(self.sunday.strftime("%A"), "Sonntag")
+        self.next_saturday = datetime(2007, 1, 13)
+        self.assertEqual(self.next_saturday.strftime("%A"), "Samstag")
+
     @mock.patch("trainings.views.datetime")
     def test_default_date_is_next_saturday(self, mocked_datetime):
-        monday = datetime(2007, 1, 1)
-        self.assertEqual(monday.strftime("%A"), "Montag")
-        saturday = datetime(2007, 1, 6)
-        self.assertEqual(saturday.strftime("%A"), "Samstag")
-        sunday = datetime(2007, 1, 7)
-        self.assertEqual(sunday.strftime("%A"), "Sonntag")
-        next_saturday = datetime(2007, 1, 13)
-        self.assertEqual(next_saturday.strftime("%A"), "Samstag")
-
-        mocked_datetime.now.return_value = monday
+        mocked_datetime.now.return_value = self.monday
         with self.assertNumQueries(2):
             response = self.client.get(reverse("signup"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/signup.html")
-        self.assertContains(response, saturday.date().isoformat())
+        self.assertContains(response, self.saturday.date().isoformat())
 
-        mocked_datetime.now.return_value = saturday
+        mocked_datetime.now.return_value = self.saturday
         with self.assertNumQueries(2):
             response = self.client.get(reverse("signup"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/signup.html")
-        self.assertContains(response, saturday.date().isoformat())
+        self.assertContains(response, self.saturday.date().isoformat())
 
-        mocked_datetime.now.return_value = sunday
+        mocked_datetime.now.return_value = self.sunday
         with self.assertNumQueries(2):
             response = self.client.get(reverse("signup"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/signup.html")
-        self.assertContains(response, next_saturday.date().isoformat())
+        self.assertContains(response, self.next_saturday.date().isoformat())
+
+    @mock.patch("trainings.views.datetime")
+    def test_default_priority_date_is_wednesday_before_training(self, mocked_datetime):
+        mocked_datetime.now.return_value = self.monday
+        dates = [self.wednesday, self.saturday, self.sunday, self.next_saturday]
+        for date in dates:
+            mocked_datetime.fromisoformat.return_value = date
+            with self.assertNumQueries(6):
+                self.client.post(
+                    reverse("signup"),
+                    data={"date": date.date(), "for_time": Signup.Time.WholeDay},
+                )
+
+        trainings = Training.objects.all()
+        self.assertEqual(len(trainings), len(dates))
+        for date, training in zip(dates, trainings):
+            self.assertEqual(date.date(), training.date)
+            self.assertEqual(training.priority_date.strftime("%A"), "Mittwoch")
+            self.assertLess(training.priority_date, training.date)
+            self.assertLessEqual(
+                training.date - training.priority_date, timedelta(days=7)
+            )
 
     def test_successive_signups(self):
         with self.assertNumQueries(8):
@@ -592,11 +647,10 @@ class SignupCreateViewTests(TestCase):
         self.assertEqual(1, len(Signup.objects.all()))
 
     def test_cannot_signup_twice(self):
-        with self.assertNumQueries(8):
-            response = self.client.post(
+        with self.assertNumQueries(6):
+            self.client.post(
                 reverse("signup"),
                 data={"date": datetime.now().date(), "for_time": Signup.Time.WholeDay},
-                follow=True,
             )
         self.assertEqual(1, len(Signup.objects.all()))
 
@@ -787,7 +841,7 @@ class SignupUpdateViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
         self.assertContains(response, "75%")
-    
+
     def test_update_for_time(self):
         with self.assertNumQueries(6):
             response = self.client.get(reverse("trainings"))
@@ -804,7 +858,10 @@ class SignupUpdateViewTests(TestCase):
         with self.assertNumQueries(11):
             response = self.client.post(
                 reverse("update_signup", kwargs={"date": TODAY}),
-                data={"is_certain": self.signup.is_certain, "for_time": Signup.Time.ArriveLate},
+                data={
+                    "is_certain": self.signup.is_certain,
+                    "for_time": Signup.Time.ArriveLate,
+                },
                 follow=True,
             )
         self.assertEqual(response.status_code, 200)
