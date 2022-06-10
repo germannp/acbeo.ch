@@ -29,15 +29,6 @@ class TrainingListView(LoginRequiredMixin, generic.ListView):
         return context
 
 
-class TrainingUpdateView(LoginRequiredMixin, generic.UpdateView):
-    form_class = forms.TrainingUpdateForm
-    template_name = "trainings/update_training.html"
-    success_url = reverse_lazy("trainings")
-
-    def get_object(self):
-        return get_object_or_404(Training, date=self.kwargs["date"])
-
-
 class TrainingCreateView(LoginRequiredMixin, generic.FormView):
     form_class = forms.TrainingCreateForm
     template_name = "trainings/create_trainings.html"
@@ -46,6 +37,15 @@ class TrainingCreateView(LoginRequiredMixin, generic.FormView):
     def form_valid(self, form):
         form.create_trainings()
         return super().form_valid(form)
+
+
+class TrainingUpdateView(LoginRequiredMixin, generic.UpdateView):
+    form_class = forms.TrainingUpdateForm
+    template_name = "trainings/update_training.html"
+    success_url = reverse_lazy("trainings")
+
+    def get_object(self):
+        return get_object_or_404(Training, date=self.kwargs["date"])
 
 
 class EmergencyMailView(LoginRequiredMixin, SuccessMessageMixin, generic.UpdateView):
