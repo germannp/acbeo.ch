@@ -1,4 +1,4 @@
-import locale
+from datetime import date, datetime, timedelta
 
 from django import forms
 from django.core.exceptions import ValidationError
@@ -8,7 +8,57 @@ from django.utils.html import strip_tags
 
 from .models import Training, Signup
 
-locale.setlocale(locale.LC_TIME, "de_CH")
+
+def year():
+    today = date.today()
+    return today.year + (8 <= today.month)
+
+
+class TrainingCreateForm(forms.Form):
+    first_day = forms.DateField(initial=lambda: datetime(year(), 8, 1).date())
+    last_day = forms.DateField(initial=lambda: datetime(year(), 8, 31).date())
+    priority_date = forms.DateField(initial=lambda: datetime(year(), 4, 15).date())
+    max_pilots = forms.IntegerField(initial=10)
+    info = forms.CharField(max_length=300, initial="Axalpwochen")
+
+    def clean_first_day(self):
+        first_day = self.cleaned_data["first_day"]
+        if first_day < date.today():
+            raise ValidationError(
+                "Es können keine Trainings in der Vergangenheit erstellt werden."
+            )
+        return first_day
+
+    def clean_last_day(self):
+        last_day = self.cleaned_data["last_day"]
+        if last_day > date.today() + timedelta(days=365):
+            raise ValidationError(
+                "Trainings können höchstens ein Jahr im Voraus erstellt werden."
+            )
+        return last_day
+
+    def clean(self):
+        cleaned_data = super().clean()
+        first_day = cleaned_data.get("first_day")
+        last_day = cleaned_data.get("last_day")
+        if not (first_day and last_day):
+            return
+
+        if first_day > last_day:
+            raise ValidationError("Der erste Tag muss vor dem Letzten liegen.")
+
+    def create_trainings(self):
+        day = self.cleaned_data["first_day"]
+        while day <= self.cleaned_data["last_day"]:
+            if Training.objects.filter(date=day).exists():
+                training = Training.objects.get(date=day)
+            else:
+                training = Training(date=day)
+            training.info = self.cleaned_data["info"]
+            training.max_pilots = self.cleaned_data["max_pilots"]
+            training.priority_date = self.cleaned_data["priority_date"]
+            training.save()
+            day += timedelta(days=1)
 
 
 class TrainingUpdateForm(forms.ModelForm):
@@ -102,7 +152,7 @@ class SignupUpdateForm(forms.ModelForm):
     class Meta:
         model = Signup
         exclude = ["pilot", "training", "status"]
-    
+
     def clean(self):
         cleaned_data = super().clean()
         self.instance.update_is_certain(cleaned_data["is_certain"])

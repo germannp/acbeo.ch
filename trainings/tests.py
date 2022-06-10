@@ -171,6 +171,130 @@ class SignupTests(TestCase):
         self.assertTrue(self.signup.has_priority())
 
 
+class TrainingCreateViewTests(TestCase):
+    def setUp(self):
+        self.pilot = User.objects.create(username="Pilot")
+        self.client.force_login(self.pilot)
+
+    @mock.patch("trainings.forms.date")
+    def test_prefilled_default_is_next_august(self, mocked_date):
+        mocked_date.today.return_value = datetime(1984, 1, 1).date()
+        with self.assertNumQueries(2):
+            response = self.client.get(reverse("create_trainings"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/create_trainings.html")
+        self.assertContains(response, 'value="1984-08-01"')
+        self.assertContains(response, 'value="1984-08-31"')
+        self.assertContains(response, 'value="1984-04-15"')
+        self.assertContains(response, 'value="Axalpwochen"')
+        self.assertContains(response, 'name="max_pilots" value=10')
+
+        mocked_date.today.return_value = datetime(1984, 8, 1).date()
+        with self.assertNumQueries(2):
+            response = self.client.get(reverse("create_trainings"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/create_trainings.html")
+        self.assertContains(response, 'value="1985-08-01"')
+
+    def test_create_trainings(self):
+        with self.assertNumQueries(14):
+            response = self.client.post(
+                reverse("create_trainings"),
+                data={
+                    "first_day": TOMORROW,
+                    "last_day": TOMORROW + timedelta(days=3),
+                    "info": "Info",
+                    "max_pilots": 11,
+                    "priority_date": TODAY,
+                },
+                follow=True,
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertEqual(4, len(Training.objects.all()))
+
+    def test_creating_training_does_not_affect_signups(self):
+        training = Training.objects.create(date=TODAY, info="Old info")
+        signup = Signup.objects.create(pilot=self.pilot, training=training)
+        training.select_signups()
+        signup.refresh_from_db()
+        self.assertEqual(signup.status, Signup.Status.Selected)
+
+        with self.assertNumQueries(10):
+            response = self.client.post(
+                reverse("create_trainings"),
+                data={
+                    "first_day": TODAY,
+                    "last_day": TODAY,
+                    "info": "New info",
+                    "max_pilots": 0,
+                    "priority_date": TODAY,
+                },
+                follow=True,
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        training.refresh_from_db()
+        self.assertEqual(training.info, "New info")
+        self.assertEqual(training.max_pilots, 0)
+        signup.refresh_from_db()
+        self.assertEqual(signup.status, Signup.Status.Selected)
+
+    def test_cannot_create_trainings_in_the_past(self):
+        with self.assertNumQueries(2):
+            response = self.client.post(
+                reverse("create_trainings"),
+                data={
+                    "first_day": YESTERDAY,
+                    "last_day": TOMORROW,
+                    "info": "Info",
+                    "max_pilots": 11,
+                    "priority_date": TODAY,
+                },
+                follow=True,
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/create_trainings.html")
+        self.assertContains(response, "alert-warning")
+        self.assertEqual(0, len(Training.objects.all()))
+
+    def test_cannot_create_trainings_more_than_a_year_ahead(self):
+        with self.assertNumQueries(2):
+            response = self.client.post(
+                reverse("create_trainings"),
+                data={
+                    "first_day": TODAY + timedelta(days=666),
+                    "last_day": TODAY + timedelta(days=1337),
+                    "info": "Info",
+                    "max_pilots": 11,
+                    "priority_date": TODAY,
+                },
+                follow=True,
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/create_trainings.html")
+        self.assertContains(response, "alert-warning")
+        self.assertEqual(0, len(Training.objects.all()))
+
+    def test_last_day_must_be_after_first_day(self):
+        with self.assertNumQueries(2):
+            response = self.client.post(
+                reverse("create_trainings"),
+                data={
+                    "first_day": TOMORROW,
+                    "last_day": YESTERDAY,
+                    "info": "Info",
+                    "max_pilots": 11,
+                    "priority_date": TODAY,
+                },
+                follow=True,
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/create_trainings.html")
+        self.assertContains(response, "alert-warning")
+        self.assertEqual(0, len(Training.objects.all()))
+
+
 class TrainingListViewTests(TestCase):
     def setUp(self):
         self.pilot_a = User.objects.create(username="Pilot A")
