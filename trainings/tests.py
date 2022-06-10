@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 import locale
 from time import sleep
 from unittest import mock
@@ -12,7 +12,7 @@ from .models import Training, Signup
 
 locale.setlocale(locale.LC_TIME, "de_CH")
 
-TODAY = datetime.now().date()
+TODAY = date.today()
 YESTERDAY = TODAY - timedelta(days=1)
 TOMORROW = TODAY + timedelta(days=1)
 
@@ -702,56 +702,55 @@ class SignupCreateViewTests(TestCase):
         self.pilot = User.objects.create(username="Pilot")
         self.client.force_login(self.pilot)
 
-        self.monday = datetime(2007, 1, 1)
+        self.monday = datetime(2007, 1, 1).date()
         self.assertEqual(self.monday.strftime("%A"), "Montag")
-        self.wednesday = datetime(2007, 1, 3)
+        self.wednesday = datetime(2007, 1, 3).date()
         self.assertEqual(self.wednesday.strftime("%A"), "Mittwoch")
-        self.saturday = datetime(2007, 1, 6)
+        self.saturday = datetime(2007, 1, 6).date()
         self.assertEqual(self.saturday.strftime("%A"), "Samstag")
-        self.sunday = datetime(2007, 1, 7)
+        self.sunday = datetime(2007, 1, 7).date()
         self.assertEqual(self.sunday.strftime("%A"), "Sonntag")
-        self.next_saturday = datetime(2007, 1, 13)
+        self.next_saturday = datetime(2007, 1, 13).date()
         self.assertEqual(self.next_saturday.strftime("%A"), "Samstag")
 
-    @mock.patch("trainings.views.datetime")
-    def test_default_date_is_next_saturday(self, mocked_datetime):
-        mocked_datetime.now.return_value = self.monday
+    @mock.patch("trainings.views.date")
+    def test_default_date_is_next_saturday(self, mocked_date):
+        mocked_date.today.return_value = self.monday
         with self.assertNumQueries(2):
             response = self.client.get(reverse("signup"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/signup.html")
-        self.assertContains(response, self.saturday.date().isoformat())
+        self.assertContains(response, self.saturday.isoformat())
 
-        mocked_datetime.now.return_value = self.saturday
+        mocked_date.today.return_value = self.saturday
         with self.assertNumQueries(2):
             response = self.client.get(reverse("signup"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/signup.html")
-        self.assertContains(response, self.saturday.date().isoformat())
+        self.assertContains(response, self.saturday.isoformat())
 
-        mocked_datetime.now.return_value = self.sunday
+        mocked_date.today.return_value = self.sunday
         with self.assertNumQueries(2):
             response = self.client.get(reverse("signup"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/signup.html")
-        self.assertContains(response, self.next_saturday.date().isoformat())
+        self.assertContains(response, self.next_saturday.isoformat())
 
-    @mock.patch("trainings.views.datetime")
-    def test_default_priority_date_is_wednesday_before_training(self, mocked_datetime):
-        mocked_datetime.now.return_value = self.monday
+    @mock.patch("trainings.views.date")
+    def test_default_priority_date_is_wednesday_before_training(self, mocked_date):
+        mocked_date.today.return_value = self.monday
         dates = [self.wednesday, self.saturday, self.sunday, self.next_saturday]
         for date in dates:
-            mocked_datetime.fromisoformat.return_value = date
             with self.assertNumQueries(6):
                 self.client.post(
                     reverse("signup"),
-                    data={"date": date.date(), "for_time": Signup.Time.WholeDay},
+                    data={"date": date, "for_time": Signup.Time.WholeDay},
                 )
 
         trainings = Training.objects.all()
         self.assertEqual(len(trainings), len(dates))
         for date, training in zip(dates, trainings):
-            self.assertEqual(date.date(), training.date)
+            self.assertEqual(date, training.date)
             self.assertEqual(training.priority_date.strftime("%A"), "Mittwoch")
             self.assertLess(training.priority_date, training.date)
             self.assertLessEqual(
@@ -774,14 +773,14 @@ class SignupCreateViewTests(TestCase):
         with self.assertNumQueries(6):
             self.client.post(
                 reverse("signup"),
-                data={"date": datetime.now().date(), "for_time": Signup.Time.WholeDay},
+                data={"date": TODAY, "for_time": Signup.Time.WholeDay},
             )
         self.assertEqual(1, len(Signup.objects.all()))
 
         with self.assertNumQueries(5):
             response = self.client.post(
                 reverse("signup"),
-                data={"date": datetime.now().date(), "for_time": Signup.Time.WholeDay},
+                data={"date": TODAY, "for_time": Signup.Time.WholeDay},
                 follow=True,
             )
         self.assertEqual(response.status_code, 200)

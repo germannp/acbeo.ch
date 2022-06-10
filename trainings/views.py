@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
@@ -25,7 +25,7 @@ class TrainingListView(LoginRequiredMixin, generic.ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["day_after_tomorrow"] = datetime.now().date() + timedelta(days=2)
+        context["day_after_tomorrow"] = date.today() + timedelta(days=2)
         return context
 
 
@@ -58,7 +58,7 @@ class EmergencyMailView(LoginRequiredMixin, SuccessMessageMixin, generic.UpdateV
         return get_object_or_404(Training, date=self.kwargs["date"])
 
     def form_valid(self, form):
-        today = datetime.now().date()
+        today = date.today()
         if form.instance.date < today:
             form.add_error(
                 None,
@@ -81,7 +81,7 @@ class SignupListView(LoginRequiredMixin, generic.ListView):
     template_name = "trainings/list_signups.html"
 
     def get_queryset(self):
-        today = datetime.now().date()
+        today = date.today()
         future_signups = (
             Signup.objects.filter(pilot=self.request.user)
             .filter(training__date__gte=today)
@@ -110,7 +110,7 @@ class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateVi
         if "date" in self.kwargs:
             context["date"] = self.kwargs["date"]
         else:
-            today = datetime.now().date()
+            today = date.today()
             next_saturday = today + timedelta(days=(5 - today.weekday()) % 7)
             context["date"] = next_saturday
         return context
@@ -118,7 +118,7 @@ class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateVi
     def form_valid(self, form):
         """Fill in pilot from logged in user and check sanity"""
         self.date = datetime.fromisoformat(form.data["date"]).date()
-        today = datetime.now().date()
+        today = date.today()
         if self.date < today:
             form.add_error(None, "Einschreiben ist nur für kommende Trainings möglich.")
             return super().form_invalid(form)
@@ -165,7 +165,7 @@ class SignupUpdateView(LoginRequiredMixin, generic.UpdateView):
         return signup
 
     def form_valid(self, form):
-        if self.kwargs["date"] < datetime.now().date():
+        if self.kwargs["date"] < date.today():
             form.add_error(
                 None, "Vergangene Anmeldungen können nicht bearbeitet werden."
             )
