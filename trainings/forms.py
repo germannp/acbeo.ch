@@ -1,29 +1,33 @@
-from datetime import date, datetime, timedelta
+import datetime
 
 from django import forms
 from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.utils.html import strip_tags
 
 from .models import Training, Signup
 
 
-def year():
-    today = date.today()
-    return today.year + (8 <= today.month)
+def date_relative_to_next_august(month, day):
+    today = datetime.date.today()
+    year_of_next_august = today.year + (8 <= today.month)
+    return datetime.date(year_of_next_august, month, day)
 
 
 class TrainingCreateForm(forms.Form):
-    first_day = forms.DateField(initial=lambda: datetime(year(), 8, 1).date())
-    last_day = forms.DateField(initial=lambda: datetime(year(), 8, 31).date())
-    priority_date = forms.DateField(initial=lambda: datetime(year(), 4, 15).date())
-    max_pilots = forms.IntegerField(initial=10)
+    first_day = forms.DateField(initial=lambda: date_relative_to_next_august(8, 1))
+    last_day = forms.DateField(initial=lambda: date_relative_to_next_august(8, 31))
+    priority_date = forms.DateField(initial=lambda: date_relative_to_next_august(4, 15))
+    max_pilots = forms.IntegerField(
+        initial=10, validators=[MinValueValidator(6), MaxValueValidator(21)]
+    )
     info = forms.CharField(max_length=300, initial="Axalpwochen")
 
     def clean_first_day(self):
         first_day = self.cleaned_data["first_day"]
-        if first_day < date.today():
+        if first_day < datetime.date.today():
             raise ValidationError(
                 "Es können keine Trainings in der Vergangenheit erstellt werden."
             )
@@ -31,7 +35,7 @@ class TrainingCreateForm(forms.Form):
 
     def clean_last_day(self):
         last_day = self.cleaned_data["last_day"]
-        if last_day > date.today() + timedelta(days=365):
+        if last_day > datetime.date.today() + datetime.timedelta(days=365):
             raise ValidationError(
                 "Trainings können höchstens ein Jahr im Voraus erstellt werden."
             )
@@ -58,7 +62,7 @@ class TrainingCreateForm(forms.Form):
             training.max_pilots = self.cleaned_data["max_pilots"]
             training.priority_date = self.cleaned_data["priority_date"]
             training.save()
-            day += timedelta(days=1)
+            day += datetime.timedelta(days=1)
 
 
 class TrainingUpdateForm(forms.ModelForm):
@@ -96,6 +100,18 @@ class EmergencyMailForm(forms.ModelForm):
         if len(emergency_contacts) != 2:
             raise ValidationError("Bitte genau zwei Notfallkontakte ausgewählen.")
         return emergency_contacts
+
+    def clean(self):
+        super().clean()
+        today = datetime.date.today()
+        if self.instance.date < today:
+            raise ValidationError(
+                "Seepolizeimail kann nicht für vergangene Trainings versandt werden."
+            )
+        if self.instance.date > today + datetime.timedelta(days=2):
+            raise ValidationError(
+                "Seepolizeimail kann höchstens drei Tage im Voraus versandt werden."
+            )
 
     def send_mail(self):
         date = self.instance.date.strftime("%A, %d. %B").replace(" 0", " ")
@@ -143,9 +159,24 @@ class EmergencyMailForm(forms.ModelForm):
 
 
 class SignupCreateForm(forms.ModelForm):
+    date = forms.DateField()
+
     class Meta:
         model = Signup
         exclude = ["pilot", "training", "status"]
+
+    def clean_date(self):
+        date = self.cleaned_data["date"]
+        today = datetime.date.today()
+        if date < today:
+            raise ValidationError(
+                "Einschreiben ist nur für kommende Trainings möglich."
+            )
+        if date > today + datetime.timedelta(days=365):
+            raise ValidationError(
+                "Einschreiben ist höchstens ein Jahr im Voraus möglich."
+            )
+        return date
 
 
 class SignupUpdateForm(forms.ModelForm):

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -37,7 +37,7 @@ class Training(models.Model):
 
     def select_signups(self):
         signups = self.signups.all()
-        if datetime.now().date() <= self.priority_date:
+        if date.today() <= self.priority_date:
             signups = [signup for signup in signups if signup.has_priority()]
 
         for signup in signups[: self.max_pilots]:
