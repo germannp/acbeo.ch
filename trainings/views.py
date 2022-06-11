@@ -47,6 +47,8 @@ class TrainingUpdateView(LoginRequiredMixin, generic.UpdateView):
     success_url = reverse_lazy("trainings")
 
     def get_object(self):
+        if self.kwargs["date"] < datetime.date.today():
+            raise Http404("Vergangene Trainings können nicht bearbeitet werden.")
         return get_object_or_404(Training, date=self.kwargs["date"])
 
 
@@ -57,6 +59,15 @@ class EmergencyMailView(LoginRequiredMixin, SuccessMessageMixin, generic.UpdateV
     success_message = "Seepolizeimail abgesendet."
 
     def get_object(self):
+        today = datetime.date.today()
+        if self.kwargs["date"] < today:
+            raise Http404(
+                "Seepolizeimail kann nicht für vergangene Trainings versandt werden."
+            )
+        if self.kwargs["date"] > today + datetime.timedelta(days=2):
+            raise Http404(
+                "Seepolizeimail kann höchstens drei Tage im Voraus versandt werden."
+            )
         return get_object_or_404(Training, date=self.kwargs["date"])
 
     def form_valid(self, form):

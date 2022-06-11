@@ -101,18 +101,6 @@ class EmergencyMailForm(forms.ModelForm):
             raise ValidationError("Bitte genau zwei Notfallkontakte ausgewählen.")
         return emergency_contacts
 
-    def clean(self):
-        super().clean()
-        today = datetime.date.today()
-        if self.instance.date < today:
-            raise ValidationError(
-                "Seepolizeimail kann nicht für vergangene Trainings versandt werden."
-            )
-        if self.instance.date > today + datetime.timedelta(days=2):
-            raise ValidationError(
-                "Seepolizeimail kann höchstens drei Tage im Voraus versandt werden."
-            )
-
     def send_mail(self):
         date = self.instance.date.strftime("%A, %d. %B").replace(" 0", " ")
         start = self.Start(int(self.cleaned_data["start"])).label

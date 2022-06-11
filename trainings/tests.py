@@ -503,7 +503,15 @@ class TrainingUpdateViewTests(TestCase):
         self.assertContains(response, self.new_info)
         self.assertContains(response, "alert-warning")
 
-    def test_training_not_found_404(self):
+    def test_cannot_update_past_or_non_existing_trainings_404(self):
+        Training(date=YESTERDAY).save()
+        with self.assertNumQueries(2):
+            response = self.client.get(
+                reverse("update_training", kwargs={"date": YESTERDAY}),
+            )
+        self.assertEqual(response.status_code, 404)
+        self.assertTemplateUsed(response, "404.html")
+
         with self.assertNumQueries(2):
             response = self.client.get(
                 reverse("update_training", kwargs={"date": "2022-13-13"}),
@@ -604,33 +612,6 @@ class EmergencyMailViewTests(TestCase):
         self.assertTemplateUsed(response, "trainings/emergency_mail.html")
         self.assertContains(response, "Bitte eine gültige Auswahl treffen.")
 
-    def test_cannot_send_emergency_mail_for_past_or_far_ahead_trainings(self):
-        with self.assertNumQueries(6):
-            response = self.client.post(
-                reverse("emergency_mail", kwargs={"date": YESTERDAY}),
-                data={"start": "2", "end": "5", "emergency_contacts": ["4", "5"]},
-                follow=True,
-            )
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "trainings/emergency_mail.html")
-        self.assertContains(
-            response,
-            "Seepolizeimail kann nicht für vergangene Trainings versandt werden.",
-        )
-
-        with self.assertNumQueries(6):
-            response = self.client.post(
-                reverse("emergency_mail", kwargs={"date": self.in_a_week}),
-                data={"start": "2", "end": "5", "emergency_contacts": ["6", "7"]},
-                follow=True,
-            )
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "trainings/emergency_mail.html")
-        self.assertContains(
-            response,
-            "Seepolizeimail kann höchstens drei Tage im Voraus versandt werden.",
-        )
-
     def test_exactly_two_emergency_contacts_must_be_selected(self):
         with self.assertNumQueries(6):
             response = self.client.post(
@@ -652,7 +633,16 @@ class EmergencyMailViewTests(TestCase):
         self.assertTemplateUsed(response, "trainings/emergency_mail.html")
         self.assertContains(response, "Bitte genau zwei Notfallkontakte ausgewählen.")
 
-    def test_cannot_send_emergency_mail_for_non_existing_trainings_404(self):
+    def test_cannot_send_emergency_mail_for_past_or_non_existing_trainings_404(self):
+        with self.assertNumQueries(2):
+            response = self.client.post(
+                reverse("emergency_mail", kwargs={"date": YESTERDAY}),
+                data={"start": "2", "end": "5", "emergency_contacts": ["4", "5"]},
+                follow=True,
+            )
+        self.assertEqual(response.status_code, 404)
+        self.assertTemplateUsed(response, "404.html")
+
         with self.assertNumQueries(2):
             response = self.client.get(
                 reverse("emergency_mail", kwargs={"date": "2022-13-13"})
@@ -663,6 +653,16 @@ class EmergencyMailViewTests(TestCase):
         with self.assertNumQueries(3):
             response = self.client.get(
                 reverse("emergency_mail", kwargs={"date": TOMORROW})
+            )
+        self.assertEqual(response.status_code, 404)
+        self.assertTemplateUsed(response, "404.html")
+
+    def test_cannot_send_emergency_mail_for_trainings_far_ahead_404(self):
+        with self.assertNumQueries(2):
+            response = self.client.post(
+                reverse("emergency_mail", kwargs={"date": self.in_a_week}),
+                data={"start": "2", "end": "5", "emergency_contacts": ["6", "7"]},
+                follow=True,
             )
         self.assertEqual(response.status_code, 404)
         self.assertTemplateUsed(response, "404.html")
@@ -880,22 +880,6 @@ class SignupUpdateViewTests(TestCase):
         self.assertContains(response, "Updated comment")
         self.assertEqual(self.signup.comment, "Updated comment")
 
-    def test_cannot_update_past_signup(self):
-        training = Training.objects.create(date=YESTERDAY)
-        signup = Signup.objects.create(pilot=self.pilot, training=training)
-
-        with self.assertNumQueries(2):
-            response = self.client.post(
-                reverse("update_signup", kwargs={"date": YESTERDAY}),
-                data={"for_time": self.signup.for_time, "comment": "Updated comment"},
-                follow=True,
-            )
-        self.assertEqual(response.status_code, 404)
-        self.assertTemplateUsed(response, "404.html")
-        self.assertContains(response, "alert-danger", status_code=404)
-        signup.refresh_from_db()
-        self.assertNotEqual(signup.comment, "New comment")
-
     def test_cancel_and_resignup_from_trainings_list(self):
         with self.assertNumQueries(6):
             response = self.client.get(reverse("trainings"))
@@ -1087,7 +1071,18 @@ class SignupUpdateViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
 
-    def test_signup_not_found_404(self):
+    def test_cannot_update_past_or_non_existent_signup_404(self):
+        training = Training.objects.create(date=YESTERDAY)
+        Signup(pilot=self.pilot, training=training).save()
+        with self.assertNumQueries(2):
+            response = self.client.post(
+                reverse("update_signup", kwargs={"date": YESTERDAY}),
+                data={"for_time": self.signup.for_time, "comment": "Updated comment"},
+                follow=True,
+            )
+        self.assertEqual(response.status_code, 404)
+        self.assertTemplateUsed(response, "404.html")
+
         with self.assertNumQueries(2):
             response = self.client.get(
                 reverse("update_signup", kwargs={"date": "2022-13-13"})
