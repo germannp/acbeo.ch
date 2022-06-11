@@ -51,6 +51,11 @@ class TrainingCreateForm(forms.Form):
         if first_day > last_day:
             raise ValidationError("Der erste Tag muss vor dem Letzten liegen.")
 
+        if last_day - first_day > datetime.timedelta(days=31):
+            raise ValidationError(
+                "Es können höchstens 31 Trainings auf einmal erstellt werden."
+            )
+
     def create_trainings(self):
         day = self.cleaned_data["first_day"]
         while day <= self.cleaned_data["last_day"]:

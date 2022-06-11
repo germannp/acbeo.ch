@@ -276,6 +276,24 @@ class TrainingCreateViewTests(TestCase):
         self.assertContains(response, "alert-warning")
         self.assertEqual(0, len(Training.objects.all()))
 
+    def test_cannot_create_more_than_31_trainings(self):
+        with self.assertNumQueries(2):
+            response = self.client.post(
+                reverse("create_trainings"),
+                data={
+                    "first_day": TODAY,
+                    "last_day": TODAY + timedelta(days=32),
+                    "info": "Info",
+                    "max_pilots": 11,
+                    "priority_date": TODAY,
+                },
+                follow=True,
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/create_trainings.html")
+        self.assertContains(response, "alert-warning")
+        self.assertEqual(0, len(Training.objects.all()))
+
     def test_last_day_must_be_after_first_day(self):
         with self.assertNumQueries(2):
             response = self.client.post(
