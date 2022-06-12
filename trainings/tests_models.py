@@ -1,5 +1,5 @@
-from datetime import date, timedelta
-from time import sleep
+from datetime import date, datetime, timedelta
+from unittest import mock
 
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -97,60 +97,72 @@ class SignupTests(TestCase):
             pilot=pilot, training=training, status=Signup.Status.Selected
         )
         self.time_selected = self.signup.signed_up_on
-        sleep(0.001)
 
-    def test_resignup_sets_to_waiting_list(self):
+    @mock.patch("trainings.models.datetime")
+    def test_resignup_sets_to_waiting_list(self, mocked_datetime):
+        mocked_datetime.now.return_value = datetime.now()
         self.assertEqual(self.signup.status, Signup.Status.Selected)
 
+        mocked_datetime.now.return_value += timedelta(seconds=10)
         self.signup.cancel()
         time_of_cancelation = self.signup.signed_up_on
         self.assertEqual(self.time_selected, time_of_cancelation)
         self.assertEqual(self.signup.status, Signup.Status.Canceled)
 
-        sleep(0.001)
+        mocked_datetime.now.return_value += timedelta(seconds=10)
         self.signup.resignup()
         self.assertLess(time_of_cancelation, self.signup.signed_up_on)
         self.assertEqual(self.signup.status, Signup.Status.Waiting)
 
-    def test_update_is_certain_sets_to_waiting_list_and_removes_priority(self):
+    @mock.patch("trainings.models.datetime")
+    def test_update_is_certain_sets_to_waiting_list_and_removes_priority(
+        self, mocked_datetime
+    ):
+        mocked_datetime.now.return_value = datetime.now()
         self.assertEqual(self.signup.status, Signup.Status.Selected)
         self.assertTrue(self.signup.has_priority())
 
+        mocked_datetime.now.return_value += timedelta(seconds=10)
         self.signup.update_is_certain(False)
         time_of_update_to_uncertain = self.signup.signed_up_on
         self.assertLess(self.time_selected, time_of_update_to_uncertain)
         self.assertEqual(self.signup.status, Signup.Status.Waiting)
         self.assertFalse(self.signup.has_priority())
 
-        sleep(0.001)
+        mocked_datetime.now.return_value += timedelta(seconds=10)
         self.signup.update_is_certain(True)
         self.assertEqual(time_of_update_to_uncertain, self.signup.signed_up_on)
         self.assertEqual(self.signup.status, Signup.Status.Waiting)
         self.assertTrue(self.signup.has_priority())
 
-    def test_update_for_time_sets_to_waiting_list_and_removes_priority(self):
+    @mock.patch("trainings.models.datetime")
+    def test_update_for_time_sets_to_waiting_list_and_removes_priority(
+        self, mocked_datetime
+    ):
+        mocked_datetime.now.return_value = datetime.now()
         self.assertEqual(self.signup.status, Signup.Status.Selected)
         self.assertTrue(self.signup.has_priority())
 
+        mocked_datetime.now.return_value += timedelta(seconds=10)
         self.signup.update_for_time(Signup.Time.ArriveLate)
         time_of_update_to_arrive_late = self.signup.signed_up_on
         self.assertLess(self.time_selected, time_of_update_to_arrive_late)
         self.assertEqual(self.signup.status, Signup.Status.Waiting)
         self.assertFalse(self.signup.has_priority())
 
-        sleep(0.001)
+        mocked_datetime.now.return_value += timedelta(seconds=10)
         self.signup.update_for_time(Signup.Time.LeaveEarly)
         self.assertEqual(time_of_update_to_arrive_late, self.signup.signed_up_on)
         self.assertEqual(self.signup.status, Signup.Status.Waiting)
         self.assertFalse(self.signup.has_priority())
 
-        sleep(0.001)
+        mocked_datetime.now.return_value += timedelta(seconds=10)
         self.signup.update_for_time(Signup.Time.Individually)
         self.assertEqual(time_of_update_to_arrive_late, self.signup.signed_up_on)
         self.assertEqual(self.signup.status, Signup.Status.Waiting)
         self.assertFalse(self.signup.has_priority())
 
-        sleep(0.001)
+        mocked_datetime.now.return_value += timedelta(seconds=10)
         self.signup.update_for_time(Signup.Time.WholeDay)
         self.assertEqual(time_of_update_to_arrive_late, self.signup.signed_up_on)
         self.assertEqual(self.signup.status, Signup.Status.Waiting)
