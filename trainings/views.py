@@ -51,6 +51,14 @@ class TrainingUpdateView(LoginRequiredMixin, generic.UpdateView):
             raise Http404("Vergangene Trainings können nicht bearbeitet werden.")
         return get_object_or_404(Training, date=self.kwargs["date"])
 
+    def get_success_url(self):
+        success_url = reverse_lazy("trainings")
+        if page := self.request.GET.get("page"):
+            success_url += f"?page={page}"
+        if training := self.request.GET.get("training"):
+            success_url += f"#training_{training}"
+        return success_url
+
 
 class EmergencyMailView(LoginRequiredMixin, SuccessMessageMixin, generic.UpdateView):
     form_class = forms.EmergencyMailForm
@@ -134,11 +142,24 @@ class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateVi
         form.instance.pilot = pilot
         form.instance.training = training
         return super().form_valid(form)
+    
+    def get_cancel_url(self):
+        cancel_url = reverse_lazy("trainings")
+        if page := self.request.GET.get("page"):
+            cancel_url += f"?page={page}"
+        if training := self.request.GET.get("training"):
+            cancel_url += f"#training_{training}"
+        return cancel_url
 
     def get_success_url(self):
         self.success_message = f"Eingeschrieben für {self.date}."
         next_day = self.date + datetime.timedelta(days=1)
-        return reverse_lazy("signup", kwargs={"date": next_day})
+        success_url = reverse_lazy("signup", kwargs={"date": next_day})
+        if page := self.request.GET.get("page"):
+            success_url += f"?page={page}"
+        if training := self.request.GET.get("training"):
+            success_url += f"&training={training}"
+        return success_url
 
 
 class SignupUpdateView(LoginRequiredMixin, generic.UpdateView):
@@ -158,7 +179,12 @@ class SignupUpdateView(LoginRequiredMixin, generic.UpdateView):
         return signup
 
     def get_success_url(self):
-        next = self.request.GET.get("next")
-        if next == reverse_lazy("my_signups"):
-            return next
-        return reverse_lazy("trainings")
+        if (success_url := self.request.GET.get("next")) == reverse_lazy("my_signups"):
+            return success_url
+
+        success_url = reverse_lazy("trainings")
+        if page := self.request.GET.get("page"):
+            success_url += f"?page={page}"
+        if training := self.request.GET.get("training"):
+            success_url += f"#training_{training}"
+        return success_url

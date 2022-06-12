@@ -447,6 +447,18 @@ class TrainingListViewTests(TestCase):
         with self.assertNumQueries(6):
             response = self.client.get(reverse("trainings"))
         self.assertContains(response, "disabled")
+    
+    def test_page_and_training_are_in_next_urls_of_update_buttons(self):
+        for i in range(3, 10):
+            training = Training.objects.create(date=TOMORROW + timedelta(days=i))
+            Signup(pilot=self.pilot_a, training=training).save()
+        
+        with self.assertNumQueries(14):
+            response = self.client.get(reverse("trainings") + "?page=2")
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertContains(response, "trainings/&page=2&training=1")
+        self.assertContains(response, "ansagen/?page=2&training=1")
 
 
 class TrainingUpdateViewTests(TestCase):
@@ -543,6 +555,15 @@ class TrainingUpdateViewTests(TestCase):
             )
         self.assertEqual(response.status_code, 404)
         self.assertTemplateUsed(response, "404.html")
+
+    def test_next_urls(self):
+        response = self.client.get(
+            reverse("update_training", kwargs={"date": TODAY})
+            + f"?next={reverse('trainings')}&page=2&training=3",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/update_training.html")
+        self.assertContains(response, reverse("trainings") + "?page=2#training_3")
 
 
 class EmergencyMailViewTests(TestCase):
@@ -764,7 +785,9 @@ class SignupCreateViewTests(TestCase):
         self.assertEqual(self.next_saturday.strftime("%A"), "Samstag")
 
     @mock.patch("trainings.views.datetime.date")
-    def test_default_date_is_next_saturday(self, mocked_date):
+    @mock.patch("trainings.views.reverse_lazy")
+    def test_default_date_is_next_saturday(self, mocked_reverse, mocked_date):
+        mocked_reverse.return_value = ""
         mocked_date.today.return_value = self.monday
         with self.assertNumQueries(2):
             response = self.client.get(reverse("signup"))
@@ -806,18 +829,6 @@ class SignupCreateViewTests(TestCase):
             self.assertLessEqual(
                 training.date - training.priority_date, timedelta(days=7)
             )
-
-    def test_successive_signups(self):
-        with self.assertNumQueries(8):
-            response = self.client.post(
-                reverse("signup"),
-                data={"date": TODAY, "for_time": Signup.Time.WholeDay},
-                follow=True,
-            )
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "trainings/signup.html")
-        self.assertContains(response, TOMORROW.isoformat())
-        self.assertEqual(1, len(Signup.objects.all()))
 
     def test_cannot_signup_twice(self):
         with self.assertNumQueries(6):
@@ -861,6 +872,26 @@ class SignupCreateViewTests(TestCase):
             )
         self.assertEqual(response.status_code, 404)
         self.assertTemplateUsed(response, "404.html")
+
+    def test_next_urls(self):
+        response = self.client.get(
+            reverse("signup", kwargs={"date": TODAY})
+            + f"?page=2&training=3",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/signup.html")
+        self.assertContains(response, reverse("trainings") + "?page=2#training_3")
+
+        with self.assertNumQueries(8):
+            response = self.client.post(
+                reverse("signup"),
+                data={"date": TODAY, "for_time": Signup.Time.WholeDay},
+                follow=True,
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/signup.html")
+        self.assertContains(response, TOMORROW.isoformat())
+        self.assertEqual(1, len(Signup.objects.all()))
 
 
 class SignupUpdateViewTests(TestCase):
@@ -1055,30 +1086,13 @@ class SignupUpdateViewTests(TestCase):
         self.assertContains(response, "bi-sun")
 
     def test_next_urls(self):
-        trainings_url = reverse("trainings")
-        my_signups_url = reverse("my_signups")
-
-        with self.assertNumQueries(6):
-            response = self.client.get(trainings_url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "trainings/list_trainings.html")
-        self.assertNotContains(
-            response,
+        response = self.client.get(
             reverse("update_signup", kwargs={"date": TODAY})
-            + "?next="
-            + my_signups_url,
+            + f"?next={reverse('trainings')}&page=2&training=3",
         )
-
-        with self.assertNumQueries(5):
-            response = self.client.get(my_signups_url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "trainings/list_signups.html")
-        self.assertContains(
-            response,
-            reverse("update_signup", kwargs={"date": TODAY})
-            + "?next="
-            + my_signups_url,
-        )
+        self.assertTemplateUsed(response, "trainings/update_signup.html")
+        self.assertContains(response, reverse("trainings") + "?page=2#training_3")
 
         response = self.client.post(
             reverse("update_signup", kwargs={"date": TODAY})
