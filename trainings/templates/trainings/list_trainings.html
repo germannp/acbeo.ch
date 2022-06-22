@@ -86,7 +86,7 @@
                     </table>
                 </div>
                 {% if not request.user in training.pilots %}
-                <a href="{% url 'signup' date=training.date.isoformat %}" class="btn btn-secondary">Einschreiben</a>
+                <a href="{% url 'signup' date=training.date.isoformat %}" class="btn btn-secondary mt-3">Einschreiben</a>
                 {% endif %}
             </div>
         </div>
