@@ -39,13 +39,13 @@ class TrainingListViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
         self.assertNotContains(
-            response, YESTERDAY.strftime("%A, %d. %B %Y").replace(" 0", " ")
+            response, YESTERDAY.strftime("%A, %d. %B").replace(" 0", " ")
         )
         self.assertContains(
-            response, TODAY.strftime("%A, %d. %B %Y").replace(" 0", " ")
+            response, TODAY.strftime("%A, %d. %B").replace(" 0", " ")
         )
         self.assertContains(
-            response, TOMORROW.strftime("%A, %d. %B %Y").replace(" 0", " ")
+            response, TOMORROW.strftime("%A, %d. %B").replace(" 0", " ")
         )
 
     def test_showing_either_signup_or_update_button(self):
@@ -53,12 +53,6 @@ class TrainingListViewTests(TestCase):
             response = self.client.get(reverse("trainings"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
-        self.assertContains(
-            response, TODAY.strftime("%A, %d. %B %Y").replace(" 0", " ")
-        )
-        self.assertContains(
-            response, TOMORROW.strftime("%A, %d. %B %Y").replace(" 0", " ")
-        )
         self.assertContains(response, reverse("update_signup", kwargs={"date": TODAY}))
         self.assertNotContains(response, reverse("signup", kwargs={"date": TODAY}))
         self.assertContains(response, reverse("signup", kwargs={"date": TOMORROW}))
@@ -68,12 +62,6 @@ class TrainingListViewTests(TestCase):
             response = self.client.get(reverse("trainings"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
-        self.assertContains(
-            response, TODAY.strftime("%A, %d. %B %Y").replace(" 0", " ")
-        )
-        self.assertContains(
-            response, TOMORROW.strftime("%A, %d. %B %Y").replace(" 0", " ")
-        )
         self.assertContains(response, reverse("signup", kwargs={"date": TODAY}))
         self.assertContains(
             response, reverse("update_signup", kwargs={"date": TOMORROW})

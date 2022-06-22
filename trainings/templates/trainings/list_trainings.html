@@ -11,7 +11,7 @@
     <div class="col left">
         {% for training in trainings %}
         <div class="card mb-4" id="training_{{ forloop.counter }}">
-            <h5 class="card-header">{{ training.date | date:"l, j. E Y" }} <a
+            <h5 class="card-header">{{ training.date | date:"l, j. E" }} <a
                     href="{% url 'update_training' date=training.date.isoformat %}{% if is_paginated %}?page={{ page_obj.number }}{% endif %}&training={{ forloop.counter }}"
                     class="btn btn-primary btn-sm bi bi-pencil-square"></a>
                 {% if training.date <= day_after_tomorrow %}
