@@ -98,12 +98,12 @@
                         </div>
                         <div class="d-grid gap-1 d-sm-block">
                             <button class="btn btn-primary" type="submit" name="save">Speichern</button>
-                            <a href="{{ view.get_success_url }}" class="btn btn-primary">Abbrechen</a>
                             {% if form.instance.get_status_display != 'Canceled' %}
-                                <button class="btn btn-danger" type="submit" name="cancel">Abmelden</button>
+                            <button class="btn btn-danger" type="submit" name="cancel">Abmelden</button>
                             {% else %}
-                                <button class="btn btn-success" type="submit" name="resignup">Wieder anmelden</button>
+                            <button class="btn btn-success" type="submit" name="resignup">Wieder anmelden</button>
                             {% endif %}
+                            <a href="{{ view.get_success_url }}" class="btn btn-outline-dark">Abbrechen</a>
                             <input type="hidden" name="next" value="{{ next }}">
                         </div>
                     </form>
