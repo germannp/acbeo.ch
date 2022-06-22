@@ -10,9 +10,9 @@
 
     <div class="col left">
         {% for training in trainings %}
-        <div class="card mb-4">
+        <div class="card mb-4" id="training_{{ forloop.counter }}">
             <h5 class="card-header">{{ training.date | date:"l, j. E Y" }} <a
-                    href="{% url 'update_training' date=training.date.isoformat %}"
+                    href="{% url 'update_training' date=training.date.isoformat %}{% if is_paginated %}?page={{ page_obj.number }}{% endif %}&training={{ forloop.counter }}"
                     class="btn btn-primary btn-sm bi bi-pencil-square"></a>
                 {% if training.date <= day_after_tomorrow %}
                 <a href="{% url 'emergency_mail' date=training.date.isoformat %}"
@@ -44,7 +44,7 @@
                                 <td>{{ forloop.counter }}</td>
                                 <td>{{ signup.pilot.first_name }} {{ signup.pilot.last_name }}
                                     {% if signup.pilot == request.user %}
-                                    <a href="{% url 'update_signup' date=training.date.isoformat %}"
+                                    <a href="{% url 'update_signup' date=training.date.isoformat %}?next={% url 'trainings' %}{% if is_paginated %}&page={{ page_obj.number }}{% endif %}&training={{ forloop.parentloop.counter }}"
                                         class="btn btn-primary btn-sm bi bi-pencil-square" />
                                     {% endif %}
                                 </td>
@@ -86,7 +86,8 @@
                     </table>
                 </div>
                 {% if not request.user in training.pilots %}
-                <a href="{% url 'signup' date=training.date.isoformat %}" class="btn btn-secondary mt-3">Einschreiben</a>
+                <a href="{% url 'signup' date=training.date.isoformat %}?{% if is_paginated %}&page={{ page_obj.number }}{% endif %}&training={{ forloop.counter }}"
+                    class="btn btn-secondary mt-3">Einschreiben</a>
                 {% endif %}
             </div>
         </div>

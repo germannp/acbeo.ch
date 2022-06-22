@@ -51,6 +51,11 @@ class TrainingCreateForm(forms.Form):
         if first_day > last_day:
             raise ValidationError("Der erste Tag muss vor dem Letzten liegen.")
 
+        if last_day - first_day > datetime.timedelta(days=31):
+            raise ValidationError(
+                "Es können höchstens 31 Trainings auf einmal erstellt werden."
+            )
+
     def create_trainings(self):
         day = self.cleaned_data["first_day"]
         while day <= self.cleaned_data["last_day"]:
@@ -100,18 +105,6 @@ class EmergencyMailForm(forms.ModelForm):
         if len(emergency_contacts) != 2:
             raise ValidationError("Bitte genau zwei Notfallkontakte ausgewählen.")
         return emergency_contacts
-
-    def clean(self):
-        super().clean()
-        today = datetime.date.today()
-        if self.instance.date < today:
-            raise ValidationError(
-                "Seepolizeimail kann nicht für vergangene Trainings versandt werden."
-            )
-        if self.instance.date > today + datetime.timedelta(days=2):
-            raise ValidationError(
-                "Seepolizeimail kann höchstens drei Tage im Voraus versandt werden."
-            )
 
     def send_mail(self):
         date = self.instance.date.strftime("%A, %d. %B").replace(" 0", " ")

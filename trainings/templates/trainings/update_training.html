@@ -62,8 +62,7 @@
                             </ul>
                         </div>
                     </div>
-                    <input type="hidden" name="next" value="{{ next }}">
-                    <a href="{% url 'trainings' %}" class="btn btn-outline-dark">Abbrechen</a>
+                    <a href="{{ view.get_success_url }}" class="btn btn-outline-dark">Abbrechen</a>
                 </form>
             </main>
         </div>
