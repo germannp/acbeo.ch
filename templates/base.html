@@ -25,7 +25,7 @@
         integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2"
         crossorigin="anonymous"></script>
 
-    <header class="p-3 mb-4 bg-primary text-white">
+    <header class="py-3 mb-4 bg-primary text-white">
         <div class="container">
             <h1>{% block headline %} {% endblock headline %}</h1>
         </div>
@@ -33,11 +33,11 @@
 
     <main class="container mb-3 pb-5">
 
+        {% if messages %}
         <div class="col">
-            {% if messages %}
             {% for message in messages %}<div class="alert my-4 alert-success">{{ message }}</div>{% endfor %}
-            {% endif %}
         </div>
+            {% endif %}
 
         {% block content %} {% endblock content %}
 
