@@ -1,7 +1,7 @@
 from datetime import date, datetime, timedelta
 from unittest import mock
 
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 
 from .models import Training, Signup
@@ -14,8 +14,8 @@ TOMORROW = TODAY + timedelta(days=1)
 
 class TrainingTests(TestCase):
     def setUp(self):
-        pilot_a = User.objects.create(username="Pilot A")
-        pilot_b = User.objects.create(username="Pilot B")
+        pilot_a = get_user_model().objects.create(email="pilot_a@example.com")
+        pilot_b = get_user_model().objects.create(email="pilot_b@example.com")
         self.training = Training.objects.create(date=TOMORROW, max_pilots=1)
         self.signup_a = Signup.objects.create(pilot=pilot_a, training=self.training)
         self.signup_b = Signup.objects.create(pilot=pilot_b, training=self.training)
@@ -91,7 +91,7 @@ class TrainingTests(TestCase):
 
 class SignupTests(TestCase):
     def setUp(self):
-        pilot = User.objects.create(username="Pilot")
+        pilot = get_user_model().objects.create(email="pilot@example.com")
         training = Training.objects.create(date=TOMORROW, priority_date=TOMORROW)
         self.signup = Signup.objects.create(
             pilot=pilot, training=training, status=Signup.Status.Selected

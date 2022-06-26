@@ -55,6 +55,7 @@ ROOT_URLCONF = "acbeo.urls"
 
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "/"
+AUTH_USER_MODEL = "news.Pilot"
 
 TEMPLATES = [
     {

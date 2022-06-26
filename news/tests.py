@@ -1,7 +1,8 @@
-from django.contrib.auth.models import User
 from django.core import mail
 from django.test import TestCase
 from django.urls import reverse
+
+from .models import Pilot
 
 
 class PostDetailTests(TestCase):
@@ -44,21 +45,21 @@ class ContactFormTests(TestCase):
         self.assertEqual(mail.outbox[0].body, self.email_data["message"])
 
 
-class UserCreationTests(TestCase):
-    user_data = {
-        "username": "John",
+class PilotCreationTests(TestCase):
+    pilot_data = {
         "email": "test@mail.com",
         "first_name": "John",
         "last_name": "Doe",
+        "phone": "079 123 45 67",
         "password1": "qhTJ]?QZ.F}v5(nA",
         "password2": "qhTJ]?QZ.F}v5(nA",
     }
 
     def test_required_fields(self):
-        for required_field in self.user_data.keys():
+        for required_field in self.pilot_data.keys():
             partial_data = {
                 key: value
-                for key, value in self.user_data.items()
+                for key, value in self.pilot_data.items()
                 if key != required_field
             }
             response = self.client.post(
@@ -66,27 +67,26 @@ class UserCreationTests(TestCase):
             )
             self.assertEqual(response.status_code, 200)
             self.assertTemplateUsed(response, "news/register.html")
-            self.assertEqual(0, len(User.objects.all()))
+            self.assertEqual(0, len(Pilot.objects.all()))
         response = self.client.post(
-            reverse("register"), data=self.user_data, follow=True
+            reverse("register"), data=self.pilot_data, follow=True
         )
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "news/login.html")
-        self.assertEqual(1, len(User.objects.all()))
+        self.assertEqual(1, len(Pilot.objects.all()))
 
-    def test_username_and_email_must_be_unique(self):
+    def test_email_must_be_unique(self):
         response = self.client.post(
-            reverse("register"), data=self.user_data, follow=True
+            reverse("register"), data=self.pilot_data, follow=True
         )
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "news/login.html")
-        self.assertEqual(1, len(User.objects.all()))
+        self.assertEqual(1, len(Pilot.objects.all()))
 
         response = self.client.post(
-            reverse("register"), data=self.user_data, follow=True
+            reverse("register"), data=self.pilot_data, follow=True
         )
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "news/register.html")
-        self.assertContains(response, "Ein Konto mit dieser Email existiert bereits.")
-        self.assertContains(response, "Dieser Benutzername ist bereits vergeben.")
-        self.assertEqual(1, len(User.objects.all()))
+        self.assertContains(response, "Pilot mit diesem Email existiert bereits.")
+        self.assertEqual(1, len(Pilot.objects.all()))

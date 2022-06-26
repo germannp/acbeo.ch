@@ -3,7 +3,7 @@ from datetime import date, timedelta
 import locale
 from unittest import mock
 
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
@@ -18,13 +18,13 @@ TOMORROW = TODAY + timedelta(days=1)
 
 class SingupListViewTests(TestCase):
     def setUp(self):
-        self.pilot_a = User.objects.create(username="Pilot A")
+        self.pilot_a = get_user_model().objects.create(email="pilot_a@example.com")
         todays_training = Training.objects.create(date=TODAY)
         self.signup = Signup.objects.create(
             pilot=self.pilot_a, training=todays_training
         )
 
-        self.pilot_b = User.objects.create(username="Pilot B")
+        self.pilot_b = get_user_model().objects.create(email="pilot_b@example.com")
         tomorrows_training = Training.objects.create(date=TOMORROW)
         Signup(pilot=self.pilot_b, training=tomorrows_training).save()
         yesterdays_training = Training.objects.create(date=YESTERDAY)
@@ -79,7 +79,7 @@ class SingupListViewTests(TestCase):
 
 class SignupCreateViewTests(TestCase):
     def setUp(self):
-        self.pilot = User.objects.create(username="Pilot")
+        self.pilot = get_user_model().objects.create(email="pilot@example.com")
         self.client.force_login(self.pilot)
 
         self.monday = date(2007, 1, 1)
@@ -205,7 +205,7 @@ class SignupCreateViewTests(TestCase):
 
 class SignupUpdateViewTests(TestCase):
     def setUp(self):
-        self.pilot = User.objects.create(username="Pilot")
+        self.pilot = get_user_model().objects.create(email="pilot@example.com")
         self.client.force_login(self.pilot)
         training = Training.objects.create(date=TODAY)
         self.signup = Signup.objects.create(

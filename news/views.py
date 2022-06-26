@@ -2,7 +2,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.urls import reverse_lazy
 from django.views import generic
 
-from .forms import ContactForm, UserCreationForm
+from .forms import ContactForm, PilotCreationForm
 from .models import Post
 
 
@@ -29,8 +29,8 @@ class ContactFormView(SuccessMessageMixin, generic.FormView):
         return super().form_valid(form)
 
 
-class UserCreateView(SuccessMessageMixin, generic.CreateView):
-    form_class = UserCreationForm
+class PilotCreateView(SuccessMessageMixin, generic.CreateView):
+    form_class = PilotCreationForm
     template_name = "news/register.html"
     success_url = reverse_lazy("login")
     success_message = "Konto angelegt."

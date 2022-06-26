@@ -1,6 +1,6 @@
 from datetime import date, datetime
 
-from django.contrib.auth.models import User
+from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.utils.timezone import make_aware
@@ -15,10 +15,12 @@ class Training(models.Model):
         null=False,
         validators=[MinValueValidator(6), MaxValueValidator(21)],
     )
-    priority_date = models.DateField(default=datetime.fromisoformat("2010-04-09").date())
+    priority_date = models.DateField(
+        default=datetime.fromisoformat("2010-04-09").date()
+    )
     info = models.CharField(max_length=300, default="", blank=True)
     emergency_mail_sender = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_DEFAULT,
         default=None,
         blank=True,
@@ -48,7 +50,9 @@ class Signup(models.Model):
     Status = models.IntegerChoices("Status", "Selected Waiting Canceled")
     Time = models.IntegerChoices("Time", "WholeDay ArriveLate LeaveEarly Individually")
 
-    pilot = models.ForeignKey(User, on_delete=models.CASCADE, related_name="signups")
+    pilot = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="signups"
+    )
     training = models.ForeignKey(
         Training, on_delete=models.CASCADE, related_name="signups"
     )
@@ -65,7 +69,7 @@ class Signup(models.Model):
 
     def __str__(self):
         return f"{self.pilot} for {self.training}"
-    
+
     def has_priority(self):
         return self.is_certain and self.for_time == self.Time.WholeDay
 

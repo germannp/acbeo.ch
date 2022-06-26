@@ -2,7 +2,7 @@ from datetime import date, timedelta
 import locale
 from unittest import mock
 
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.core import mail
 from django.test import TestCase
 from django.urls import reverse
@@ -18,8 +18,8 @@ TOMORROW = TODAY + timedelta(days=1)
 
 class TrainingListViewTests(TestCase):
     def setUp(self):
-        self.pilot_a = User.objects.create(username="Pilot A")
-        self.pilot_b = User.objects.create(username="Pilot B")
+        self.pilot_a = get_user_model().objects.create(email="pilot_a@example.com")
+        self.pilot_b = get_user_model().objects.create(email="pilot_b@example.com")
         self.client.force_login(self.pilot_a)
 
         Training(date=YESTERDAY).save()
@@ -41,9 +41,7 @@ class TrainingListViewTests(TestCase):
         self.assertNotContains(
             response, YESTERDAY.strftime("%A, %d. %B").replace(" 0", " ")
         )
-        self.assertContains(
-            response, TODAY.strftime("%A, %d. %B").replace(" 0", " ")
-        )
+        self.assertContains(response, TODAY.strftime("%A, %d. %B").replace(" 0", " "))
         self.assertContains(
             response, TOMORROW.strftime("%A, %d. %B").replace(" 0", " ")
         )
@@ -106,12 +104,12 @@ class TrainingListViewTests(TestCase):
         with self.assertNumQueries(6):
             response = self.client.get(reverse("trainings"))
         self.assertContains(response, "disabled")
-    
+
     def test_page_and_training_are_in_next_urls_of_update_buttons(self):
         for i in range(3, 10):
             training = Training.objects.create(date=TOMORROW + timedelta(days=i))
             Signup(pilot=self.pilot_a, training=training).save()
-        
+
         with self.assertNumQueries(14):
             response = self.client.get(reverse("trainings") + "?page=2")
         self.assertEqual(response.status_code, 200)
@@ -122,7 +120,7 @@ class TrainingListViewTests(TestCase):
 
 class TrainingCreateViewTests(TestCase):
     def setUp(self):
-        self.pilot = User.objects.create(username="Pilot")
+        self.pilot = get_user_model().objects.create(email="pilot@example.com")
         self.client.force_login(self.pilot)
 
     @mock.patch("trainings.forms.datetime.date", wraps=date)
@@ -280,7 +278,7 @@ class TrainingCreateViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/create_trainings.html")
         self.assertContains(response, "alert-warning")
-    
+
     def test_cannot_create_trainings_for_non_existent_date(self):
         with self.assertNumQueries(2):
             response = self.client.post(
@@ -295,7 +293,7 @@ class TrainingCreateViewTests(TestCase):
 
 class TrainingUpdateViewTests(TestCase):
     def setUp(self):
-        self.pilot = User.objects.create(username="Pilot")
+        self.pilot = get_user_model().objects.create(email="pilot@example.com")
         self.client.force_login(self.pilot)
         self.training = Training.objects.create(date=TODAY)
 
@@ -400,12 +398,16 @@ class TrainingUpdateViewTests(TestCase):
 
 class EmergencyMailViewTests(TestCase):
     def setUp(self):
-        self.pilot_a = User.objects.create(
-            username="Pilot A", first_name="Name A", email="sender@example.com"
+        self.pilot_a = get_user_model().objects.create(
+            email="sender@example.com", first_name="Name A"
         )
         self.client.force_login(self.pilot_a)
-        self.pilot_b = User.objects.create(username="Pilot B", first_name="Name B")
-        self.pilot_c = User.objects.create(username="Pilot C", first_name="Name C")
+        self.pilot_b = get_user_model().objects.create(
+            email="pilot_b@example.com", first_name="Name B"
+        )
+        self.pilot_c = get_user_model().objects.create(
+            email="pilot_c@example.com", first_name="Name C"
+        )
 
         self.todays_training = Training.objects.create(date=TODAY)
         self.signup_a_today = Signup.objects.create(
