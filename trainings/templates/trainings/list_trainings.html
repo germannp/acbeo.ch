@@ -11,13 +11,14 @@
     <div class="col left">
         {% for training in trainings %}
         <div class="card mb-4" id="training_{{ forloop.counter }}">
-            <h5 class="card-header">{{ training.date | date:"l, j. E" }} <a
-                    href="{% url 'update_training' date=training.date.isoformat %}?page={{ page_obj.number }}&training={{ forloop.counter }}"
+            <h5 class="card-header">{{ training.date | date:"l, j. E" }} 
+                {% if request.user.is_orga %}
+                <a href="{% url 'update_training' date=training.date.isoformat %}?page={{ page_obj.number }}&training={{ forloop.counter }}"
                     class="btn btn-primary btn-sm bi bi-pencil-square"></a>
-                {% if training.date <= day_after_tomorrow %}
-                <a href="{% url 'emergency_mail' date=training.date.isoformat %}"
-                    class="btn btn-primary btn-sm {% if training.emergency_mail_sender %}disabled{% endif %}">
-                    Seepolizeimail</a>
+                    {% if training.date <= day_after_tomorrow %}
+                    <a href="{% url 'emergency_mail' date=training.date.isoformat %}"
+                        class="btn btn-danger btn-sm bi bi-envelope-exclamation {% if training.emergency_mail_sender %}disabled{% endif %}"></a>
+                    {% endif %}
                 {% endif %}
             </h5>
             <div class="card-body">
@@ -31,7 +32,7 @@
                                 <th scope="col">#</th>
                                 <th class="col-xl-2 col-lg-3 col-sm-4 col-xs-8" scope="col">Pilot·in</th>
                                 <th scope="col">Status</th>
-                                <th scope="col">Eingeschrieben seit</th>
+                                <th scope="col">Einschreibedatum</th>
                                 <th scope="col">Verbindlichkeit</th>
                                 <th scope="col">Zeitplan</th>
                                 <th scope="col">Wetterwunsch</th>

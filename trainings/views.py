@@ -1,6 +1,6 @@
 import datetime
 
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.http import Http404
 from django.shortcuts import get_object_or_404
@@ -31,7 +31,12 @@ class TrainingListView(LoginRequiredMixin, generic.ListView):
         return context
 
 
-class TrainingCreateView(LoginRequiredMixin, generic.FormView):
+class OrgaRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
+    def test_func(self):
+        return self.request.user.is_orga
+
+
+class TrainingCreateView(OrgaRequiredMixin, generic.FormView):
     form_class = forms.TrainingCreateForm
     template_name = "trainings/create_trainings.html"
     success_url = reverse_lazy("trainings")
@@ -41,7 +46,7 @@ class TrainingCreateView(LoginRequiredMixin, generic.FormView):
         return super().form_valid(form)
 
 
-class TrainingUpdateView(LoginRequiredMixin, generic.UpdateView):
+class TrainingUpdateView(OrgaRequiredMixin, generic.UpdateView):
     form_class = forms.TrainingUpdateForm
     template_name = "trainings/update_training.html"
     success_url = reverse_lazy("trainings")
@@ -60,7 +65,7 @@ class TrainingUpdateView(LoginRequiredMixin, generic.UpdateView):
         return success_url
 
 
-class EmergencyMailView(LoginRequiredMixin, SuccessMessageMixin, generic.UpdateView):
+class EmergencyMailView(OrgaRequiredMixin, SuccessMessageMixin, generic.UpdateView):
     form_class = forms.EmergencyMailForm
     template_name = "trainings/emergency_mail.html"
     success_url = reverse_lazy("trainings")
@@ -142,7 +147,7 @@ class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateVi
         form.instance.pilot = pilot
         form.instance.training = training
         return super().form_valid(form)
-    
+
     def get_cancel_url(self):
         cancel_url = reverse_lazy("trainings")
         if page := self.request.GET.get("page"):
