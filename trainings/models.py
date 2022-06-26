@@ -71,7 +71,11 @@ class Signup(models.Model):
         return f"{self.pilot} for {self.training}"
 
     def has_priority(self):
-        return self.is_certain and self.for_time == self.Time.WholeDay
+        return (
+            self.pilot.is_member
+            and self.is_certain
+            and self.for_time == self.Time.WholeDay
+        )
 
     def select(self):
         if self.status != self.Status.Waiting:

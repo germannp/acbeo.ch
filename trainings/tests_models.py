@@ -14,8 +14,12 @@ TOMORROW = TODAY + timedelta(days=1)
 
 class TrainingTests(TestCase):
     def setUp(self):
-        pilot_a = get_user_model().objects.create(email="pilot_a@example.com")
-        pilot_b = get_user_model().objects.create(email="pilot_b@example.com")
+        pilot_a = get_user_model().objects.create(
+            email="pilot_a@example.com", role=get_user_model().Role.Member
+        )
+        pilot_b = get_user_model().objects.create(
+            email="pilot_b@example.com", role=get_user_model().Role.Member
+        )
         self.training = Training.objects.create(date=TOMORROW, max_pilots=1)
         self.signup_a = Signup.objects.create(pilot=pilot_a, training=self.training)
         self.signup_b = Signup.objects.create(pilot=pilot_b, training=self.training)
@@ -91,12 +95,23 @@ class TrainingTests(TestCase):
 
 class SignupTests(TestCase):
     def setUp(self):
-        pilot = get_user_model().objects.create(email="pilot@example.com")
-        training = Training.objects.create(date=TOMORROW, priority_date=TOMORROW)
+        pilot = get_user_model().objects.create(
+            email="pilot@example.com", role=get_user_model().Role.Member
+        )
+        self.training = Training.objects.create(date=TOMORROW, priority_date=TOMORROW)
         self.signup = Signup.objects.create(
-            pilot=pilot, training=training, status=Signup.Status.Selected
+            pilot=pilot, training=self.training, status=Signup.Status.Selected
         )
         self.time_selected = self.signup.signed_up_on
+
+    def test_member_required_for_priority(self):
+        self.assertTrue(self.signup.has_priority())
+
+        guest = get_user_model().objects.create(
+            email="guest@example.com", role=get_user_model().Role.Guest
+        )
+        signup = Signup(pilot=guest, training=self.training)
+        self.assertFalse(signup.has_priority())
 
     @mock.patch("trainings.models.datetime")
     def test_resignup_sets_to_waiting_list(self, mocked_datetime):

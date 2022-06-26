@@ -69,6 +69,10 @@ class Pilot(AbstractBaseUser):
         return True
 
     @property
+    def is_member(self):
+        return self.role >= self.Role.Member
+
+    @property
     def is_orga(self):
         return self.role >= self.Role.Orga
 
