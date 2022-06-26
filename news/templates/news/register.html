@@ -34,11 +34,14 @@
                         <input type="email" name="email" class="form-control" placeholder="name@example.com"
                             {% if form.email.value %}value={{ form.email.value }}{% endif %}>
                         <label for="floatingInput">Email</label>
+                        <small class="text-muted">Zum Anmelden und Passwort Zurücksetzen.</small>
                     </div>
                     <div class="form-floating mb-3">
                         <input type="text" name="phone" class="form-control" placeholder="text"
                             {% if form.phone.value %}value={{ form.phone.value }}{% endif %}>
                         <label for="floatingInput">Telefonnummer (z. B. 079 123 45 67)</label>
+                        <small class="text-muted">Wir senden nach Rücksprache pro Training zwei Nummern von 
+                            Teilnehmenden an Notfalldienste.</small>
                     </div>
                     <div class="form-floating mb-3">
                         <input type="password" name="password1" autocomplete="new-password" class="form-control"
