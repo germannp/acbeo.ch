@@ -15,6 +15,7 @@ class Training(models.Model):
         null=False,
         validators=[MinValueValidator(6), MaxValueValidator(21)],
     )
+    min_orgas = 2
     priority_date = models.DateField(
         default=datetime.fromisoformat("2010-04-09").date()
     )
@@ -39,10 +40,21 @@ class Training(models.Model):
 
     def select_signups(self):
         signups = self.signups.all()
-        if date.today() <= self.priority_date:
-            signups = [signup for signup in signups if signup.has_priority()]
 
-        for signup in signups[: self.max_pilots]:
+        selected_orgas = [signup for signup in signups if signup.is_selected_orga]
+        spots_for_orgas = max(0, self.min_orgas - len(selected_orgas))
+        if spots_for_orgas:
+            waiting_orgas = [signup for signup in signups if signup.is_waiting_orga]
+            orgas_to_select = waiting_orgas[:spots_for_orgas]
+            signups = orgas_to_select + [
+                signup for signup in signups if signup not in orgas_to_select
+            ]
+            spots_for_orgas -= len(orgas_to_select)
+
+        if date.today() <= self.priority_date:
+            signups = [signup for signup in signups if signup.has_priority]
+
+        for signup in signups[: self.max_pilots - spots_for_orgas]:
             signup.select()
 
 
@@ -68,14 +80,23 @@ class Signup(models.Model):
         ordering = ["status", "signed_up_on"]
 
     def __str__(self):
-        return f"{self.pilot} for {self.training}"
+        return f"{self.pilot} {self.get_status_display()} for {self.training}"
 
+    @property
     def has_priority(self):
         return (
             self.pilot.is_member
             and self.is_certain
             and self.for_time == self.Time.WholeDay
         )
+
+    @property
+    def is_selected_orga(self):
+        return self.status == self.Status.Selected and self.pilot.is_orga
+
+    @property
+    def is_waiting_orga(self):
+        return self.status == self.Status.Waiting and self.pilot.is_orga
 
     def select(self):
         if self.status != self.Status.Waiting:

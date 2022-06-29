@@ -99,6 +99,7 @@ class SignupListView(LoginRequiredMixin, generic.ListView):
             Signup.objects.filter(pilot=self.request.user)
             .filter(training__date__gte=today)
             .select_related("training")
+            .prefetch_related("training__signups__pilot")
         )
         for signup in future_signups:
             signup.training.select_signups()

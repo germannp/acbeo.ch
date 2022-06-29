@@ -32,7 +32,7 @@ class SingupListViewTests(TestCase):
 
     def test_only_my_signups_are_shown(self):
         self.client.force_login(self.pilot_a)
-        with self.assertNumQueries(6):
+        with self.assertNumQueries(7):
             response = self.client.get(reverse("my_signups"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_signups.html")
@@ -48,7 +48,7 @@ class SingupListViewTests(TestCase):
         )
 
         self.client.force_login(self.pilot_b)
-        with self.assertNumQueries(6):
+        with self.assertNumQueries(7):
             response = self.client.get(reverse("my_signups"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_signups.html")
@@ -68,7 +68,7 @@ class SingupListViewTests(TestCase):
         self.assertEqual(self.signup.status, Signup.Status.Waiting)
 
         self.client.force_login(self.pilot_a)
-        with self.assertNumQueries(6):
+        with self.assertNumQueries(7):
             response = self.client.get(reverse("my_signups"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_signups.html")
@@ -288,7 +288,7 @@ class SignupUpdateViewTests(TestCase):
         self.assertContains(response, "Test comment")
 
     def test_cancel_and_resignup_from_signups_list(self):
-        with self.assertNumQueries(4 + 1 + 5):
+        with self.assertNumQueries(11):
             response = self.client.post(
                 reverse("update_signup", kwargs={"date": TODAY})
                 + "?next="
@@ -304,7 +304,7 @@ class SignupUpdateViewTests(TestCase):
         self.assertTemplateUsed(response, "trainings/list_signups.html")
         self.assertContains(response, "bi-x-octagon")
 
-        with self.assertNumQueries(4 + 1 + 5 + 1):
+        with self.assertNumQueries(12):
             response = self.client.post(
                 reverse("update_signup", kwargs={"date": TODAY})
                 + "?next="
