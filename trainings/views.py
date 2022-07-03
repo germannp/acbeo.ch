@@ -22,6 +22,11 @@ class TrainingListView(LoginRequiredMixin, generic.ListView):
         ).prefetch_related("signups__pilot")
         for training in trainings:
             training.select_signups()
+        # Selecting signups can alter their order, but Signup instances cannot be sorted.
+        # Refreshing them from the DB is the best solution I found 🤷
+        trainings = Training.objects.filter(
+            date__gte=datetime.date.today()
+        ).prefetch_related("signups__pilot")
         return trainings
 
     def get_context_data(self, **kwargs):
