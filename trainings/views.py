@@ -128,10 +128,15 @@ class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateVi
         context = super().get_context_data(**kwargs)
         if "date" in self.kwargs:
             context["date"] = self.kwargs["date"]
-        else:
-            today = datetime.date.today()
-            next_saturday = today + datetime.timedelta(days=(5 - today.weekday()) % 7)
-            context["date"] = next_saturday
+            return context
+
+        today = datetime.date.today()
+        if today.weekday() >= 5:  # Saturdays and Sundays
+            context["date"] = today
+            return context
+
+        next_saturday = today + datetime.timedelta(days=(5 - today.weekday()) % 7)
+        context["date"] = next_saturday
         return context
 
     def form_valid(self, form):

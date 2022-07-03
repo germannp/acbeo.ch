@@ -86,10 +86,14 @@ class SignupCreateViewTests(TestCase):
         self.assertEqual(self.monday.strftime("%A"), "Montag")
         self.wednesday = date(2007, 1, 3)
         self.assertEqual(self.wednesday.strftime("%A"), "Mittwoch")
+        self.friday = date(2007, 1, 5)
+        self.assertEqual(self.friday.strftime("%A"), "Freitag")
         self.saturday = date(2007, 1, 6)
         self.assertEqual(self.saturday.strftime("%A"), "Samstag")
         self.sunday = date(2007, 1, 7)
         self.assertEqual(self.sunday.strftime("%A"), "Sonntag")
+        self.next_monday = date(2007, 1, 8)
+        self.assertEqual(self.next_monday.strftime("%A"), "Montag")
         self.next_saturday = date(2007, 1, 13)
         self.assertEqual(self.next_saturday.strftime("%A"), "Samstag")
 
@@ -97,31 +101,26 @@ class SignupCreateViewTests(TestCase):
     @mock.patch("trainings.views.reverse_lazy")
     def test_default_date_is_next_saturday(self, mocked_reverse, mocked_date):
         mocked_reverse.return_value = ""
-        mocked_date.today.return_value = self.monday
-        with self.assertNumQueries(2):
-            response = self.client.get(reverse("signup"))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "trainings/signup.html")
-        self.assertContains(response, self.saturday.isoformat())
-
-        mocked_date.today.return_value = self.saturday
-        with self.assertNumQueries(2):
-            response = self.client.get(reverse("signup"))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "trainings/signup.html")
-        self.assertContains(response, self.saturday.isoformat())
-
-        mocked_date.today.return_value = self.sunday
-        with self.assertNumQueries(2):
-            response = self.client.get(reverse("signup"))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "trainings/signup.html")
-        self.assertContains(response, self.next_saturday.isoformat())
+        for now, default_date in [
+            (self.monday, self.saturday),
+            (self.wednesday, self.saturday),
+            (self.friday, self.saturday),
+            (self.saturday, self.saturday),
+            (self.sunday, self.sunday),
+            (self.next_monday, self.next_saturday)
+        ]:
+            with self.subTest(now=now.isoformat(), default_date=default_date.isoformat()):
+                mocked_date.today.return_value = now
+                with self.assertNumQueries(2):
+                    response = self.client.get(reverse("signup"))
+                self.assertEqual(response.status_code, 200)
+                self.assertTemplateUsed(response, "trainings/signup.html")
+                self.assertContains(response, default_date.isoformat())
 
     @mock.patch("trainings.forms.datetime", wraps=datetime)
     def test_default_priority_date_is_wednesday_before_training(self, mocked_date):
         mocked_date.date.today.return_value = self.monday
-        dates = [self.wednesday, self.saturday, self.sunday, self.next_saturday]
+        dates = [self.wednesday, self.saturday, self.sunday, self.next_monday, self.next_saturday]
         for date in dates:
             with self.assertNumQueries(6):
                 self.client.post(
@@ -184,8 +183,7 @@ class SignupCreateViewTests(TestCase):
 
     def test_next_urls(self):
         response = self.client.get(
-            reverse("signup", kwargs={"date": TODAY})
-            + f"?page=2&training=3",
+            reverse("signup", kwargs={"date": TODAY}) + f"?page=2&training=3",
         )
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/signup.html")
