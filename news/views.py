@@ -1,4 +1,5 @@
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmView
 from django.contrib.messages.views import SuccessMessageMixin
 from django.urls import reverse_lazy
 from django.views import generic
@@ -35,6 +36,23 @@ class PilotCreateView(SuccessMessageMixin, generic.CreateView):
     template_name = "news/register.html"
     success_url = reverse_lazy("login")
     success_message = "Konto angelegt."
+
+
+class PilotPasswordResetView(SuccessMessageMixin, PasswordResetView):
+    template_name = "news/password_reset.html"
+    subject_template_name = "news/password_reset_subject.txt"
+    email_template_name = "news/password_reset_email.html"
+    success_url = reverse_lazy("home")
+    success_message = (
+        "Instruktionen zum Zurücksetzen des Passworts wurden an die angegebene Email "
+        "geschickt."
+    )
+
+
+class PilotPasswordResetConfirmView(SuccessMessageMixin, PasswordResetConfirmView):
+    template_name = "news/password_reset_confirm.html"
+    success_url = reverse_lazy("login")
+    success_message = "Passwort geändert."
 
 
 class NonMemberOnlyMixin(LoginRequiredMixin, UserPassesTestMixin):
