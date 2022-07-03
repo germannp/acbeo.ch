@@ -41,7 +41,7 @@ class ContactFormTests(TestCase):
         self.assertEqual(1, len(mail.outbox))
         self.assertEqual(mail.outbox[0].subject, self.email_data["subject"])
         self.assertEqual(mail.outbox[0].from_email, self.email_data["email"])
-        self.assertEqual(mail.outbox[0].to, ["to@example.com"])
+        self.assertEqual(mail.outbox[0].to, ["info@example.com"])
         self.assertEqual(mail.outbox[0].body, self.email_data["message"])
 
 
@@ -53,6 +53,7 @@ class PilotCreationTests(TestCase):
         "phone": "079 123 45 67",
         "password1": "qhTJ]?QZ.F}v5(nA",
         "password2": "qhTJ]?QZ.F}v5(nA",
+        "accept_safety_concept": True,
     }
 
     def test_required_fields(self):
@@ -74,6 +75,16 @@ class PilotCreationTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "news/login.html")
         self.assertEqual(1, len(Pilot.objects.all()))
+    
+    def test_safety_concept_must_be_accepted(self):
+        partial_data = self.pilot_data.copy()
+        partial_data["accept_safety_concept"] = False
+        response = self.client.post(
+            reverse("register"), data=partial_data, follow=True
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "news/register.html")
+        self.assertEqual(0, len(Pilot.objects.all()))
 
     def test_email_must_be_unique(self):
         response = self.client.post(

@@ -10,7 +10,7 @@
     {% if form.errors %}
     {% for error_list in form.errors.values %}
     {% for error in error_list %}
-    <div class="alert my-4 alert-warning">{{ error }}</div>
+    <div class="alert mb-4 alert-warning">{{ error }}</div>
     {% endfor %}
     {% endfor %}
     {% endif %}
@@ -53,7 +53,12 @@
                             placeholder="password">
                         <label for="floatingPassword">Passwort wiederholen</label>
                     </div>
-                    <!-- TODO: Sicherheitskonzept -->
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="accept_safety_concept" id="acceptSafetyConcept">
+                        <label class="form-check-label" for="acceptSafetyConcept">
+                            Ich bin mit dem <a href="#">Sicherheitskonzept</a> einverstanden.
+                        </label>
+                    </div>
                     <button class="btn btn-primary mb-2" type="submit">Konto erstellen</button>
                     <a href="javascript:history.back()" class="btn btn-outline-dark mb-2">Abbrechen</a>
                 </form>
