@@ -20,6 +20,33 @@ class ContactForm(forms.Form):
         )
 
 
+class MembershipForm(forms.Form):
+    accept_statutes = forms.BooleanField(required=False)
+    comment = forms.CharField(required=False)
+
+    def clean_accept_statutes(self):
+        accept_statutes = self.cleaned_data.get("accept_statutes")
+        if not accept_statutes:
+            raise ValidationError("Du musst mit unseren Statuten einverstanden sein.")
+        return accept_statutes
+
+    def send_mail(self):
+        message = (
+            f"{self.sender.first_name} {self.sender.last_name} möchte Mitglied werden. Die "
+            f"Email ist {self.sender.email} und die Telefonnummer {self.sender.phone}."
+        )
+        comment = self.cleaned_data["comment"]
+        if comment:
+            message += "\n\nKommentar:\n" + comment
+        send_mail(
+            subject="Antrag ACBeo-Mitgliedschaft",
+            message=message,
+            from_email=self.sender.email,
+            recipient_list=["info@example.com", self.sender.email],
+            fail_silently=False,
+        )
+
+
 class PilotCreationForm(forms.ModelForm):
     accept_safety_concept = forms.BooleanField(required=False)
     password1 = forms.CharField()

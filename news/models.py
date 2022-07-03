@@ -68,6 +68,10 @@ class Pilot(AbstractBaseUser):
     def has_module_perms(self, app_label):
         return True
 
+    def make_member(self):
+        self.role = self.Role.Member
+        self.save()
+
     @property
     def is_member(self):
         return self.role >= self.Role.Member

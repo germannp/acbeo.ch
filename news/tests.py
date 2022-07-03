@@ -75,13 +75,11 @@ class PilotCreationTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "news/login.html")
         self.assertEqual(1, len(Pilot.objects.all()))
-    
+
     def test_safety_concept_must_be_accepted(self):
         partial_data = self.pilot_data.copy()
         partial_data["accept_safety_concept"] = False
-        response = self.client.post(
-            reverse("register"), data=partial_data, follow=True
-        )
+        response = self.client.post(reverse("register"), data=partial_data, follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "news/register.html")
         self.assertEqual(0, len(Pilot.objects.all()))
@@ -101,3 +99,62 @@ class PilotCreationTests(TestCase):
         self.assertTemplateUsed(response, "news/register.html")
         self.assertContains(response, "Pilot mit diesem Email existiert bereits.")
         self.assertEqual(1, len(Pilot.objects.all()))
+
+
+class MembershipFormViewTests(TestCase):
+    def setUp(self):
+        self.guest = Pilot.objects.create(
+            email="guest@example.com", first_name="Guest", role=Pilot.Role.Guest
+        )
+        self.member = Pilot.objects.create(
+            email="member@example.com", role=Pilot.Role.Member
+        )
+        self.client.force_login(self.guest)
+
+    def test_statutes_must_be_accepted_and_comment_is_prefilled(self):
+        response = self.client.post(
+            reverse("membership"),
+            data={"accept_statutes": False, "comment": "Kommentar"},
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "news/membership.html")
+        self.assertContains(response, "Kommentar")
+        self.assertContains(
+            response, "Du musst mit unseren Statuten einverstanden sein."
+        )
+        self.guest.refresh_from_db()
+        self.assertEqual(self.guest.role, Pilot.Role.Guest)
+
+    def test_becoming_member(self):
+        response = self.client.post(
+            reverse("membership"),
+            data={"accept_statutes": True},
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "news/index.html")
+        self.guest.refresh_from_db()
+        self.assertEqual(self.guest.role, Pilot.Role.Member)
+
+    def test_button_hidden_from_members(self):
+        response = self.client.get(reverse("home"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "news/sidebar.html")
+        self.assertContains(response, "Mitglied werden")
+
+        self.client.force_login(self.member)
+        response = self.client.get(reverse("home"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "news/sidebar.html")
+        self.assertNotContains(response, "Mitglied werden")
+
+    def test_form_forbidden_for_members(self):
+        response = self.client.get(reverse("membership"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "news/membership.html")
+
+        self.client.force_login(self.member)
+        response = self.client.get(reverse("membership"))
+        self.assertEqual(response.status_code, 403)
+        self.assertTemplateUsed(response, "403.html")
