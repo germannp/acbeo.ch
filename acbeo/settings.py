@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/4.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -18,15 +19,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-a@irbg8qfvhb@r%r(i7a+p9o(7mgj)46#l^9n+*w=hc@$vso0k"
+SECRET_KEY = os.getenv(
+    "SECRET_KEY", "django-insecure-a@irbg8qfvhb@r%r(i7a+p9o(7mgj)46#l^9n+*w=hc@$vso0k"
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ["acbeo.fly.dev"]
+CSRF_TRUSTED_ORIGINS = ["https://acbeo.fly.dev"]
 
 # Application definition
 
@@ -79,12 +82,17 @@ WSGI_APPLICATION = "acbeo.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+if "DATABASE_URL" in os.environ:
+    import dj_database_url
+
+    DATABASES = {"default": dj_database_url.config(conn_max_age=600)}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
     }
-}
 
 
 # Password validation
