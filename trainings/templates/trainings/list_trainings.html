@@ -32,6 +32,7 @@
                                 <th scope="col">#</th>
                                 <th class="col-xl-2 col-lg-3 col-sm-4 col-xs-8" scope="col">Pilot·in</th>
                                 <th scope="col">Status</th>
+                                <th scope="col">Rolle</th>
                                 <th scope="col">Einschreibedatum</th>
                                 <th scope="col">Verbindlichkeit</th>
                                 <th scope="col">Zeitplan</th>
@@ -50,12 +51,22 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {% if signup.get_status_display == 'Selected' %}<i
-                                        class="bi bi-cloud-check text-success"></i>{% endif %}
-                                    {% if signup.get_status_display == 'Waiting' %}<i
-                                        class="bi bi-hourglass-split text-warning"></i>{% endif %}
-                                    {% if signup.get_status_display == 'Canceled' %}<i
-                                        class="bi bi-x-octagon text-danger"></i>{% endif %}
+                                    {% if signup.get_status_display == 'Selected' %}
+                                    <i class="bi bi-cloud-check text-success"></i>
+                                    {% elif signup.get_status_display == 'Waiting' %}
+                                    <i class="bi bi-hourglass-split text-warning"></i>
+                                    {% else %}
+                                    <i class="bi bi-x-octagon text-danger"></i>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if signup.pilot.get_role_display == 'Guest' %}
+                                    Gast
+                                    {% elif signup.pilot.get_role_display == 'Member' %}
+                                    Mitglied
+                                    {% else %}
+                                    Leiter·in
+                                    {% endif %}
                                 </td>
                                 <td>{{ signup.signed_up_on | date:"D., j. E G:i" }}</td>
                                 <td>
