@@ -23,6 +23,7 @@
                             <tr>
                                 <th scope="col">#</th>
                                 <th class="col-xl-2 col-lg-3" scope="col">Datum</th>
+                                <th class="col-sm-1" scope="col">Pilot·innen</th>
                                 <th class="col-sm-1" scope="col">Status</th>
                                 <th scope="col">Verbindlichkeit</th>
                                 <th scope="col">Zeitplan</th>
@@ -42,12 +43,19 @@
                                         {% endif %}
                                 </td>
                                 <td>
+                                    {% if signup.training.number_of_motivated_pilots < 6 %}
+                                    <span class="text-warning">{{ signup.training.number_of_motivated_pilots }}</span>
+                                    {% else %}
+                                    {{ signup.training.number_of_motivated_pilots }}
+                                    {% endif %}
+                                </td>
+                                <td>
                                     {% if signup.get_status_display == 'Selected' %}<i
-                                        class="bi bi-cloud-check text-success"></i>{% endif %}
+                                    class="bi bi-cloud-check text-success"></i>{% endif %}
                                     {% if signup.get_status_display == 'Waiting' %}<i
-                                        class="bi bi-hourglass-split text-warning"></i>{% endif %}
+                                    class="bi bi-hourglass-split text-warning"></i>{% endif %}
                                     {% if signup.get_status_display == 'Canceled' %}<i
-                                        class="bi bi-x-octagon text-danger"></i>{% endif %}
+                                    class="bi bi-x-octagon text-danger"></i>{% endif %}
                                 </td>
                                 <td>
                                     {% if signup.get_status_display != 'Canceled' %}

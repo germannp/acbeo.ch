@@ -258,3 +258,13 @@ class SignupTests(TestCase):
         self.signup.for_sketchy_weather = False
         self.assertEqual(self.signup.status, Signup.Status.Selected)
         self.assertTrue(self.signup.has_priority)
+
+    def test_is_motivated(self):
+        for status, is_motivated in [
+            (Signup.Status.Waiting, True),
+            (Signup.Status.Selected, True),
+            (Signup.Status.Canceled, False),
+        ]:
+            with self.subTest(status=status, is_motivated=is_motivated):
+                self.signup.status = status
+                self.assertEqual(self.signup.is_motivated, is_motivated)

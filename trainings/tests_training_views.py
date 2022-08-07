@@ -505,8 +505,8 @@ class EmergencyMailViewTests(TestCase):
         self.todays_training.select_signups()
 
         yesterdays_training = Training.objects.create(date=YESTERDAY)
-        Signup.objects.create(pilot=self.orga, training=yesterdays_training).save()
-        Signup.objects.create(pilot=self.pilot_b, training=yesterdays_training).save()
+        Signup(pilot=self.orga, training=yesterdays_training).save()
+        Signup(pilot=self.pilot_b, training=yesterdays_training).save()
         yesterdays_training.select_signups()
 
         self.in_a_week = TODAY + timedelta(days=7)

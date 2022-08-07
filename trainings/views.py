@@ -113,6 +113,7 @@ class SignupListView(LoginRequiredMixin, generic.ListView):
             Signup.objects.filter(pilot=self.request.user)
             .order_by("training__date")
             .select_related("training")
+            .prefetch_related("training__signups")
         )
         future_signups = [signup for signup in signups if signup.training.date >= today]
         past_signups = [signup for signup in signups if signup.training.date < today][::-1]

@@ -19,20 +19,21 @@ TOMORROW = TODAY + timedelta(days=1)
 class SingupListViewTests(TestCase):
     def setUp(self):
         self.pilot_a = get_user_model().objects.create(email="pilot_a@example.com")
-        todays_training = Training.objects.create(date=TODAY)
+        self.client.force_login(self.pilot_a)
+        self.todays_training = Training.objects.create(date=TODAY)
         self.signup = Signup.objects.create(
-            pilot=self.pilot_a, training=todays_training
+            pilot=self.pilot_a, training=self.todays_training
         )
 
         self.pilot_b = get_user_model().objects.create(email="pilot_b@example.com")
+        Signup(pilot=self.pilot_b, training=self.todays_training).save()
         tomorrows_training = Training.objects.create(date=TOMORROW)
         Signup(pilot=self.pilot_b, training=tomorrows_training).save()
         yesterdays_training = Training.objects.create(date=YESTERDAY)
         Signup(pilot=self.pilot_b, training=yesterdays_training).save()
 
     def test_only_my_signups_are_shown(self):
-        self.client.force_login(self.pilot_a)
-        with self.assertNumQueries(7):
+        with self.assertNumQueries(9):
             response = self.client.get(reverse("my_signups"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_signups.html")
@@ -48,14 +49,14 @@ class SingupListViewTests(TestCase):
         )
 
         self.client.force_login(self.pilot_b)
-        with self.assertNumQueries(7):
+        with self.assertNumQueries(8):
             response = self.client.get(reverse("my_signups"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_signups.html")
         self.assertContains(
             response, TOMORROW.strftime("%a, %d. %B %Y").replace(" 0", " ")
         )
-        self.assertNotContains(
+        self.assertContains(
             response, TODAY.strftime("%a, %d. %B %Y").replace(" 0", " ")
         )
         self.assertContains(response, "Vergangene Trainings")
@@ -67,14 +68,29 @@ class SingupListViewTests(TestCase):
         self.signup.refresh_from_db()
         self.assertEqual(self.signup.status, Signup.Status.Waiting)
 
-        self.client.force_login(self.pilot_a)
-        with self.assertNumQueries(7):
+        with self.assertNumQueries(9):
             response = self.client.get(reverse("my_signups"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_signups.html")
 
         self.signup.refresh_from_db()
         self.assertEqual(self.signup.status, Signup.Status.Selected)
+
+    def test_signups_with_up_to_5_pilots_are_shown_in_warning_color(self):
+        self.todays_training.select_signups()
+        for i in range(3, 8):
+            pilot = get_user_model().objects.create(email=f"{i}@example.com")
+            Signup(pilot=pilot, training=self.todays_training).save()
+            self.assertEqual(i, len(self.todays_training.signups.all()))
+            with self.assertNumQueries(8):
+                response = self.client.get(reverse("my_signups"))
+            self.assertEqual(response.status_code, 200)
+            self.assertTemplateUsed(response, "trainings/list_signups.html")
+            self.assertContains(response, i)
+            if i < 6:
+                self.assertContains(response, "text-warning")
+            else:
+                self.assertNotContains(response, "text-warning")
 
 
 class SignupCreateViewTests(TestCase):
@@ -107,9 +123,11 @@ class SignupCreateViewTests(TestCase):
             (self.friday, self.saturday),
             (self.saturday, self.saturday),
             (self.sunday, self.sunday),
-            (self.next_monday, self.next_saturday)
+            (self.next_monday, self.next_saturday),
         ]:
-            with self.subTest(now=now.isoformat(), default_date=default_date.isoformat()):
+            with self.subTest(
+                now=now.isoformat(), default_date=default_date.isoformat()
+            ):
                 mocked_date.today.return_value = now
                 with self.assertNumQueries(2):
                     response = self.client.get(reverse("signup"))
@@ -120,7 +138,13 @@ class SignupCreateViewTests(TestCase):
     @mock.patch("trainings.forms.datetime", wraps=datetime)
     def test_default_priority_date_is_wednesday_before_training(self, mocked_date):
         mocked_date.date.today.return_value = self.monday
-        dates = [self.wednesday, self.saturday, self.sunday, self.next_monday, self.next_saturday]
+        dates = [
+            self.wednesday,
+            self.saturday,
+            self.sunday,
+            self.next_monday,
+            self.next_saturday,
+        ]
         for date in dates:
             with self.assertNumQueries(6):
                 self.client.post(
@@ -286,7 +310,7 @@ class SignupUpdateViewTests(TestCase):
         self.assertContains(response, "Test comment")
 
     def test_cancel_and_resignup_from_signups_list(self):
-        with self.assertNumQueries(11):
+        with self.assertNumQueries(12):
             response = self.client.post(
                 reverse("update_signup", kwargs={"date": TODAY})
                 + "?next="
@@ -302,7 +326,7 @@ class SignupUpdateViewTests(TestCase):
         self.assertTemplateUsed(response, "trainings/list_signups.html")
         self.assertContains(response, "bi-x-octagon")
 
-        with self.assertNumQueries(12):
+        with self.assertNumQueries(13):
             response = self.client.post(
                 reverse("update_signup", kwargs={"date": TODAY})
                 + "?next="

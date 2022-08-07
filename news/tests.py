@@ -8,7 +8,7 @@ from .models import Pilot, Post
 class PostListViewTests(TestCase):
     def setUp(self):
         author = Pilot.objects.create(email="author@example.com", first_name="Author")
-        Post.objects.create(title="Test news", slug="test-news", author=author)
+        Post(title="Test news", slug="test-news", author=author).save()
 
     def test_author_name_shown(self):
         response = self.client.get(reverse("home"))
@@ -21,7 +21,7 @@ class PostListViewTests(TestCase):
 class PostDetailViewTests(TestCase):
     def setUp(self):
         author = Pilot.objects.create(email="author@example.com", first_name="Author")
-        Post.objects.create(title="Test news", slug="test-news", author=author)
+        Post(title="Test news", slug="test-news", author=author).save()
 
     def test_author_name_shown(self):
         response = self.client.get(reverse("post", kwargs={"slug": "test-news"}))
