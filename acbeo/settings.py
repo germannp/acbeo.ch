@@ -28,7 +28,7 @@ DEBUG = True
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
-ALLOWED_HOSTS = ["acbeo.fly.dev"]
+ALLOWED_HOSTS = ["127.0.0.1", "acbeo.fly.dev"]
 CSRF_TRUSTED_ORIGINS = ["https://acbeo.fly.dev"]
 
 # Application definition
