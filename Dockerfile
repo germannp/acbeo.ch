@@ -7,7 +7,8 @@ RUN apt-get update && apt-get install -y \
     python3-venv \
     python3-dev \
     python3-setuptools \
-    python3-wheel
+    python3-wheel \
+    locales-all
 
 RUN mkdir -p /app
 WORKDIR /app
@@ -17,7 +18,7 @@ RUN pip install -r requirements.txt
 
 COPY . .
 
-# RUN python manage.py test
+RUN python manage.py test
 RUN python manage.py migrate
 RUN python manage.py collectstatic --noinput
 

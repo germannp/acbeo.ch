@@ -38,14 +38,17 @@ class SingupListViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_signups.html")
         self.assertContains(
-            response, TODAY.strftime("%a, %d. %B %Y").replace(" 0", " ")
+            response,
+            TODAY.strftime("%a., %d. %B %Y").replace(" 0", " ").replace("..", "."),
         )
         self.assertNotContains(
-            response, TOMORROW.strftime("%a, %d. %B %Y").replace(" 0", " ")
+            response,
+            TOMORROW.strftime("%a., %d. %B %Y").replace(" 0", " ").replace("..", "."),
         )
         self.assertNotContains(response, "Vergangene Trainings")
         self.assertNotContains(
-            response, YESTERDAY.strftime("%a, %d. %B %Y").replace(" 0", " ")
+            response,
+            YESTERDAY.strftime("%a., %d. %B %Y").replace(" 0", " ").replace("..", "."),
         )
 
         self.client.force_login(self.pilot_b)
@@ -54,14 +57,17 @@ class SingupListViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_signups.html")
         self.assertContains(
-            response, TOMORROW.strftime("%a, %d. %B %Y").replace(" 0", " ")
+            response,
+            TOMORROW.strftime("%a., %d. %B %Y").replace(" 0", " ").replace("..", "."),
         )
         self.assertContains(
-            response, TODAY.strftime("%a, %d. %B %Y").replace(" 0", " ")
+            response,
+            TODAY.strftime("%a., %d. %B %Y").replace(" 0", " ").replace("..", "."),
         )
         self.assertContains(response, "Vergangene Trainings")
         self.assertContains(
-            response, YESTERDAY.strftime("%a, %d. %B %Y").replace(" 0", " ")
+            response,
+            YESTERDAY.strftime("%a., %d. %B %Y").replace(" 0", " ").replace("..", "."),
         )
 
     def test_list_signups_selects_signups(self):
