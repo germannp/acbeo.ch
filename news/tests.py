@@ -2,17 +2,41 @@ from django.core import mail
 from django.test import TestCase
 from django.urls import reverse
 
-from .models import Pilot
+from .models import Pilot, Post
 
 
-class PostDetailTests(TestCase):
+class PostListViewTests(TestCase):
+    def setUp(self):
+        author = Pilot.objects.create(email="author@example.com", first_name="Author")
+        Post.objects.create(title="Test news", slug="test-news", author=author)
+
+    def test_author_name_shown(self):
+        response = self.client.get(reverse("home"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "news/index.html")
+        self.assertContains(response, "Author")
+        self.assertNotContains(response, "author@example.com")
+
+
+class PostDetailViewTests(TestCase):
+    def setUp(self):
+        author = Pilot.objects.create(email="author@example.com", first_name="Author")
+        Post.objects.create(title="Test news", slug="test-news", author=author)
+
+    def test_author_name_shown(self):
+        response = self.client.get(reverse("post", kwargs={"slug": "test-news"}))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "news/post.html")
+        self.assertContains(response, "Author")
+        self.assertNotContains(response, "author@example.com")
+
     def test_post_not_found_404(self):
         response = self.client.get(reverse("post", kwargs={"slug": "missing"}))
         self.assertEqual(response.status_code, 404)
         self.assertTemplateUsed(response, "404.html")
 
 
-class ContactFormTests(TestCase):
+class ContactFormViewTests(TestCase):
     email_data = {
         "email": "from@example.com",
         "subject": "Subject",
@@ -45,7 +69,7 @@ class ContactFormTests(TestCase):
         self.assertEqual(mail.outbox[0].body, self.email_data["message"])
 
 
-class PilotCreationTests(TestCase):
+class PilotCreationViewTests(TestCase):
     pilot_data = {
         "email": "test@mail.com",
         "first_name": "John",

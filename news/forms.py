@@ -32,7 +32,7 @@ class MembershipForm(forms.Form):
 
     def send_mail(self):
         message = (
-            f"{self.sender.first_name} {self.sender.last_name} möchte Mitglied werden. Die "
+            f"{self.sender} möchte Mitglied werden. Die "
             f"Email ist {self.sender.email} und die Telefonnummer {self.sender.phone}."
         )
         comment = self.cleaned_data["comment"]

@@ -82,7 +82,7 @@ class EmergencyMailForm(forms.ModelForm):
 
     class EmergencyContactChoiceField(forms.ModelMultipleChoiceField):
         def label_from_instance(self, signup):
-            return f"{signup.pilot.first_name} {signup.pilot.last_name}, {signup.pilot.phone}"
+            return f"{signup.pilot}, {signup.pilot.phone}"
 
     start = forms.ChoiceField(choices=Start.choices, initial=Start["9:00"])
     end = forms.ChoiceField(choices=End.choices, initial=End["19:00"])
@@ -133,8 +133,8 @@ class EmergencyMailForm(forms.ModelForm):
             "<b>Veranstalter</b>: Acro Club Berner Oberland, acbeo.ch.\n\n"
 
             f"<b>Ansprechpersonen</b>:\n"
-            f"{contacts[0].pilot.first_name} {contacts[0].pilot.last_name}, {contacts[0].pilot.phone}\n"
-            f"{contacts[1].pilot.first_name} {contacts[1].pilot.last_name}, {contacts[1].pilot.phone}\n\n"
+            f"{contacts[0]}, {contacts[0].pilot.phone}\n"
+            f"{contacts[1]}, {contacts[1].pilot.phone}\n\n"
 
             "Mit freundlichen Grüssen\n"
             f"{self.sender.first_name} {self.sender.last_name}\n"

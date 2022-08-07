@@ -43,7 +43,7 @@
                             {% for signup in training.signups.all %}
                             <tr>
                                 <td>{{ forloop.counter }}</td>
-                                <td>{{ signup.pilot.first_name }} {{ signup.pilot.last_name }}
+                                <td>{{ signup.pilot }}
                                     {% if signup.pilot == request.user %}
                                     <a href="{% url 'update_signup' date=training.date.isoformat %}?next={% url 'trainings' %}&page={{ page_obj.number }}&training={{ forloop.parentloop.counter }}"
                                         class="btn btn-primary btn-sm bi bi-pencil-square" />
