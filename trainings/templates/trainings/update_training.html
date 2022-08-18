@@ -22,8 +22,8 @@
                 <form method="post">
                     {% csrf_token %}
                     <div class="form-floating mb-3">
-                        <input type="text" name="info" id="info" class="form-control" placeholder="text"
-                            value="{{ form.info.value | default:'Training findet statt, Treffpunkt 9 Uhr Aaregg.' }}">
+                        <textarea type="text" name="info" id="info" class="form-control" placeholder="text"
+                            style="height: 100px"></textarea>
                         <label for="floatingInput">Infos</label>
                     </div>
                     <div class="row mb-3">
@@ -39,25 +39,25 @@
                     </div>
                     <div class="btn-group">
                         <button class="btn btn-primary" type="submit">Speichern</button>
-                        <div class="btn-group">
+                        <div class="btn-group dropup">
                             <button id="btnGroupDrop1" type="button" class="btn btn-primary dropdown-toggle"
                                 data-bs-toggle="dropdown">
                             </button>
                             <ul class="dropdown-menu">
-                                <li><a class="dropdown-item"
+                                <li><a class="dropdown-item text-danger"
                                         onclick="document.getElementById('info').value='Training findet wegen schlechtem Wetter nicht statt.'"
                                         href="#">Schlechtes Wetter</a></li>
-                                <li><a class="dropdown-item"
+                                <li><a class="dropdown-item text-danger"
                                         onclick="document.getElementById('info').value='Training findet nicht statt, zu viel Wind.'"
                                         href="#">Zu viel Wind</a></li>
-                                <li><a class="dropdown-item"
+                                <li><a class="dropdown-item text-danger"
                                         onclick="document.getElementById('info').value='Training findet nicht statt, zu wenig Anmeldungen.'"
                                         href="#">Zu wenig Anmeldungen</a></li>
                                 <li>
                                     <hr class="dropdown-divider">
                                 </li>
-                                <li><a class="dropdown-item"
-                                        onclick="document.getElementById('info').value='Training findet statt, Treffpunkt 9 Uhr Aaregg.'"
+                                <li><a class="dropdown-item text-success"
+                                        onclick="document.getElementById('info').value='Training findet statt, Treffpunkt 9 Uhr Aaregg. Leiter·in: {{ user.first_name }}, {{ user.phone }}'"
                                         href="#">Ansagen</a></li>
                             </ul>
                         </div>

@@ -435,7 +435,6 @@ class TrainingUpdateViewTests(TestCase):
             )
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/update_training.html")
-        self.assertContains(response, self.new_info)
         self.assertContains(response, "alert-warning")
 
         with self.assertNumQueries(3):
@@ -446,7 +445,6 @@ class TrainingUpdateViewTests(TestCase):
             )
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/update_training.html")
-        self.assertContains(response, self.new_info)
         self.assertContains(response, "alert-warning")
 
     def test_cannot_update_past_or_non_existing_trainings_404(self):
