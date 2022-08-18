@@ -22,12 +22,12 @@
                     {% csrf_token %}
                     <div class="form-floating mb-3">
                         <input type="text" name="first_name" class="form-control" placeholder="text"
-                            {% if form.first_name.value %}value={{ form.first_name.value }}{% endif %}>
+                            {% if form.first_name.value %}value="{{ form.first_name.value }}"{% endif %}>
                         <label for="floatingInput">Vorname</label>
                     </div>
                     <div class="form-floating mb-3">
                         <input type="text" name="last_name" class="form-control" placeholder="text"
-                            {% if form.last_name.value %}value={{ form.last_name.value }}{% endif %}>
+                            {% if form.last_name.value %}value="{{ form.last_name.value }}"{% endif %}>
                         <label for="floatingInput">Nachname</label>
                     </div>
                     <div class="form-floating mb-3">
@@ -38,7 +38,7 @@
                     </div>
                     <div class="form-floating mb-3">
                         <input type="text" name="phone" class="form-control" placeholder="text"
-                            {% if form.phone.value %}value={{ form.phone.value }}{% endif %}>
+                            {% if form.phone.value %}value="{{ form.phone.value }}"{% endif %}>
                         <label for="floatingInput">Telefonnummer (z. B. 079 123 45 67)</label>
                         <small class="text-muted">Wir senden nach Rücksprache pro Training zwei Nummern von 
                             Teilnehmenden an Notfalldienste.</small>
