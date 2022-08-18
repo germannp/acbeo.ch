@@ -125,6 +125,60 @@ class PilotCreationViewTests(TestCase):
         self.assertEqual(1, len(Pilot.objects.all()))
 
 
+class PilotUpdateViewTests(TestCase):
+    def setUp(self):
+        self.pilot_data = {
+            "email": "pilot@example.com",
+            "first_name": "First Name",
+            "last_name": "Last Name",
+            "phone": "079 123 45 67",
+        }
+        self.pilot = Pilot.objects.create(**self.pilot_data)
+        self.client.force_login(self.pilot)
+
+    def test_form_is_prefilled(self):
+        response = self.client.get(reverse("update_pilot"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "news/update_pilot.html")
+        for value in self.pilot_data.values():
+            self.assertContains(response, value)
+
+    def test_required_fields(self):
+        for required_field in self.pilot_data.keys():
+            partial_data = {
+                key: value
+                for key, value in self.pilot_data.items()
+                if key != required_field
+            }
+            response = self.client.post(
+                reverse("update_pilot"), data=partial_data, follow=True
+            )
+            self.assertEqual(response.status_code, 200)
+            self.assertTemplateUsed(response, "news/update_pilot.html")
+
+    def test_update_pilot(self):
+        self.pilot_data["first_name"] = "New First Name"
+        self.client.post(reverse("update_pilot"), data=self.pilot_data, follow=True)
+        self.pilot.refresh_from_db()
+        self.assertEqual(self.pilot.first_name, "New First Name")
+
+    def test_next_urls(self):
+        response = self.client.post(
+            reverse("update_pilot") + f"?next={reverse('trainings')}",
+            data=self.pilot_data,
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+
+        response = self.client.post(
+            reverse("update_pilot") + "?next=http://danger.com",
+            data=self.pilot_data,
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 400)
+
+
 class MembershipFormViewTests(TestCase):
     def setUp(self):
         self.guest = Pilot.objects.create(
@@ -186,9 +240,7 @@ class MembershipFormViewTests(TestCase):
 
 class PilotAdminTests(TestCase):
     def setUp(self):
-        staff = Pilot.objects.create(
-            email="staff@example.com", role=Pilot.Role.Staff
-        )
+        staff = Pilot.objects.create(email="staff@example.com", role=Pilot.Role.Staff)
         self.client.force_login(staff)
         self.guest = Pilot.objects.create(
             email="guest@example.com", role=Pilot.Role.Guest

@@ -75,3 +75,9 @@ class PilotCreationForm(forms.ModelForm):
         if commit:
             pilot.save()
         return pilot
+
+
+class PilotUpdateForm(forms.ModelForm):
+    class Meta:
+        model = Pilot
+        fields = ("first_name", "last_name", "email", "phone")

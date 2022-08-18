@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Konto bearbeiten{% endblock title %}
+
+{% block headline %}Konto bearbeiten{% endblock headline %}
+
+{% block content %}
+
+<div class="col-md-4">
+    {% if form.errors %}
+    {% for error_list in form.errors.values %}
+    {% for error in error_list %}
+    <div class="alert mb-4 alert-warning">{{ error }}</div>
+    {% endfor %}
+    {% endfor %}
+    {% endif %}
+
+    <div class="card my-4">
+        <div class="card-body">
+            <main class="form mb-2">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-floating mb-3">
+                        <input type="text" name="first_name" class="form-control" placeholder="text"
+                            {% if form.first_name.value %}value="{{ form.first_name.value }}"{% endif %}>
+                        <label for="floatingInput">Vorname</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input type="text" name="last_name" class="form-control" placeholder="text"
+                            {% if form.last_name.value %}value="{{ form.last_name.value }}"{% endif %}>
+                        <label for="floatingInput">Nachname</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input type="email" name="email" class="form-control" placeholder="name@example.com"
+                            {% if form.email.value %}value={{ form.email.value }}{% endif %}>
+                        <label for="floatingInput">Email</label>
+                        <small class="text-muted">Zum Anmelden und Passwort Zurücksetzen.</small>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input type="text" name="phone" class="form-control" placeholder="text"
+                            {% if form.phone.value %}value="{{ form.phone.value }}"{% endif %}>
+                        <label for="floatingInput">Telefonnummer (z. B. 079 123 45 67)</label>
+                        <small class="text-muted">Wir senden nach Rücksprache pro Training zwei Nummern von 
+                            Teilnehmenden an Notfalldienste.</small>
+                    </div>
+                    <button class="btn btn-primary mb-2" type="submit">Speichern</button>
+                    <a href="javascript:history.back()" class="btn btn-outline-dark mb-2">Abbrechen</a>
+                </form>
+            </main>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}

@@ -59,7 +59,6 @@ class OrgaRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
 class TrainingUpdateView(OrgaRequiredMixin, generic.UpdateView):
     form_class = forms.TrainingUpdateForm
     template_name = "trainings/update_training.html"
-    success_url = reverse_lazy("trainings")
 
     def get_object(self):
         if self.kwargs["date"] < datetime.date.today():

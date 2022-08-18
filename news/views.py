@@ -4,7 +4,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.urls import reverse_lazy
 from django.views import generic
 
-from .forms import ContactForm, MembershipForm, PilotCreationForm
+from .forms import ContactForm, MembershipForm, PilotCreationForm, PilotUpdateForm
 from .models import Post
 
 
@@ -36,6 +36,20 @@ class PilotCreateView(SuccessMessageMixin, generic.CreateView):
     template_name = "news/register.html"
     success_url = reverse_lazy("login")
     success_message = "Konto angelegt."
+
+
+class PilotUpdateView(LoginRequiredMixin, SuccessMessageMixin, generic.UpdateView):
+    form_class = PilotUpdateForm
+    template_name = "news/update_pilot.html"
+    success_message = "Änderungen gespeichert."
+
+    def get_object(self):
+        return self.request.user
+    
+    def get_success_url(self):
+        if success_url := self.request.GET.get("next"):
+            return success_url
+        return reverse_lazy("home")
 
 
 class PilotPasswordResetView(SuccessMessageMixin, PasswordResetView):
