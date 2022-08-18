@@ -48,11 +48,14 @@ class TrainingListViewTests(TestCase):
 
         self.signup.refresh_from_db()
         self.assertEqual(self.signup.status, Signup.Status.Selected)
-    
+
     def test_freshly_selected_signups_are_listed_first(self):
         now = datetime.now()
         low_priority_signup = Signup.objects.create(
-            pilot=self.pilot_b, training=self.last_training, signed_up_on=now, is_certain=False
+            pilot=self.pilot_b,
+            training=self.last_training,
+            signed_up_on=now,
+            is_certain=False,
         )
         now += timedelta(hours=1)
         normal_signup = Signup.objects.create(
@@ -61,7 +64,7 @@ class TrainingListViewTests(TestCase):
         for signup in [low_priority_signup, normal_signup]:
             signup.refresh_from_db()
             self.assertEqual(signup.status, Signup.Status.Waiting)
-        
+
         with self.assertNumQueries(12):
             response = self.client.get(reverse("trainings"))
         self.assertEqual(response.status_code, 200)
@@ -313,6 +316,24 @@ class TrainingCreateViewTests(TestCase):
         self.assertContains(response, "alert-warning")
         self.assertEqual(0, len(Training.objects.all()))
 
+    def test_priority_date_cannot_be_after_last_day(self):
+        with self.assertNumQueries(2):
+            response = self.client.post(
+                reverse("create_trainings"),
+                data={
+                    "first_day": TODAY,
+                    "last_day": TOMORROW,
+                    "info": "Info",
+                    "max_pilots": 11,
+                    "priority_date": TOMORROW + timedelta(days=1),
+                },
+                follow=True,
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/create_trainings.html")
+        self.assertContains(response, "alert-warning")
+        self.assertEqual(0, len(Training.objects.all()))
+
     def test_max_pilots_range(self):
         with self.assertNumQueries(2):
             response = self.client.post(
@@ -441,6 +462,21 @@ class TrainingUpdateViewTests(TestCase):
             response = self.client.post(
                 reverse("update_training", kwargs={"date": TODAY}),
                 data={"info": self.new_info, "max_pilots": 22},
+                follow=True,
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "trainings/update_training.html")
+        self.assertContains(response, "alert-warning")
+
+    def test_priority_date_cannot_be_after_last_day(self):
+        with self.assertNumQueries(3):
+            response = self.client.post(
+                reverse("update_training", kwargs={"date": TODAY}),
+                data={
+                    "info": self.new_info,
+                    "max_pilots": 11,
+                    "priority_date": TOMORROW,
+                },
                 follow=True,
             )
         self.assertEqual(response.status_code, 200)
