@@ -36,12 +36,12 @@ class TrainingListView(LoginRequiredMixin, generic.ListView):
         return context
 
 
-class OrgaRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
+class StaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     def test_func(self):
-        return self.request.user.is_orga
+        return self.request.user.is_staff
 
 
-class TrainingCreateView(OrgaRequiredMixin, generic.FormView):
+class TrainingCreateView(StaffRequiredMixin, generic.FormView):
     form_class = forms.TrainingCreateForm
     template_name = "trainings/create_trainings.html"
     success_url = reverse_lazy("trainings")
@@ -49,6 +49,11 @@ class TrainingCreateView(OrgaRequiredMixin, generic.FormView):
     def form_valid(self, form):
         form.create_trainings()
         return super().form_valid(form)
+
+
+class OrgaRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
+    def test_func(self):
+        return self.request.user.is_orga
 
 
 class TrainingUpdateView(OrgaRequiredMixin, generic.UpdateView):

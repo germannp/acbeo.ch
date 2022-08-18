@@ -152,25 +152,26 @@ class TrainingCreateViewTests(TestCase):
         self.orga = get_user_model().objects.create(
             email="orga@example.com", role=get_user_model().Role.Orga
         )
-        self.client.force_login(self.orga)
+        self.staff = get_user_model().objects.create(
+            email="staff@example.com", role=get_user_model().Role.Staff
+        )
+        self.client.force_login(self.staff)
 
-    def test_orga_required(self):
-        guest = get_user_model().objects.create(email="guest@example.com")
-        self.client.force_login(guest)
+    def test_staff_required(self):
+        self.client.force_login(self.orga)
         with self.assertNumQueries(2):
             response = self.client.get(reverse("create_trainings"))
         self.assertEqual(response.status_code, 403)
         self.assertTemplateUsed(response, "403.html")
 
-    def test_only_orga_sees_menu_entry(self):
+    def test_only_staff_sees_menu_entry(self):
         with self.assertNumQueries(3):
             response = self.client.get(reverse("home"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "base.html")
         self.assertContains(response, reverse("create_trainings"))
 
-        guest = get_user_model().objects.create(email="guest@example.com")
-        self.client.force_login(guest)
+        self.client.force_login(self.orga)
         with self.assertNumQueries(3):
             response = self.client.get(reverse("home"))
         self.assertEqual(response.status_code, 200)

@@ -17,6 +17,11 @@
 
     <div class="card my-4">
         <div class="card-body">
+            <p>Normale Trainings werden automatisch erstellt, sobald sich jemand einschreibt. Hier können
+                mehrere Trainings auf einmal erstellt und z. B. mit der Information "Axalpwochen" versehen
+                werden, ohne dass sich jemand anmelden muss.</p>
+            <p>Einstellungen bestehender Trainings (weil sich z. B. bereits jemand eingeschrieben hat) werden
+                überschrieben, Anmeldungen bleiben erhalten.</p>
             <main class="form">
                 <form method="post">
                     {% csrf_token %}
@@ -46,8 +51,6 @@
                             value="{{ form.priority_date.value.isoformat }}" required>
                         <label>Datum Vorrang (bis und mit)</label>
                     </div>
-                    <p>Einstellungen bestehender Trainings (weil sich z. B. bereits jemand eingeschrieben hat) werden
-                        überschrieben, Anmeldungen bleiben erhalten.</p>
                     <button class="btn btn-primary" type="submit">Speichern</button>
                     <input type="hidden" name="next" value="{{ next }}">
                     <a href="{% url 'trainings' %}" class="btn btn-outline-dark">Abbrechen</a>
