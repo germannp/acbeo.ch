@@ -182,3 +182,28 @@ class MembershipFormViewTests(TestCase):
         response = self.client.get(reverse("membership"))
         self.assertEqual(response.status_code, 403)
         self.assertTemplateUsed(response, "403.html")
+
+
+class PilotAdminTests(TestCase):
+    def setUp(self):
+        staff = Pilot.objects.create(
+            email="staff@example.com", role=Pilot.Role.Staff
+        )
+        self.client.force_login(staff)
+        self.guest = Pilot.objects.create(
+            email="guest@example.com", role=Pilot.Role.Guest
+        )
+
+    def test_make_member(self):
+        response = self.client.post(
+            reverse("admin:news_pilot_changelist"),
+            data={
+                "action": "make_member",
+                "_selected_action": [self.guest.id],
+            },
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+
+        self.guest.refresh_from_db()
+        self.assertEqual(self.guest.role, Pilot.Role.Member)

@@ -14,6 +14,11 @@ class PostAdmin(admin.ModelAdmin):
 admin.site.register(Post, PostAdmin)
 
 
+@admin.action(description="Ausgewählte zu Mitgliedern machen")
+def make_member(modeladmin, request, queryset):
+    queryset.update(role=Pilot.Role.Member)
+
+
 class PilotAdmin(BaseUserAdmin):
     list_display = (
         "email",
@@ -28,7 +33,8 @@ class PilotAdmin(BaseUserAdmin):
     search_fields = ("first_name", "last_name", "email", "phone")
     list_filter = ("role", "is_active")
     filter_horizontal = ()
-    
+    actions = [make_member]
+
     # Fields for creating Pilot from admin site
     add_fieldsets = (
         (
