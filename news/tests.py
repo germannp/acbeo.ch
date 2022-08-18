@@ -43,7 +43,7 @@ class ContactFormViewTests(TestCase):
         "message": "Message",
     }
 
-    def test_required_fields(self):
+    def test_required_fields_and_form_is_prefilled(self):
         for required_field in self.email_data.keys():
             partial_data = {
                 key: value
@@ -55,7 +55,11 @@ class ContactFormViewTests(TestCase):
             )
             self.assertEqual(response.status_code, 200)
             self.assertTemplateUsed(response, "news/contact.html")
+            for value in partial_data.values():
+                self.assertContains(response, value)
             self.assertEqual(0, len(mail.outbox))
+    
+    def test_contact(self):
         response = self.client.post(
             reverse("contact"), data=self.email_data, follow=True
         )
@@ -80,7 +84,7 @@ class PilotCreationViewTests(TestCase):
         "accept_safety_concept": True,
     }
 
-    def test_required_fields(self):
+    def test_required_fields_and_form_is_prefilled(self):
         for required_field in self.pilot_data.keys():
             partial_data = {
                 key: value
@@ -92,6 +96,10 @@ class PilotCreationViewTests(TestCase):
             )
             self.assertEqual(response.status_code, 200)
             self.assertTemplateUsed(response, "news/register.html")
+            for key, value in partial_data.items():
+                if "password" in key or key == "accept_safety_concept":
+                    continue
+                self.assertContains(response, value)
             self.assertEqual(0, len(Pilot.objects.all()))
         response = self.client.post(
             reverse("register"), data=self.pilot_data, follow=True
@@ -181,23 +189,52 @@ class PilotUpdateViewTests(TestCase):
 
 class MembershipFormViewTests(TestCase):
     def setUp(self):
+        self.membership_data = {
+            "street": "Street 666",
+            "town": "1337 Town",
+            "country": "Country",
+            "accept_statutes": True,
+            "comment": "Kommentar",
+        }
         self.guest = Pilot.objects.create(
             email="guest@example.com", first_name="Guest", role=Pilot.Role.Guest
         )
+        self.client.force_login(self.guest)
         self.member = Pilot.objects.create(
             email="member@example.com", role=Pilot.Role.Member
         )
-        self.client.force_login(self.guest)
 
-    def test_statutes_must_be_accepted_and_comment_is_prefilled(self):
+    def test_required_fields_and_form_is_prefilled(self):
+        for required_field in self.membership_data.keys():
+            if required_field == "comment":
+                continue
+            partial_data = {
+                key: value
+                for key, value in self.membership_data.items()
+                if key != required_field
+            }
+            response = self.client.post(
+                reverse("membership"), data=partial_data, follow=True
+            )
+            self.assertEqual(response.status_code, 200)
+            self.assertTemplateUsed(response, "news/membership.html")
+            for key, value in partial_data.items():
+                if key == "accept_statutes":
+                    continue
+                self.assertContains(response, value)
+            self.assertEqual(0, len(mail.outbox))
+            self.guest.refresh_from_db()
+            self.assertEqual(self.guest.role, Pilot.Role.Guest)
+
+    def test_statutes_must_be_accepted(self):
+        self.membership_data["accept_statutes"] = False
         response = self.client.post(
             reverse("membership"),
-            data={"accept_statutes": False, "comment": "Kommentar"},
+            data=self.membership_data,
             follow=True,
         )
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "news/membership.html")
-        self.assertContains(response, "Kommentar")
         self.assertContains(
             response, "Du musst mit unseren Statuten einverstanden sein."
         )
@@ -206,9 +243,7 @@ class MembershipFormViewTests(TestCase):
 
     def test_becoming_member(self):
         response = self.client.post(
-            reverse("membership"),
-            data={"accept_statutes": True},
-            follow=True,
+            reverse("membership"), data=self.membership_data, follow=True
         )
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "news/index.html")

@@ -24,7 +24,9 @@
                     <form method="post">
                         {% csrf_token %}
                         <p class="card-text">
-                            Bitte überprüfe deine Kontaktdaten und teile uns per Kommentar mit, falls etwa nicht stimmt:</p>
+                            Bitte überprüfe deine Kontaktdaten und <a
+                                href="{% url 'update_pilot' %}?next={{ request.path }}">korrigiere</a> sie, falls etwas
+                            nicht stimmt:</p>
                         <p class="card-text">
                             <strong>Name, Vorname</strong><br>
                             {{ request.user }}</p>
@@ -34,6 +36,23 @@
                         <p class="card-text">
                             <strong>Telefonnummer</strong><br>
                             {{ request.user.phone }}</p>
+                        <div class="form-floating mb-3">
+                            <input type="text" name="street" class="form-control" placeholder="text" 
+                                {% if form.street.value %}value="{{ form.street.value }}" {% endif %}>
+                            <label for="floatingInput">Strasse, Hausnummer</label>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <input type="text" name="town" class="form-control" placeholder="text" 
+                                {% if form.town.value %}value="{{ form.town.value }}" {% endif %}>
+                            <label for="floatingInput">Ort, Postleitzahl</label>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <input type="text" name="country" class="form-control" placeholder="text" 
+                                value="{{ form.country.value | default:'Schweiz' }}">
+                            <label for="floatingInput">Land</label>
+                            <small class="text-muted">Wir versenden die Rechnung per Email, zum Ausstellen einer
+                                Rechnung ist jedoch eine Postadresse nötig.</small>
+                        </div>
                         <div class="form-check mb-3">
                             <input class="form-check-input" type="checkbox" name="accept_statutes" id="acceptStatutes">
                             <label class="form-check-label" for="acceptStatutes">
@@ -41,8 +60,8 @@
                             </label>
                         </div>
                         <div class="form-floating mb-3">
-                            <textarea class="form-control" placeholder="text" name="comment" style="height: 200px"
-                            >{% if form.comment.value %}{{ form.comment.value }}{% endif %}</textarea>
+                            <textarea class="form-control" placeholder="text" name="comment" style="height: 200px">
+                                {% if form.comment.value %}{{ form.comment.value }}{% endif %}</textarea>
                             <label for="message">Kommentar</label>
                         </div>
                         <button class="btn btn-primary" type="submit">Absenden</button>
@@ -61,10 +80,10 @@
                     Als Mitglied hast du an unseren Trainings bei rechtzeitiger Anmeldung Vorrang und kannst dich aktiv
                     im Club einbringen.</p>
                 <p class="card-text">
-                    Dafür ist ein jährlicher Mitgliederbeitrag fällig, unabhängig davon an wievielen Trainings du teil 
-                    nimmst. Der Mitgliederbeitrag ist bis zum Ausscheiden aus dem Club fällig, wobei der Austritt jeweils
-                    bis zur Mitgliederversammlung anfangs Saison möglich ist. Die Höhe des Mitgliederbeitrags wird von 
-                    der Mitgliederversammlung fest gelegt.</p>
+                    Dafür ist ein jährlicher Mitgliederbeitrag fällig, unabhängig davon an wievielen Trainings du teil
+                    nimmst. Der Mitgliederbeitrag ist bis zum Ausscheiden aus dem Club fällig, wobei der Austritt
+                    jeweils bis zur Mitgliederversammlung anfangs Saison möglich ist. Die Höhe des Mitgliederbeitrags
+                    wird von der Mitgliederversammlung fest gelegt.</p>
                 <p class="card-text">
                     Die genauen Regelungen sind in unseren <a href="#">Statuten</a> fest gelegt.</p>
             </div>

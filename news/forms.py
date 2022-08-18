@@ -21,6 +21,9 @@ class ContactForm(forms.Form):
 
 
 class MembershipForm(forms.Form):
+    street = forms.CharField(required=True)
+    town = forms.CharField(required=True)
+    country = forms.CharField(required=True)
     accept_statutes = forms.BooleanField(required=False)
     comment = forms.CharField(required=False)
 
@@ -31,12 +34,18 @@ class MembershipForm(forms.Form):
         return accept_statutes
 
     def send_mail(self):
-        message = (
-            f"{self.sender} möchte Mitglied werden. Die "
-            f"Email ist {self.sender.email} und die Telefonnummer {self.sender.phone}."
+        message = "\n".join(
+            [
+                str(self.sender),
+                self.cleaned_data["street"],
+                self.cleaned_data["town"],
+                self.cleaned_data["country"],
+                self.sender.email,
+                self.sender.phone,
+                "\nMöchte Mitglied werden.",
+            ]
         )
-        comment = self.cleaned_data["comment"]
-        if comment:
+        if comment := self.cleaned_data["comment"]:
             message += "\n\nKommentar:\n" + comment
         send_mail(
             subject="Antrag ACBeo-Mitgliedschaft",
@@ -59,7 +68,9 @@ class PilotCreationForm(forms.ModelForm):
     def clean_accept_safety_concept(self):
         accept_safety_concept = self.cleaned_data.get("accept_safety_concept")
         if not accept_safety_concept:
-            raise ValidationError("Du musst mit unserem Sicherheitskonzept einverstanden sein.")
+            raise ValidationError(
+                "Du musst mit unserem Sicherheitskonzept einverstanden sein."
+            )
         return accept_safety_concept
 
     def clean_password2(self):
