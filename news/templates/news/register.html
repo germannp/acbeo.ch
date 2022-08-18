@@ -63,7 +63,7 @@
                     <a href="javascript:history.back()" class="btn btn-outline-dark mb-2">Abbrechen</a>
                 </form>
             </main>
-            Falls du bereits ein Konto hast, bitte <a href="{% url 'login' %}">einloggen</a>.
+            Falls du bereits ein Konto hast, bitte <a href="{% url 'login' %}?next={{ next }}">einloggen</a>.
         </div>
     </div>
 </div>

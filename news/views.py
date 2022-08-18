@@ -34,8 +34,13 @@ class ContactFormView(SuccessMessageMixin, generic.FormView):
 class PilotCreateView(SuccessMessageMixin, generic.CreateView):
     form_class = PilotCreationForm
     template_name = "news/register.html"
-    success_url = reverse_lazy("login")
     success_message = "Konto angelegt."
+
+    def get_success_url(self):
+        success_url = reverse_lazy("login")
+        if next := self.request.GET.get("next"):
+            success_url += f"?next={next}"
+        return success_url
 
 
 class PilotUpdateView(LoginRequiredMixin, SuccessMessageMixin, generic.UpdateView):
