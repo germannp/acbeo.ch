@@ -1,11 +1,14 @@
 {% block sidebar %}
 
+{% load static %}
+
 <div class="col float-right">
     <div class="card mb-3">
         <h5 class="card-header">Spielregeln</h5>
         <div class="card-body">
             <p class="card-text">
-                Unsere Trainings stehen allen offen, die unser <a href="#">Sicherheitskonzept</a> akzeptieren; die
+                Unsere Trainings stehen allen offen, die unser <a
+                    href="{% static 'news/sicherheitskonzept.pdf' %}">Sicherheitskonzept</a> akzeptieren; die
                 Teilnehmerzahl ist jedoch begrenzt und Mitglieder, die sich zu 100% für den ganzen Tag anmelden, haben
                 bei rechtzeitiger Anmeldung Vorrang.</p>
             <p class="card-text">

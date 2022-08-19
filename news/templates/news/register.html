@@ -6,6 +6,8 @@
 
 {% block content %}
 
+{% load static %}
+
 <div class="col-md-4">
     {% if form.errors %}
     {% for error_list in form.errors.values %}
@@ -56,7 +58,7 @@
                     <div class="form-check mb-3">
                         <input class="form-check-input" type="checkbox" name="accept_safety_concept" id="acceptSafetyConcept">
                         <label class="form-check-label" for="acceptSafetyConcept">
-                            Ich bin mit dem <a href="#">Sicherheitskonzept</a> einverstanden.
+                            Ich bin mit dem <a href="{% static 'news/sicherheitskonzept.pdf' %}">Sicherheitskonzept</a> einverstanden.
                         </label>
                     </div>
                     <button class="btn btn-primary mb-2" type="submit">Konto erstellen</button>

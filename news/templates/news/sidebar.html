@@ -1,13 +1,17 @@
 {% block sidebar %}
 
+{% load static %}
+
 <div class="col-xxl-4 col-md-5 float-right">
     <div class="card mb-3">
+        <img class="card-img-top" src="{% static 'news/smile.jpeg' %}" alt="Card image cap">
         <h5 class="card-header">Über uns</h5>
         <div class="card-body">
             <p class="card-text">
                 Wir sind ein Verein von Gleitschirm- und Deltapilot·innen, die gemeinsam in einer sicheren Umgebung ihr
                 fliegerisches Können verbessern wollen. Dazu organisieren wir seit 2010 Trainings mit Boot an der Axalp.
-                Unsere Trainings stehen allen offen, die unser <a href="#">Sicherheitskonzept</a> akzeptieren; die
+                Unsere Trainings stehen allen offen, die unser <a
+                    href="{% static 'news/sicherheitskonzept.pdf' %}">Sicherheitskonzept</a> akzeptieren; die
                 Teilnehmerzahl ist jedoch begrenzt und Mitglieder haben bei rechtzeitiger Anmeldung Vorrang.</p>
             <div class="d-grid gap-1 d-xl-block">
                 <a href="{% url 'signup' %}" class="btn btn-secondary">Einschreiben</a>

@@ -1,22 +1,26 @@
+{% load static %}
+
 <!doctype html>
 <html lang="en">
-
-<style>
-    .card {
-        box-shadow: 0 16px 48px #E3E7EB;
-    }
-</style>
+    
+    <style>
+        .card {
+            box-shadow: 0 16px 48px #E3E7EB;
+        }
+    </style>
 
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
-
+    integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
+    
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
 
-    <title>ACBeo - {% block title %} {% endblock title %}</title>
+    <link rel="shortcut icon" type="image/png" href="{% static 'news/favicon.png' %}"/>
+    
+    <title>{% block title %} {% endblock title %}</title>
 </head>
 
 <body>
