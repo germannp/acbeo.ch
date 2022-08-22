@@ -58,7 +58,7 @@ class ContactFormViewTests(TestCase):
             for value in partial_data.values():
                 self.assertContains(response, value)
             self.assertEqual(0, len(mail.outbox))
-    
+
     def test_contact(self):
         response = self.client.post(
             reverse("contact"), data=self.email_data, follow=True
@@ -277,7 +277,7 @@ class PilotAdminTests(TestCase):
     def setUp(self):
         staff = Pilot.objects.create(email="staff@example.com", role=Pilot.Role.Staff)
         self.client.force_login(staff)
-        self.guest = Pilot.objects.create(
+        self.pilot = Pilot.objects.create(
             email="guest@example.com", role=Pilot.Role.Guest
         )
 
@@ -286,11 +286,25 @@ class PilotAdminTests(TestCase):
             reverse("admin:news_pilot_changelist"),
             data={
                 "action": "make_member",
-                "_selected_action": [self.guest.id],
+                "_selected_action": [self.pilot.id],
             },
             follow=True,
         )
         self.assertEqual(response.status_code, 200)
 
-        self.guest.refresh_from_db()
-        self.assertEqual(self.guest.role, Pilot.Role.Member)
+        self.pilot.refresh_from_db()
+        self.assertTrue(self.pilot.is_member)
+
+    def test_make_orga(self):
+        response = self.client.post(
+            reverse("admin:news_pilot_changelist"),
+            data={
+                "action": "make_orga",
+                "_selected_action": [self.pilot.id],
+            },
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+
+        self.pilot.refresh_from_db()
+        self.assertTrue(self.pilot.is_orga)
