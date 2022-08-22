@@ -375,9 +375,6 @@ class TrainingUpdateViewTests(TestCase):
         self.client.force_login(self.orga)
         self.training = Training.objects.create(date=TODAY)
 
-        self.default_info = "Training findet statt"
-        self.new_info = "Training abgesagt"
-
     def test_orga_required(self):
         guest = get_user_model().objects.create(email="guest@example.com")
         self.client.force_login(guest)
@@ -408,23 +405,28 @@ class TrainingUpdateViewTests(TestCase):
         )
 
     def test_form_is_prefilled(self):
+        self.training.info = "Stored Info"
+        self.training.save()
         with self.assertNumQueries(3):
             response = self.client.get(
                 reverse("update_training", kwargs={"date": TODAY})
             )
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/update_training.html")
+        self.assertContains(response, "Stored Info")
         self.assertContains(response, self.training.max_pilots)
         self.assertContains(response, self.training.priority_date.isoformat())
-        self.assertContains(response, self.default_info)
 
     def test_update_training(self):
+        first_info = "Default Info"
+        new_info = "New Info"
+
         with self.assertNumQueries(7):
             response = self.client.get(reverse("trainings"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
-        self.assertNotContains(response, self.default_info)
-        self.assertNotContains(response, self.new_info)
+        self.assertNotContains(response, first_info)
+        self.assertNotContains(response, new_info)
 
         new_max_pilots = self.training.max_pilots - 1
         new_priority_date = self.training.priority_date - timedelta(days=1)
@@ -432,26 +434,26 @@ class TrainingUpdateViewTests(TestCase):
             response = self.client.post(
                 reverse("update_training", kwargs={"date": TODAY}),
                 data={
-                    "info": self.new_info,
+                    "info": new_info,
                     "max_pilots": new_max_pilots,
                     "priority_date": new_priority_date,
                 },
                 follow=True,
             )
         self.training.refresh_from_db()
-        self.assertEqual(self.training.info, self.new_info)
+        self.assertEqual(self.training.info, new_info)
         self.assertEqual(self.training.max_pilots, new_max_pilots)
         self.assertEqual(self.training.priority_date, new_priority_date)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
-        self.assertNotContains(response, self.default_info)
-        self.assertContains(response, self.new_info)
+        self.assertNotContains(response, first_info)
+        self.assertContains(response, new_info)
 
     def test_max_pilots_range(self):
         with self.assertNumQueries(3):
             response = self.client.post(
                 reverse("update_training", kwargs={"date": TODAY}),
-                data={"info": self.new_info, "max_pilots": 5},
+                data={"max_pilots": 5},
                 follow=True,
             )
         self.assertEqual(response.status_code, 200)
@@ -461,7 +463,7 @@ class TrainingUpdateViewTests(TestCase):
         with self.assertNumQueries(3):
             response = self.client.post(
                 reverse("update_training", kwargs={"date": TODAY}),
-                data={"info": self.new_info, "max_pilots": 22},
+                data={"max_pilots": 22},
                 follow=True,
             )
         self.assertEqual(response.status_code, 200)
@@ -472,11 +474,7 @@ class TrainingUpdateViewTests(TestCase):
         with self.assertNumQueries(3):
             response = self.client.post(
                 reverse("update_training", kwargs={"date": TODAY}),
-                data={
-                    "info": self.new_info,
-                    "max_pilots": 11,
-                    "priority_date": TOMORROW,
-                },
+                data={"priority_date": TOMORROW},
                 follow=True,
             )
         self.assertEqual(response.status_code, 200)
