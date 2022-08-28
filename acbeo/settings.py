@@ -26,8 +26,8 @@ SECRET_KEY = os.getenv(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("ENVIRONMENT") != "PROD"
 
-ALLOWED_HOSTS = ["127.0.0.1", "acbeo.fly.dev"]
-CSRF_TRUSTED_ORIGINS = ["https://acbeo.fly.dev"]
+ALLOWED_HOSTS = ["127.0.0.1", "acbeo.fly.dev", "acbeo.ch", "www.acbeo.ch"]
+CSRF_TRUSTED_ORIGINS = ["https://acbeo.fly.dev", "https://acbeo.ch"]
 
 if DEBUG: 
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
