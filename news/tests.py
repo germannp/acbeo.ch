@@ -1,8 +1,31 @@
+from http import HTTPStatus
+
 from django.core import mail
-from django.test import TestCase
+from django.test import RequestFactory, SimpleTestCase, TestCase
 from django.urls import reverse
 
 from .models import Pilot, Post
+from .middleware import RedirectToNonWwwMiddleware
+
+
+class RedirectToNonWwwMiddlewareTests(SimpleTestCase):
+    def setUp(self):
+        self.request_factory = RequestFactory()
+        self.dummy_response = object()
+        self.middleware = RedirectToNonWwwMiddleware(
+            lambda request: self.dummy_response
+        )
+
+    def test_www_redirect(self):
+        request = self.request_factory.get("/some-path/", HTTP_HOST="www.example.com")
+        response = self.middleware(request)
+        self.assertEqual(response.status_code, HTTPStatus.MOVED_PERMANENTLY)
+        self.assertEqual(response["Location"], "https://example.com/some-path/")
+
+    def test_non_redirect(self):
+        request = self.request_factory.get("/some-path/", HTTP_HOST="example.com")
+        response = self.middleware(request)
+        self.assertIs(response, self.dummy_response)
 
 
 class PostListViewTests(TestCase):
