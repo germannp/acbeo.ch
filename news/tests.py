@@ -59,6 +59,14 @@ class ContactFormViewTests(TestCase):
                 self.assertContains(response, value)
             self.assertEqual(0, len(mail.outbox))
 
+    def test_pilot_email_prefilled(self):
+        pilot = Pilot.objects.create(email="pilot@example.com")
+        self.client.force_login(pilot)
+        response = self.client.get(reverse("contact"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "news/contact.html")
+        self.assertContains(response, pilot.email)
+
     def test_contact(self):
         response = self.client.post(
             reverse("contact"), data=self.email_data, follow=True

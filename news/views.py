@@ -26,6 +26,12 @@ class ContactFormView(SuccessMessageMixin, generic.FormView):
     success_url = reverse_lazy("home")
     success_message = "Nachricht abgesendet."
 
+    def get_initial(self):
+        initial = super(ContactFormView, self).get_initial()
+        if self.request.user.is_authenticated:
+            initial["email"] = self.request.user.email
+        return initial
+
     def form_valid(self, form):
         form.send_mail()
         return super().form_valid(form)
