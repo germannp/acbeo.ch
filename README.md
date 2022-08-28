@@ -17,8 +17,7 @@ $ python manage.py makemigrations
 $ python manage.py migrate
 ```
 In principle, database migrations should be versioned and `makemigrations` should not 
-find any new migrations. However, during this early stage of development, we take the 
-liberty to introduce breaking changes. If the migration fails, remove `db.sqlite3` and 
+find any new migrations. However, if the migration still fails, remove `db.sqlite3` and 
 all previously generated migrations scripts from the `app/migrations` folders (but not 
 `__init__.py` 🙄) and try again.
 
@@ -31,8 +30,14 @@ $ python manage.py runserver
 Creating a super user is only necessary to access the admin site, where the database 
 can be edited directly. Normal pilot accounts can be registered over the website.
 
-The Django project folder, `acbeo`, contains the settings. The code is organized in 
-two Django apps: `news` contains the front page and user management and `trainings` 
-the tool for organizing trainings. Within each app `url.py` contains paths to views, 
-which load, manipulate, and save models mapped to the database, and render data and 
-forms in templates.
+The code is organized as follows: Django project folder, `acbeo`, contains the settings. 
+In particular, `acbeo/settings.py` reads secrets from environmental variables, which 
+need to be configured for deployment. The logic is organized in two Django apps: `news` 
+contains the front page and user management and `trainings` the tool for organizing 
+trainings. Within each app `url.py` contains paths to views, which load, manipulate, and 
+save models mapped to the database, and render data and forms in templates.
+
+To customize Bootstrap, it's source code and [SASS](https://sass-lang.com/) are required. 
+These can be installed using `$ nmp i bootstrap@5.2.0 sass`. Then the stylesheets can be
+compiled using `sass news/static/news/custom.scss news/static/news/custom.css`. The 
+resulting files need to be versioned for the site to work.
