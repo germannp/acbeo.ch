@@ -26,10 +26,23 @@ SECRET_KEY = os.getenv(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("ENVIRONMENT") != "PROD"
 
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-
 ALLOWED_HOSTS = ["127.0.0.1", "acbeo.fly.dev"]
 CSRF_TRUSTED_ORIGINS = ["https://acbeo.fly.dev"]
+
+if DEBUG: 
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+else:
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+    EMAIL_HOST = os.getenv("EMAIL_HOST")
+    EMAIL_PORT = os.getenv("EMAIL_PORT")
+    EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+    EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "dev@example.com")
+INFO_EMAIL = os.getenv("INFO_EMAIL", "info@example.com")
+EMERGENCY_EMAILS = os.getenv(
+    "EMERGENCY_EMAILS", "emergency@example.com,emergency2@example.com"
+).split(",")
 
 # Application definition
 

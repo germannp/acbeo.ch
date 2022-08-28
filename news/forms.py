@@ -1,4 +1,5 @@
 from django import forms
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
 
@@ -12,10 +13,10 @@ class ContactForm(forms.Form):
 
     def send_mail(self):
         send_mail(
-            subject=self.cleaned_data["subject"],
+            subject="Kontaktformular: " + self.cleaned_data["subject"],
             message=self.cleaned_data["message"],
-            from_email=self.cleaned_data["email"],
-            recipient_list=["info@example.com"],
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[settings.INFO_EMAIL, self.cleaned_data["email"]],
             fail_silently=False,
         )
 
@@ -50,8 +51,8 @@ class MembershipForm(forms.Form):
         send_mail(
             subject="Antrag ACBeo-Mitgliedschaft",
             message=message,
-            from_email=self.sender.email,
-            recipient_list=["info@example.com", self.sender.email],
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[settings.INFO_EMAIL, self.sender.email],
             fail_silently=False,
         )
 

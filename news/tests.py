@@ -75,9 +75,13 @@ class ContactFormViewTests(TestCase):
         self.assertTemplateUsed(response, "news/index.html")
         self.assertContains(response, "Nachricht abgesendet.")
         self.assertEqual(1, len(mail.outbox))
-        self.assertEqual(mail.outbox[0].subject, self.email_data["subject"])
-        self.assertEqual(mail.outbox[0].from_email, self.email_data["email"])
-        self.assertEqual(mail.outbox[0].to, ["info@example.com"])
+        self.assertEqual(
+            mail.outbox[0].subject, "Kontaktformular: " + self.email_data["subject"]
+        )
+        self.assertEqual(mail.outbox[0].from_email, "dev@example.com")
+        self.assertEqual(
+            mail.outbox[0].to, ["info@example.com", self.email_data["email"]]
+        )
         self.assertEqual(mail.outbox[0].body, self.email_data["message"])
 
 

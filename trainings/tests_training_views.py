@@ -589,8 +589,11 @@ class EmergencyMailViewTests(TestCase):
         self.assertTrue(
             TODAY.strftime("%A, %d. %B").replace(" 0", " ") in mail.outbox[0].subject
         )
-        self.assertEqual(mail.outbox[0].from_email, "info@example.com")
-        self.assertTrue(self.orga.email in mail.outbox[0].to)
+        self.assertEqual(mail.outbox[0].from_email, "dev@example.com")
+        self.assertEqual(
+            mail.outbox[0].to,
+            ["emergency@example.com", "emergency2@example.com", self.orga.email],
+        )
         self.assertTrue("8:30 bis 20:00" in mail.outbox[0].body)
         self.assertTrue(self.orga.first_name in mail.outbox[0].body)
         self.assertTrue(self.pilot_b.first_name in mail.outbox[0].body)

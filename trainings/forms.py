@@ -1,6 +1,7 @@
 import datetime
 
 from django import forms
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -161,8 +162,8 @@ class EmergencyMailForm(forms.ModelForm):
             subject=f"{date}: Gleitschirm-Sicherheitstraining ueber dem Brienzersee",
             message=strip_tags(html_message),
             html_message=html_message,
-            from_email="info@example.com",
-            recipient_list=["emergency@example.com", self.sender.email],
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=settings.EMERGENCY_EMAILS + [self.sender.email],
             fail_silently=False,
         )
         self.instance.emergency_mail_sender = self.sender
