@@ -228,6 +228,7 @@ class MembershipFormViewTests(TestCase):
             "street": "Street 666",
             "town": "1337 Town",
             "country": "Country",
+            "request_membership": True,
             "accept_statutes": True,
             "comment": "Kommentar",
         }
@@ -254,12 +255,25 @@ class MembershipFormViewTests(TestCase):
             self.assertEqual(response.status_code, HTTPStatus.OK)
             self.assertTemplateUsed(response, "news/membership.html")
             for key, value in partial_data.items():
-                if key == "accept_statutes":
+                if key in ["request_membership", "accept_statutes"]:
                     continue
                 self.assertContains(response, value)
             self.assertEqual(0, len(mail.outbox))
             self.guest.refresh_from_db()
             self.assertEqual(self.guest.role, Pilot.Role.Guest)
+
+    def test_membership_must_be_requested(self):
+        self.membership_data["request_membership"] = False
+        response = self.client.post(
+            reverse("membership"),
+            data=self.membership_data,
+            follow=True,
+        )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "news/membership.html")
+        self.assertContains(response, "Du musst Mitglied werden wollen.")
+        self.guest.refresh_from_db()
+        self.assertEqual(self.guest.role, Pilot.Role.Guest)
 
     def test_statutes_must_be_accepted(self):
         self.membership_data["accept_statutes"] = False
@@ -285,7 +299,7 @@ class MembershipFormViewTests(TestCase):
         self.guest.refresh_from_db()
         self.assertEqual(self.guest.role, Pilot.Role.Member)
 
-    def test_button_hidden_from_members(self):
+    def test_button_and_menu_hidden_from_members(self):
         response = self.client.get(reverse("home"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "news/sidebar.html")

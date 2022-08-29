@@ -523,7 +523,7 @@ class TrainingUpdateViewTests(TestCase):
     def test_next_urls(self):
         response = self.client.get(
             reverse("update_training", kwargs={"date": TODAY})
-            + f"?next={reverse('trainings')}&page=2&training=3",
+            + f"?next={reverse('trainings')}&page=2&training=3"
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "trainings/update_training.html")

@@ -66,12 +66,15 @@
                         {% endif %}
                     </li>
                     <li class="nav-item">
-                        {% if request.user.is_authenticated %}
+                    {% if request.user.is_authenticated %}
                     <li class="nav-item dropup">
                         <a class="nav-link dropdown-toggle" href="#" id="dropdown04" data-bs-toggle="dropdown"
                             aria-expanded="false">Konto</a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="{% url 'update_pilot' %}?next={{ request.path }}">Bearbeiten</a></li>
+                            {% if not request.user.is_member %}
+                            <li><a class="dropdown-item" href="{% url 'membership' %}">Mitglied werden</a></li>
+                            {% endif %}
                             <li><a class="dropdown-item" href="{% url 'logout' %}?next=/">Abmelden</a></li>
                         </ul>
                     </li>

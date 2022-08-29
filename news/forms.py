@@ -25,8 +25,15 @@ class MembershipForm(forms.Form):
     street = forms.CharField(required=True)
     town = forms.CharField(required=True)
     country = forms.CharField(required=True)
+    request_membership = forms.BooleanField(required=False)
     accept_statutes = forms.BooleanField(required=False)
     comment = forms.CharField(required=False)
+
+    def clean_request_membership(self):
+        request_membership = self.cleaned_data.get("request_membership")
+        if not request_membership:
+            raise ValidationError("Du musst Mitglied werden wollen.")
+        return request_membership
 
     def clean_accept_statutes(self):
         accept_statutes = self.cleaned_data.get("accept_statutes")

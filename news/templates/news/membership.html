@@ -55,6 +55,13 @@
                                 Rechnung ist jedoch eine Postadresse nötig.</small>
                         </div>
                         <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" name="request_membership" id="requestMembership">
+                            <label class="form-check-label" for="requestMembership">
+                                Ich will Mitglied werden. Um als Gast mit uns zu fliegen, reicht dein Benutzerkonto und
+                                du kannst das Beantragen der Mitgliedschaft <a href="{% url 'home' %}">abbrechen</a>.
+                            </label>
+                        </div>
+                        <div class="form-check mb-3">
                             <input class="form-check-input" type="checkbox" name="accept_statutes" id="acceptStatutes">
                             <label class="form-check-label" for="acceptStatutes">
                                 Ich bin mit den <a href="{% static 'news/statuten.pdf' %}">Statuten</a> einverstanden.
@@ -78,8 +85,8 @@
             <h5 class="card-header">Rechte und Pflichten</h5>
             <div class="card-body">
                 <p class="card-text">
-                    Als Mitglied hast du an unseren Trainings bei rechtzeitiger Anmeldung Vorrang und kannst dich aktiv
-                    im Club einbringen.</p>
+                    Du musst nicht Mitglied sein, um mit uns zu fliegen. Als Mitglied hast du aber an unseren
+                    Trainings bei rechtzeitiger Anmeldung Vorrang und kannst dich aktiv im Club einbringen.</p>
                 <p class="card-text">
                     Dafür ist ein jährlicher Mitgliederbeitrag fällig, unabhängig davon an wievielen Trainings du teil
                     nimmst. Der Mitgliederbeitrag ist bis zum Ausscheiden aus dem Club fällig, wobei der Austritt
