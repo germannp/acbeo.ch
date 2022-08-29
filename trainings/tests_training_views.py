@@ -27,7 +27,7 @@ class TrainingListViewTests(TestCase):
 
         Training(date=YESTERDAY).save()
         self.todays_training = Training.objects.create(date=TODAY)
-        tomorrows_training = Training.objects.create(date=TOMORROW)
+        self.tomorrows_training = Training.objects.create(date=TOMORROW)
         Training(date=TOMORROW + timedelta(days=1)).save()
         self.last_training = Training.objects.create(
             date=TOMORROW + timedelta(days=2), priority_date=TOMORROW
@@ -36,7 +36,22 @@ class TrainingListViewTests(TestCase):
         self.signup = Signup.objects.create(
             pilot=self.orga, training=self.todays_training
         )
-        Signup(pilot=self.pilot_b, training=tomorrows_training).save()
+        Signup(pilot=self.pilot_b, training=self.tomorrows_training).save()
+    
+    def test_signup_button_when_no_trainings_listed(self):
+        Training.objects.all().exclude(date=TODAY).delete()
+        with self.assertNumQueries(10):
+            response = self.client.get(reverse("trainings"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertNotContains(response, "btn-secondary")
+
+        self.todays_training.delete()
+        with self.assertNumQueries(4):
+            response = self.client.get(reverse("trainings"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertContains(response, "btn-secondary")
 
     def test_list_trainings_selects_signups(self):
         self.signup.refresh_from_db()

@@ -9,6 +9,11 @@
 <div class="row mt-2">
 
     <div class="col left">
+        {% if not trainings %}
+        <p>Im Moment ist niemand für ein kommendes Training eingeschrieben.</p>
+        <a href="{% url 'signup' %}" class="btn btn-secondary">Einschreiben</a>
+        {% endif %}
+
         {% for training in trainings %}
         <div class="card mb-4" id="training_{{ forloop.counter }}">
             <h5 class="card-header">{{ training.date | date:"l, j. E" }} 
