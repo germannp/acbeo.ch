@@ -30,6 +30,8 @@ class ContactFormView(SuccessMessageMixin, generic.FormView):
         initial = super(ContactFormView, self).get_initial()
         if self.request.user.is_authenticated:
             initial["email"] = self.request.user.email
+        if subject := self.request.GET.get("subject"):
+            initial["subject"] = subject
         return initial
 
     def form_valid(self, form):

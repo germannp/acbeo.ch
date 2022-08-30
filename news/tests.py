@@ -89,6 +89,13 @@ class ContactFormViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "news/contact.html")
         self.assertContains(response, pilot.email)
+    
+    def test_subject_from_url(self):
+        subject="Some subject"
+        response = self.client.get(reverse("contact") + f"?subject={subject}")
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "news/contact.html")
+        self.assertContains(response, subject)
 
     def test_contact(self):
         response = self.client.post(
