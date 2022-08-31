@@ -60,11 +60,14 @@ class PostDetailViewTests(TestCase):
 
 
 class ContactFormViewTests(TestCase):
-    email_data = {
-        "email": "from@example.com",
-        "subject": "Subject",
-        "message": "Message",
-    }
+    def setUp(self):
+        self.pilot = Pilot.objects.create(email="pilot@example.com")
+        self.client.force_login(self.pilot)
+        self.email_data = {
+            "email": "from@example.com",
+            "subject": "Subject",
+            "message": "Message",
+        }
 
     def test_required_fields_and_form_is_prefilled(self):
         for required_field in self.email_data.keys():
@@ -83,12 +86,10 @@ class ContactFormViewTests(TestCase):
             self.assertEqual(0, len(mail.outbox))
 
     def test_pilot_email_prefilled(self):
-        pilot = Pilot.objects.create(email="pilot@example.com")
-        self.client.force_login(pilot)
         response = self.client.get(reverse("contact"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "news/contact.html")
-        self.assertContains(response, pilot.email)
+        self.assertContains(response, self.pilot.email)
     
     def test_subject_from_url(self):
         subject="Some subject"
