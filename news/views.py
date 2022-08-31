@@ -20,7 +20,7 @@ class PostDetailView(generic.DetailView):
     template_name = "news/post.html"
 
 
-class ContactFormView(SuccessMessageMixin, generic.FormView):
+class ContactFormView(LoginRequiredMixin, SuccessMessageMixin, generic.FormView):
     form_class = ContactForm
     template_name = "news/contact.html"
     success_url = reverse_lazy("home")
