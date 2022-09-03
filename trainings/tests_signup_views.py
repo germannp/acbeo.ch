@@ -170,11 +170,16 @@ class SignupCreateViewTests(TestCase):
             )
 
     def test_cannot_signup_twice(self):
-        with self.assertNumQueries(6):
-            self.client.post(
+        with self.assertNumQueries(8):
+            response = self.client.post(
                 reverse("signup"),
                 data={"date": TODAY, "for_time": Signup.Time.WholeDay},
+                follow=True,
             )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "trainings/signup.html")
+        self.assertContains(response, "alert-success")
+        self.assertContains(response, f"<b>{TODAY.strftime('%A')}</b>")
         self.assertEqual(1, len(Signup.objects.all()))
 
         with self.assertNumQueries(5):
@@ -186,6 +191,7 @@ class SignupCreateViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "trainings/signup.html")
         self.assertContains(response, "alert-warning")
+        self.assertContains(response, f"<b>{TODAY.strftime('%A')}</b>")
         self.assertEqual(1, len(Signup.objects.all()))
 
     def test_cannot_signup_for_past_training(self):

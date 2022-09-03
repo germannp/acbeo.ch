@@ -1,4 +1,5 @@
 import datetime
+import locale
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.messages.views import SuccessMessageMixin
@@ -9,6 +10,9 @@ from django.views import generic
 
 from . import forms
 from .models import Training, Signup
+
+
+locale.setlocale(locale.LC_TIME, "de_CH")
 
 
 class TrainingListView(LoginRequiredMixin, generic.ListView):
@@ -158,7 +162,11 @@ class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateVi
             )
         pilot = self.request.user
         if Signup.objects.filter(pilot=pilot, training=training).exists():
-            form.add_error(None, f"Du bist für {self.date} bereits eingeschrieben.")
+            form.add_error(
+                None,
+                f"Du bist für <b>{self.date.strftime('%A')}</b>, den"
+                f"{self.date.strftime(' %d. %B %Y').replace (' 0', ' ')}, bereits eingeschrieben.",
+            )
             return super().form_invalid(form)
         form.instance.pilot = pilot
         form.instance.training = training
@@ -173,7 +181,10 @@ class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateVi
         return cancel_url
 
     def get_success_url(self):
-        self.success_message = f"Eingeschrieben für {self.date}."
+        self.success_message = (
+            f"Eingeschrieben für <b>{self.date.strftime('%A')}</b>, "
+            f"den {self.date.strftime('%d. %B %Y')}.".replace(" 0", " ")
+        )
         next_day = self.date + datetime.timedelta(days=1)
         success_url = reverse_lazy("signup", kwargs={"date": next_day})
         if page := self.request.GET.get("page"):

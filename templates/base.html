@@ -32,7 +32,7 @@
 
         {% if messages %}
         <div class="col">
-            {% for message in messages %}<div class="alert my-4 alert-success">{{ message }}</div>{% endfor %}
+            {% for message in messages %}<div class="alert my-4 alert-success">{{ message | safe }}</div>{% endfor %}
         </div>
         {% endif %}
 
