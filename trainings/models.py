@@ -37,7 +37,7 @@ class Training(models.Model):
 
     def pilots(self):
         return [signup.pilot for signup in self.signups.all()]
-    
+
     def number_of_motivated_pilots(self):
         return sum(signup.is_motivated for signup in self.signups.all())
 
@@ -84,10 +84,14 @@ class Signup(models.Model):
 
     def __str__(self):
         return f"{self.pilot} {self.get_status_display()} for {self.training}"
-    
+
     @property
     def is_motivated(self):
-        return self.status != self.Status.Canceled
+        return (
+            self.status != self.Status.Canceled
+            and self.is_certain
+            and self.for_time == self.Time.WholeDay
+        )
 
     @property
     def has_priority(self):
@@ -112,6 +116,7 @@ class Signup(models.Model):
         self.save()
 
     def cancel(self):
+        self.signed_up_on = make_aware(datetime.now())
         self.status = self.Status.Canceled
         # Not saving, because called before saving updates from form
 

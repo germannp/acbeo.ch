@@ -188,7 +188,7 @@ class SignupTests(TestCase):
         mocked_datetime.now.return_value += timedelta(seconds=10)
         self.signup.cancel()
         time_of_cancelation = self.signup.signed_up_on
-        self.assertEqual(self.time_selected, time_of_cancelation)
+        self.assertLess(self.time_selected, time_of_cancelation)
         self.assertEqual(self.signup.status, Signup.Status.Canceled)
 
         mocked_datetime.now.return_value += timedelta(seconds=10)
@@ -260,11 +260,25 @@ class SignupTests(TestCase):
         self.assertTrue(self.signup.has_priority)
 
     def test_is_motivated(self):
-        for status, is_motivated in [
-            (Signup.Status.Waiting, True),
-            (Signup.Status.Selected, True),
-            (Signup.Status.Canceled, False),
+        for status, is_certain, for_time, is_motivated in [
+            # Cannot be Canceled
+            (Signup.Status.Waiting, True, Signup.Time.WholeDay, True),
+            (Signup.Status.Selected, True, Signup.Time.WholeDay, True),
+            (Signup.Status.Canceled, True, Signup.Time.WholeDay, False),
+            # Must be certain
+            (Signup.Status.Waiting, False, Signup.Time.WholeDay, False),
+            # Must be for whole day
+            (Signup.Status.Waiting, True, Signup.Time.ArriveLate, False),
+            (Signup.Status.Waiting, True, Signup.Time.LeaveEarly, False),
+            (Signup.Status.Waiting, True, Signup.Time.Individually, False),
         ]:
-            with self.subTest(status=status, is_motivated=is_motivated):
+            with self.subTest(
+                status=status,
+                is_certain=is_certain,
+                for_time=for_time,
+                is_motivated=is_motivated,
+            ):
                 self.signup.status = status
+                self.signup.is_certain = is_certain
+                self.signup.for_time = for_time
                 self.assertEqual(self.signup.is_motivated, is_motivated)

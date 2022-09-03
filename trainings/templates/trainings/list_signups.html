@@ -34,9 +34,9 @@
                         </thead>
                         <tbody class="table-group-divider">
                             {% for signup in signups %}
-                            <tr>
+                            <tr {% if signup.get_status_display == 'Canceled' %}class="text-muted"{% endif %}>
                                 <td>{{ forloop.counter }}</td>
-                                <td>{{ signup.training.date | date:"D., j. E Y" }}
+                                <td>{{ signup.training.date | date:"D., j. M. Y" }}
                                     {% if time == "future" %}
                                     <a href="{% url 'update_signup' date=signup.training.date.isoformat %}?next={% url 'my_signups' %}"
                                         class="btn btn-primary btn-sm bi bi-pencil-square" /a>
@@ -44,9 +44,9 @@
                                 </td>
                                 <td>
                                     {% if signup.training.number_of_motivated_pilots < 6 %}
-                                    <span class="text-warning">{{ signup.training.number_of_motivated_pilots }}</span>
+                                    <span class="text-warning">{{ signup.training.number_of_motivated_pilots }} zu 100%</span>
                                     {% else %}
-                                    {{ signup.training.number_of_motivated_pilots }}
+                                    {{ signup.training.number_of_motivated_pilots }} zu 100%
                                     {% endif %}
                                 </td>
                                 <td>
@@ -59,14 +59,14 @@
                                 </td>
                                 <td>
                                     {% if signup.get_status_display != 'Canceled' %}
-                                    {% if signup.is_certain %}100%{% else %}75%{% endif %}
+                                    {% if signup.is_certain %}100%{% else %}<span class="text-warning">75%</span>{% endif %}
                                     {% endif %}
                                 </td>
                                 <td>
                                     {% if signup.for_time == signup.Time.WholeDay %}Ganzer Tag{% endif %}
-                                    {% if signup.for_time == signup.Time.ArriveLate %}Komme später{% endif %}
-                                    {% if signup.for_time == signup.Time.LeaveEarly %}Gehe früher{% endif %}
-                                    {% if signup.for_time == signup.Time.Individually %}Individuell{% endif %}
+                                    {% if signup.for_time == signup.Time.ArriveLate %}<span class="text-warning">Komme später</span>{% endif %}
+                                    {% if signup.for_time == signup.Time.LeaveEarly %}<span class="text-warning">Gehe früher</span>{% endif %}
+                                    {% if signup.for_time == signup.Time.Individually %}<span class="text-warning">Individuell</span>{% endif %}
                                 </td>
                                 <td>
                                     {% if signup.get_status_display != 'Canceled' %}

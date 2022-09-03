@@ -40,16 +40,16 @@ class SingupListViewTests(TestCase):
         self.assertTemplateUsed(response, "trainings/list_signups.html")
         self.assertContains(
             response,
-            TODAY.strftime("%a., %d. %B %Y").replace(" 0", " ").replace("..", "."),
+            TODAY.strftime("%a., %d. %b. %Y").replace(" 0", " ").replace("..", "."),
         )
         self.assertNotContains(
             response,
-            TOMORROW.strftime("%a., %d. %B %Y").replace(" 0", " ").replace("..", "."),
+            TOMORROW.strftime("%a., %d. %b. %Y").replace(" 0", " ").replace("..", "."),
         )
         self.assertNotContains(response, "Vergangene Trainings")
         self.assertNotContains(
             response,
-            YESTERDAY.strftime("%a., %d. %B %Y").replace(" 0", " ").replace("..", "."),
+            YESTERDAY.strftime("%a., %d. %b. %Y").replace(" 0", " ").replace("..", "."),
         )
 
         self.client.force_login(self.pilot_b)
@@ -59,16 +59,16 @@ class SingupListViewTests(TestCase):
         self.assertTemplateUsed(response, "trainings/list_signups.html")
         self.assertContains(
             response,
-            TOMORROW.strftime("%a., %d. %B %Y").replace(" 0", " ").replace("..", "."),
+            TOMORROW.strftime("%a., %d. %b. %Y").replace(" 0", " ").replace("..", "."),
         )
         self.assertContains(
             response,
-            TODAY.strftime("%a., %d. %B %Y").replace(" 0", " ").replace("..", "."),
+            TODAY.strftime("%a., %d. %b. %Y").replace(" 0", " ").replace("..", "."),
         )
         self.assertContains(response, "Vergangene Trainings")
         self.assertContains(
             response,
-            YESTERDAY.strftime("%a., %d. %B %Y").replace(" 0", " ").replace("..", "."),
+            YESTERDAY.strftime("%a., %d. %b. %Y").replace(" 0", " ").replace("..", "."),
         )
 
     def test_list_signups_selects_signups(self):
@@ -83,7 +83,8 @@ class SingupListViewTests(TestCase):
         self.signup.refresh_from_db()
         self.assertEqual(self.signup.status, Signup.Status.Selected)
 
-    def test_signups_with_up_to_5_pilots_are_shown_in_warning_color(self):
+    def test_text_color(self):
+        # Trainings with less than 6 motivated pilots
         self.todays_training.select_signups()
         for i in range(3, 8):
             pilot = get_user_model().objects.create(email=f"{i}@example.com")
@@ -98,6 +99,45 @@ class SingupListViewTests(TestCase):
                 self.assertContains(response, "text-warning")
             else:
                 self.assertNotContains(response, "text-warning")
+        
+        # Signups that are not is_certain and for WholeDay
+        for is_certain, for_time, warning in [
+            (True, Signup.Time.WholeDay, False),
+            (False, Signup.Time.WholeDay, True),
+            (True, Signup.Time.ArriveLate, True),
+            (True, Signup.Time.LeaveEarly, True),
+            (True, Signup.Time.Individually, True),
+        ]:
+            with self.subTest(is_certain=is_certain, for_time=for_time, warning=warning):
+                self.signup.is_certain = is_certain
+                self.signup.for_time = for_time
+                self.signup.save()
+                with self.assertNumQueries(8):
+                    response = self.client.get(reverse("my_signups"))
+                self.assertEqual(response.status_code, HTTPStatus.OK)
+                self.assertTemplateUsed(response, "trainings/list_signups.html")
+                self.assertNotContains(response, "bi-hourglass-split")
+                if warning:
+                    self.assertContains(response, "text-warning")
+                else:
+                    self.assertNotContains(response, "text-warning")
+
+        for status, muted in [
+            (Signup.Status.Selected, False),
+            (Signup.Status.Canceled, True),
+        ]:
+            with self.subTest(status=status, muted=muted):
+                self.signup.status = status
+                self.signup.save()
+                with self.assertNumQueries(7):
+                    response = self.client.get(reverse("my_signups"))
+                self.assertEqual(response.status_code, HTTPStatus.OK)
+                self.assertTemplateUsed(response, "trainings/list_signups.html")
+                self.assertNotContains(response, "bi-hourglass-split")
+                if muted:
+                    self.assertContains(response, "text-muted")
+                else:
+                    self.assertNotContains(response, "text-muted")
 
 
 class SignupCreateViewTests(TestCase):

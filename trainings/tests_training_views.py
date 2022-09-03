@@ -37,7 +37,7 @@ class TrainingListViewTests(TestCase):
             pilot=self.orga, training=self.todays_training
         )
         Signup(pilot=self.pilot_b, training=self.tomorrows_training).save()
-    
+
     def test_signup_button_when_no_trainings_listed(self):
         Training.objects.all().exclude(date=TODAY).delete()
         with self.assertNumQueries(10):
@@ -125,6 +125,49 @@ class TrainingListViewTests(TestCase):
             response, reverse("update_signup", kwargs={"date": TOMORROW})
         )
         self.assertNotContains(response, reverse("signup", kwargs={"date": TOMORROW}))
+
+    def test_text_color(self):
+        for i, (is_certain, for_time, warning) in enumerate(
+            [
+                (True, Signup.Time.WholeDay, False),
+                (False, Signup.Time.WholeDay, True),
+                (True, Signup.Time.ArriveLate, True),
+                (True, Signup.Time.LeaveEarly, True),
+                (True, Signup.Time.Individually, True),
+            ]
+        ):
+            with self.subTest(
+                is_certain=is_certain, for_time=for_time, warning=warning
+            ):
+                self.signup.is_certain = is_certain
+                self.signup.for_time = for_time
+                self.signup.save()
+                with self.assertNumQueries(10 + (i == 0)):
+                    response = self.client.get(reverse("trainings"))
+                self.assertEqual(response.status_code, HTTPStatus.OK)
+                self.assertTemplateUsed(response, "trainings/list_trainings.html")
+                self.assertNotContains(response, "bi-hourglass-split")
+                if warning:
+                    self.assertContains(response, "text-warning")
+                else:
+                    self.assertNotContains(response, "text-warning")
+
+        for status, muted in [
+            (Signup.Status.Selected, False),
+            (Signup.Status.Canceled, True),
+        ]:
+            with self.subTest(status=status, muted=muted):
+                self.signup.status = status
+                self.signup.save()
+                with self.assertNumQueries(9):
+                    response = self.client.get(reverse("trainings"))
+                self.assertEqual(response.status_code, HTTPStatus.OK)
+                self.assertTemplateUsed(response, "trainings/list_trainings.html")
+                self.assertNotContains(response, "bi-hourglass-split")
+                if muted:
+                    self.assertContains(response, "text-muted")
+                else:
+                    self.assertNotContains(response, "text-muted")
 
     def test_update_info_and_emergency_mail_buttons_shown_and_disabled(self):
         with self.assertNumQueries(11):
