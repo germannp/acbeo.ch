@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from django.urls import path, register_converter
+from django.views.generic import TemplateView
 
 from . import views
 
@@ -19,6 +20,7 @@ register_converter(DateConverter, "date")
 
 urlpatterns = [
     path("", views.TrainingListView.as_view(), name="trainings"),
+    path("infos/", TemplateView.as_view(template_name="trainings/about.html"), name="about_trainings"),
     path("erstellen/", views.TrainingCreateView.as_view(), name="create_trainings"),
     path(
         "<date:date>/ansagen/",

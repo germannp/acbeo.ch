@@ -28,7 +28,7 @@
         </div>
     </header>
 
-    <main class="container mb-3 pb-5">
+    <main class="container mb-2 pb-5">
 
         {% if messages %}
         <div class="col">
@@ -58,6 +58,7 @@
                             {% if request.user.is_staff %}
                             <li><a class="dropdown-item" href="{% url 'create_trainings' %}">Trainings erstellen</a></li>
                             {% endif %}
+                            <li><a class="dropdown-item" href="{% url 'about_trainings' %}">Praktische Infos</a></li>
                         </ul>
                     </li>
                     <li class="nav-item">

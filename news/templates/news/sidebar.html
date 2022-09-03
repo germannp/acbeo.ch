@@ -12,7 +12,7 @@
                 fliegerisches Können verbessern wollen. Dazu organisieren wir seit 2010 Trainings mit Boot an der Axalp.
                 Unsere Trainings stehen allen offen, die unser <a
                     href="{% static 'news/sicherheitskonzept.pdf' %}">Sicherheitskonzept</a> akzeptieren; die
-                Teilnehmerzahl ist jedoch begrenzt und Mitglieder haben bei rechtzeitiger Anmeldung Vorrang.</p>
+                Teilnehmerzahl ist jedoch begrenzt und Mitglieder haben bei rechtzeitigem Einschreiben Vorrang.</p>
             <div class="d-grid gap-1 d-xl-block">
                 <a href="{% url 'signup' %}" class="btn btn-secondary">Einschreiben</a>
                 {% if not request.user.is_member %}
@@ -22,7 +22,7 @@
             </div>
         </div>
     </div>
-    <div class="card mb-3">
+    <div class="card mb-4">
         <img class="card-img-top" src="{% static 'news/synchro.jpeg' %}" alt="Card image cap">
         <h5 class="card-header">Partner</h5>
         <div class="card-body">

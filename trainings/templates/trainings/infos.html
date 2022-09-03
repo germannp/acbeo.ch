@@ -1,0 +1,29 @@
+{% load static %}
+
+<div class="card mb-4">
+    <h5 class="card-header">Praktische Infos</h5>
+    <div class="card-body">
+        <p class="card-text">
+            Trainingsablauf und Materialempfehlungen stehen im <a
+                href="{% static 'news/sicherheitskonzept.pdf' %}">Sicherheitskonzept</a>. Hier folgen weitere praktische
+            Informationen, die nicht direkt sicherheitsrelevant sind.</p>
+        <p class="card-text">
+            Ob ein Training statt findet entscheiden die eingeschriebenen Leiter·innen aufgrund des Wetters und der
+            eingeschriebenen Pilot·innen. Der Entscheid wird direkt bei den jeweiligen <a
+                href="{% url 'trainings' %}">Trainings</a> veröffentlicht. Wir versuchen den Entscheid spätestens um 19
+            Uhr am Vorabend zu veröffentlichen.</p>
+        <p class="card-text">
+            Wir treffen uns jeweils am Landeplatz bei der Aaregg. Die nächste Postautohaltestelle ist Brienz BE, im
+            Brunnen. Leider sind die Verbindungen schlecht, meist findet sich aber eine Mitfahrgelegenheit, am besten
+            beim Einschreiben einen Kommentar schreiben. In der Regel sind genügend Parkplätze vorhanden, bezahlen kann
+            man mit Münz, Karte oder App.</p>
+        <p class="card-text">
+            Am Landeplatz hat es eine Toilette mit Trinkwasser. Es gibt in der Regel keine Möglichkeit, sich mit
+            Nahrungsmitteln zu versorgen. Wir machen auch keine Mittagspause, da sich im Bus und am Start- oder
+            Landeplatz immer wieder kleinere Pausen ergeben.</p>
+        <p class="card-text">
+            Ein Flug kostet CHF 9, ein 10er Abo CHF 72. Wer eine Runde Bus oder Boot macht, kriegt einen Flug
+            gutgeschrieben. Gäste müssen die ersten vier Trainings im Jahr eine Tagesmitgliedschaft für CHF 30 lösen.
+            Bezahlen kann man in Bar oder mit Twint.</p>
+    </div>
+</div>
