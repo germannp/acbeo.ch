@@ -132,30 +132,30 @@ class EmergencyMailForm(forms.ModelForm):
         # fmt: off
         html_message = (
             "<b>Was</b>: Information über Gleitschirm Sicherheitstraining über dem "
-            "Brienzersee\n\n"
+            "Brienzersee<br>\n<br>\n"
 
             "<b>Geht an</b>: Einsatzzentrale der Kantonspolizei in Thun. Bitte weiterleiten "
-            "an die Polizeiwachen Brienz und Meiringen, und die Seepolizei Brienzersee.\n\n"
+            "an die Polizeiwachen Brienz und Meiringen, und die Seepolizei Brienzersee.<br>\n<br>\n"
 
-            "<b>Wo</b>: Östliches Seebecken Brienzersee\n"
-            "Start: Axalp\n"
-            "Landung: Aaregg, Forsthaus\n\n"
+            "<b>Wo</b>: Östliches Seebecken Brienzersee<br>\n"
+            "Start: Axalp<br>\n"
+            "Landung: Aaregg, Forsthaus<br>\n<br>\n"
 
             "<b>Zweck</b>: Unter den entsprechenden Sicherheitsvorkehrungen werden "
             "verschiedene Extremflugsituationen geübt. Wasserlandungen sind "
             "nicht vorgesehen, aber jederzeit möglich. Ein eigenes, bemanntes "
-            "Boot steht für alle Fälle auf dem See bereit.\n\n"
+            "Boot steht für alle Fälle auf dem See bereit.<br>\n<br>\n"
 
-            f"<b>Wann</b>: {date} von {start} bis {end} (falls das Wetter passt).\n\n"
+            f"<b>Wann</b>: {date} von {start} bis {end} (falls das Wetter passt).<br>\n<br>\n"
 
-            "<b>Veranstalter</b>: Acro Club Berner Oberland, acbeo.ch.\n\n"
+            "<b>Veranstalter</b>: Acro Club Berner Oberland, acbeo.ch.<br>\n<br>\n"
 
-            f"<b>Ansprechpersonen</b>:\n"
-            f"{contacts[0]}, {contacts[0].pilot.phone}\n"
-            f"{contacts[1]}, {contacts[1].pilot.phone}\n\n"
+            f"<b>Ansprechpersonen</b>:<br>\n"
+            f"{contacts[0].pilot}, {contacts[0].pilot.phone}<br>\n"
+            f"{contacts[1].pilot}, {contacts[1].pilot.phone}<br>\n<br>\n"
 
-            "Mit freundlichen Grüssen\n"
-            f"{self.sender.first_name} {self.sender.last_name}\n"
+            "Mit freundlichen Grüssen<br>\n"
+            f"{self.sender}<br>\n"
         )
         # fmt: on
         send_mail(
