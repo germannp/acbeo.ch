@@ -102,7 +102,13 @@ class PilotUpdateForm(forms.ModelForm):
         fields = ("first_name", "last_name", "email", "phone")
 
     def send_mail(self):
-        message = ""
+        if not self.changed_data:
+            return
+
+        message = (
+            f"{self.cleaned_data['first_name']} {self.cleaned_data['last_name']} hat "
+            "folgende Änderungen am Konto gemacht:\n\n"
+        )
         for field in self.changed_data:
             message += f"{field}: {self[field].initial} -> {self.cleaned_data[field]}\n"
         send_mail(

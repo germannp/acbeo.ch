@@ -216,7 +216,12 @@ class PilotUpdateViewTests(TestCase):
             self.assertTemplateUsed(response, "news/update_pilot.html")
 
     def test_update_pilot(self):
-        self.pilot_data["first_name"] = "New First Name"
+        response = self.client.post(
+            reverse("update_pilot"), data=self.pilot_data, follow=True
+        )
+        self.assertEqual(0, len(mail.outbox))
+
+        self.pilot_data["phone"] = "1337"
         response = self.client.post(
             reverse("update_pilot"), data=self.pilot_data, follow=True
         )
@@ -224,13 +229,15 @@ class PilotUpdateViewTests(TestCase):
         self.assertTemplateUsed(response, "news/index.html")
         self.assertContains(response, "Änderungen gespeichert.")
         self.pilot.refresh_from_db()
-        self.assertEqual(self.pilot.first_name, "New First Name")
+        self.assertEqual(self.pilot.phone, "1337")
 
         self.assertEqual(1, len(mail.outbox))
         self.assertEqual(mail.outbox[0].subject, "Änderung an Konto")
         self.assertEqual(mail.outbox[0].from_email, "dev@example.com")
         self.assertEqual(mail.outbox[0].to, ["info@example.com"])
         self.assertTrue(self.pilot_data["first_name"] in mail.outbox[0].body)
+        self.assertTrue(self.pilot_data["last_name"] in mail.outbox[0].body)
+        self.assertTrue("079 123 45 67 -> 1337" in mail.outbox[0].body)
 
     def test_next_urls(self):
         response = self.client.post(
