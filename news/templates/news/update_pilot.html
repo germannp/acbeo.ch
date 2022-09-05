@@ -16,8 +16,9 @@
     {% endif %}
 
     <div class="card my-4">
+        <h5 class="card-header">Konto</h5>
         <div class="card-body">
-            <main class="form mb-2">
+            <main class="form">
                 <form method="post">
                     {% csrf_token %}
                     <div class="form-floating mb-3">
@@ -44,12 +45,26 @@
                             absagen müssen, und wir senden nach Rücksprache pro Training zwei Nummern von
                             Teilnehmenden an Notfalldienste.</small>
                     </div>
-                    <button class="btn btn-primary mb-2" type="submit">Speichern</button>
-                    <a href="javascript:history.back()" class="btn btn-outline-dark mb-2">Abbrechen</a>
+                    <button class="btn btn-primary" type="submit">Speichern</button>
+                    <a href="javascript:history.back()" class="btn btn-outline-dark">Abbrechen</a>
                 </form>
             </main>
         </div>
     </div>
+
+    {% if request.user.is_member %}
+    <div class="card mb-4">
+        <h5 class="card-header">Postadresse</h5>
+        <div class="card-body">
+            <p class="card-text">
+                Wir bitten dich, uns Umzüge zu melden, falls wir z. B. Werbematerial versenden wollen. Wir speichern die
+                Postadresse nicht in der Datenbank der Webseite ab, weil hier auch Wochenend- und Ferienpläne
+                abgespeichert werden.</p>
+            <a href="{% url 'contact' %}?subject=Neue%20Postadresse" class="btn btn-primary">Adressänderung melden</a>
+        </div>
+    </div>
+    {% endif %}
+
 </div>
 
 {% endblock content %}

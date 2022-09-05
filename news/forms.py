@@ -100,3 +100,15 @@ class PilotUpdateForm(forms.ModelForm):
     class Meta:
         model = Pilot
         fields = ("first_name", "last_name", "email", "phone")
+
+    def send_mail(self):
+        message = ""
+        for field in self.changed_data:
+            message += f"{field}: {self[field].initial} -> {self.cleaned_data[field]}\n"
+        send_mail(
+            subject="Änderung an Konto",
+            message=message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[settings.INFO_EMAIL],
+            fail_silently=False,
+        )

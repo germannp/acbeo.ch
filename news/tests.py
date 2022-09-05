@@ -90,9 +90,9 @@ class ContactFormViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "news/contact.html")
         self.assertContains(response, self.pilot.email)
-    
+
     def test_subject_from_url(self):
-        subject="Some subject"
+        subject = "Some subject"
         response = self.client.get(reverse("contact") + f"?subject={subject}")
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "news/contact.html")
@@ -194,6 +194,14 @@ class PilotUpdateViewTests(TestCase):
         for value in self.pilot_data.values():
             self.assertContains(response, value)
 
+    def test_only_members_see_report_new_address_card(self):
+        response = self.client.get(reverse("update_pilot"))
+        self.assertNotContains(response, "Adressänderung melden")
+
+        self.pilot.make_member()
+        response = self.client.get(reverse("update_pilot"))
+        self.assertContains(response, "Adressänderung melden")
+
     def test_required_fields(self):
         for required_field in self.pilot_data.keys():
             partial_data = {
@@ -209,9 +217,20 @@ class PilotUpdateViewTests(TestCase):
 
     def test_update_pilot(self):
         self.pilot_data["first_name"] = "New First Name"
-        self.client.post(reverse("update_pilot"), data=self.pilot_data, follow=True)
+        response = self.client.post(
+            reverse("update_pilot"), data=self.pilot_data, follow=True
+        )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "news/index.html")
+        self.assertContains(response, "Änderungen gespeichert.")
         self.pilot.refresh_from_db()
         self.assertEqual(self.pilot.first_name, "New First Name")
+
+        self.assertEqual(1, len(mail.outbox))
+        self.assertEqual(mail.outbox[0].subject, "Änderung an Konto")
+        self.assertEqual(mail.outbox[0].from_email, "dev@example.com")
+        self.assertEqual(mail.outbox[0].to, ["info@example.com"])
+        self.assertTrue(self.pilot_data["first_name"] in mail.outbox[0].body)
 
     def test_next_urls(self):
         response = self.client.post(
