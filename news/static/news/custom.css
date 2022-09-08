@@ -10766,11 +10766,19 @@ textarea.form-control-lg {
   color: #fff;
 }
 
+.btn-primary:focus {
+  color: #fff;
+}
+
 .btn-secondary {
   color: #fff;
 }
 
 .btn-secondary:hover {
+  color: #fff;
+}
+
+.btn-secondary:focus {
   color: #fff;
 }
 
