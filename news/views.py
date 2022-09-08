@@ -65,7 +65,8 @@ class PilotUpdateView(LoginRequiredMixin, SuccessMessageMixin, generic.UpdateVie
         return reverse_lazy("home")
 
     def form_valid(self, form):
-        form.send_mail()
+        if self.request.user.is_member:
+            form.send_mail()
         return super().form_valid(form)
 
 
