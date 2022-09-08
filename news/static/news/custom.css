@@ -10762,7 +10762,15 @@ textarea.form-control-lg {
   color: #fff;
 }
 
+.btn-primary:hover {
+  color: #fff;
+}
+
 .btn-secondary {
+  color: #fff;
+}
+
+.btn-secondary:hover {
   color: #fff;
 }
 

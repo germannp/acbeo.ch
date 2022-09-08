@@ -9,7 +9,15 @@ $secondary: #F25D27;
     color: color-contrast(#000); // returns `color: #fff`
 }
 
+.btn-primary:hover {
+    color: color-contrast(#000); // returns `color: #fff`
+}
+
 .btn-secondary {
+    color: color-contrast(#000); // returns `color: #fff`
+}
+
+.btn-secondary:hover {
     color: color-contrast(#000); // returns `color: #fff`
 }
 
