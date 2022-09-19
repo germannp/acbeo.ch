@@ -151,10 +151,18 @@ class PilotCreationViewTests(TestCase):
         self.assertTemplateUsed(response, "news/login.html")
         self.assertEqual(1, len(Pilot.objects.all()))
 
+    def test_phone_number_validation(self):
+        invalid_data = self.pilot_data.copy()
+        invalid_data["phone"] = "pilot@example.com"
+        response = self.client.post(reverse("register"), data=invalid_data, follow=True)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "news/register.html")
+        self.assertEqual(0, len(Pilot.objects.all()))
+
     def test_safety_concept_must_be_accepted(self):
-        partial_data = self.pilot_data.copy()
-        partial_data["accept_safety_concept"] = False
-        response = self.client.post(reverse("register"), data=partial_data, follow=True)
+        invalid_data = self.pilot_data.copy()
+        invalid_data["accept_safety_concept"] = False
+        response = self.client.post(reverse("register"), data=invalid_data, follow=True)
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "news/register.html")
         self.assertEqual(0, len(Pilot.objects.all()))
@@ -214,6 +222,15 @@ class PilotUpdateViewTests(TestCase):
             )
             self.assertEqual(response.status_code, HTTPStatus.OK)
             self.assertTemplateUsed(response, "news/update_pilot.html")
+
+    def test_phone_number_validation(self):
+        invalid_data = self.pilot_data.copy()
+        invalid_data["phone"] = "pilot@example.com"
+        response = self.client.post(
+            reverse("update_pilot"), data=invalid_data, follow=True
+        )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "news/update_pilot.html")
 
     def test_update_member_sends_notification_email(self):
         response = self.client.post(

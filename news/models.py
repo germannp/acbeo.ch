@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
+from django.core.exceptions import ValidationError
 from django.db import models
 
 
@@ -40,13 +41,21 @@ class PilotManager(BaseUserManager):
         return pilot
 
 
+def validate_phone(phone):
+    for character in phone:
+        if character not in "0123456789+() ":
+            raise ValidationError(
+                f"{phone} ist keine Telefonnummer.", params={"phone": phone}
+            )
+
+
 class Pilot(AbstractBaseUser):
     Role = models.IntegerChoices("Role", "Guest Member Orga Staff")
 
     email = models.EmailField(max_length=255, unique=True)
     first_name = models.CharField(max_length=150)
     last_name = models.CharField(max_length=150)
-    phone = models.CharField(max_length=20)
+    phone = models.CharField(max_length=20, validators=[validate_phone])
     date_joined = models.DateTimeField(auto_now_add=True)
     role = models.IntegerField(choices=Role.choices, default=Role.Guest)
     is_active = models.BooleanField(default=True)

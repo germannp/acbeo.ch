@@ -29,7 +29,7 @@ DEBUG = os.getenv("ENVIRONMENT") != "PROD"
 ALLOWED_HOSTS = ["127.0.0.1", "acbeo.fly.dev", "acbeo.ch", "www.acbeo.ch"]
 CSRF_TRUSTED_ORIGINS = ["https://acbeo.fly.dev", "https://acbeo.ch"]
 
-if DEBUG: 
+if DEBUG:
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 else:
     EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
