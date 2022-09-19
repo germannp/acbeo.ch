@@ -1,3 +1,5 @@
+import logging
+
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmView
 from django.contrib.messages.views import SuccessMessageMixin
@@ -43,6 +45,17 @@ class PilotCreateView(SuccessMessageMixin, generic.CreateView):
     form_class = PilotCreationForm
     template_name = "news/register.html"
     success_message = "Konto angelegt."
+
+    def form_valid(self, form):
+        message = f"{form.instance.first_name} {form.instance.last_name} registerd"
+        if ip := self.request.META.get("REMOTE_ADDR"):
+            message += f", IP: {ip}"
+        if host := self.request.META.get("REMOTE_HOST "):
+            message += f", host: {host}"
+        if user_agent := self.request.META.get("HTTP_USER_AGENT"):
+            message += f", user agent: {user_agent}"
+        logging.info(message)
+        return super().form_valid(form)
 
     def get_success_url(self):
         success_url = reverse_lazy("login")

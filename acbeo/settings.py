@@ -26,6 +26,15 @@ SECRET_KEY = os.getenv(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("ENVIRONMENT") != "PROD"
 
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": True,
+    "root": {
+        "level": "INFO",
+        "format": "{asctime} {levelname} {message}",
+    },
+}
+
 ALLOWED_HOSTS = ["127.0.0.1", "acbeo.fly.dev", "acbeo.ch", "www.acbeo.ch"]
 CSRF_TRUSTED_ORIGINS = ["https://acbeo.fly.dev", "https://acbeo.ch"]
 
