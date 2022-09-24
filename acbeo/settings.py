@@ -28,10 +28,17 @@ DEBUG = os.getenv("ENVIRONMENT") != "PROD"
 
 LOGGING = {
     "version": 1,
-    "disable_existing_loggers": True,
-    "root": {
-        "level": "INFO",
-        "format": "{asctime} {levelname} {message}",
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "loggers": {
+        "spam-protection": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "format": "{asctime} {levelname} {message}",
+        },
     },
 }
 

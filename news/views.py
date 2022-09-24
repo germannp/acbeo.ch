@@ -54,7 +54,8 @@ class PilotCreateView(SuccessMessageMixin, generic.CreateView):
             message += f", host: {host}"
         if user_agent := self.request.META.get("HTTP_USER_AGENT"):
             message += f", user agent: {user_agent}"
-        logging.info(message)
+        logger = logging.getLogger("spam-protection")
+        logger.info(message)
         return super().form_valid(form)
 
     def get_success_url(self):
