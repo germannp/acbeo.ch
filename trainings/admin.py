@@ -11,6 +11,7 @@ class TrainingAdmin(admin.ModelAdmin):
         "emergency_mail_sender",
         "info",
     )
+    ordering = ("-date",)
 
 
 admin.site.register(Training, TrainingAdmin)
@@ -27,6 +28,7 @@ class SignupAdmin(admin.ModelAdmin):
         "for_sketchy_weather",
         "comment",
     )
+    ordering = ("-training", "status", "signed_up_on")
     search_fields = ["training", "pilot"]
 
 
