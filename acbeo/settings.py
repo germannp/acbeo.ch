@@ -92,6 +92,8 @@ LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "/"
 AUTH_USER_MODEL = "news.Pilot"
 
+SESSION_COOKIE_AGE = 240 * 24 * 60 * 60  # Stay logged in for 240 days
+
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
