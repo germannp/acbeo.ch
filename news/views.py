@@ -47,7 +47,7 @@ class PilotCreateView(SuccessMessageMixin, generic.CreateView):
     success_message = "Konto angelegt."
 
     def form_valid(self, form):
-        message = f"{form.instance.first_name} {form.instance.last_name} registerd"
+        message = f"{form.instance.first_name} {form.instance.last_name} registered"
         if ip := self.request.META.get("REMOTE_ADDR"):
             message += f", IP: {ip}"
         if host := self.request.META.get("REMOTE_HOST "):

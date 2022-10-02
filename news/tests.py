@@ -144,12 +144,17 @@ class PilotCreationViewTests(TestCase):
                     continue
                 self.assertContains(response, value)
             self.assertEqual(0, len(Pilot.objects.all()))
-        response = self.client.post(
-            reverse("register"), data=self.pilot_data, follow=True
+
+        with self.assertLogs("spam-protection", level="INFO") as cm:
+            response = self.client.post(
+                reverse("register"), data=self.pilot_data, follow=True
+            )
+            self.assertEqual(response.status_code, HTTPStatus.OK)
+            self.assertTemplateUsed(response, "news/login.html")
+            self.assertEqual(1, len(Pilot.objects.all()))
+        self.assertEqual(
+            cm.output, ["INFO:spam-protection:John Doe registered, IP: 127.0.0.1"]
         )
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "news/login.html")
-        self.assertEqual(1, len(Pilot.objects.all()))
 
     def test_phone_number_validation(self):
         invalid_data = self.pilot_data.copy()
@@ -168,12 +173,16 @@ class PilotCreationViewTests(TestCase):
         self.assertEqual(0, len(Pilot.objects.all()))
 
     def test_email_must_be_unique(self):
-        response = self.client.post(
-            reverse("register"), data=self.pilot_data, follow=True
+        with self.assertLogs("spam-protection", level="INFO") as cm:
+            response = self.client.post(
+                reverse("register"), data=self.pilot_data, follow=True
+            )
+            self.assertEqual(response.status_code, HTTPStatus.OK)
+            self.assertTemplateUsed(response, "news/login.html")
+            self.assertEqual(1, len(Pilot.objects.all()))
+        self.assertEqual(
+            cm.output, ["INFO:spam-protection:John Doe registered, IP: 127.0.0.1"]
         )
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "news/login.html")
-        self.assertEqual(1, len(Pilot.objects.all()))
 
         response = self.client.post(
             reverse("register"), data=self.pilot_data, follow=True
