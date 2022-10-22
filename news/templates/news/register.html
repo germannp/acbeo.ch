@@ -57,18 +57,39 @@
                         <label for="floatingPassword">Passwort wiederholen</label>
                     </div>
                     <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" name="accept_safety_concept" id="acceptSafetyConcept">
+                        <input class="form-check-input" type="checkbox" name="accept_safety_concept"
+                            id="acceptSafetyConcept">
                         <label class="form-check-label" for="acceptSafetyConcept">
-                            Ich bin mit dem <a href="{% static 'news/sicherheitskonzept.pdf' %}">Sicherheitskonzept</a> einverstanden.
+                            Ich bin mit dem <a href="{% static 'news/sicherheitskonzept.pdf' %}">Sicherheitskonzept</a>
+                            einverstanden.
                         </label>
                     </div>
+                    <input type="hidden" name="recaptcha" id="id_recaptcha">
                     <button class="btn btn-primary mb-2" type="submit">Konto erstellen</button>
                     <a href="javascript:history.back()" class="btn btn-outline-dark mb-2">Abbrechen</a>
                 </form>
             </main>
             Falls du bereits ein Konto hast, bitte <a href="{% url 'login' %}?next={{ next }}">einloggen</a>.
+            <div><small class="text-muted">Diese Seite ist durch reCAPTCHA Enterprise geschützt und es gelten die
+                <a href="https://policies.google.com/privacy">Datenschutzerklärung</a> und
+                <a href="https://policies.google.com/terms">Nutzungsbedinungen</a> von Google.</small></div>
         </div>
     </div>
+
 </div>
+
+<style>
+    .grecaptcha-badge {
+        visibility: hidden;
+    }
+</style>
+<script src="https://www.google.com/recaptcha/enterprise.js?render=6LdEFEgiAAAAALhfxgxkrl1jugj2YQvkYwEeNv8D"></script>
+<script>
+    grecaptcha.enterprise.ready(function () {
+        grecaptcha.enterprise.execute("6LdEFEgiAAAAALhfxgxkrl1jugj2YQvkYwEeNv8D", { action: "register" }).then(function (token) {
+            document.getElementById("id_recaptcha").value = token;
+        });
+    });
+</script>
 
 {% endblock content %}

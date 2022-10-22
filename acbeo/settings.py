@@ -60,6 +60,10 @@ EMERGENCY_EMAILS = os.getenv(
     "EMERGENCY_EMAILS", "emergency@example.com,emergency2@example.com"
 ).split(",")
 
+RECAPTCHA_SERVICE_ACCOUNT_INFO = eval(
+    os.getenv("RECAPTCHA_SERVICE_ACCOUNT_INFO", "None")
+)
+
 # Application definition
 
 INSTALLED_APPS = [

@@ -1,10 +1,12 @@
 import logging
 
+from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmView
 from django.contrib.messages.views import SuccessMessageMixin
 from django.urls import reverse_lazy
 from django.views import generic
+from google.cloud import recaptchaenterprise_v1 as recaptcha
 
 from .forms import ContactForm, MembershipForm, PilotCreationForm, PilotUpdateForm
 from .models import Post
@@ -48,13 +50,32 @@ class PilotCreateView(SuccessMessageMixin, generic.CreateView):
 
     def form_valid(self, form):
         message = f"{form.instance.first_name} {form.instance.last_name} registered"
+        event = recaptcha.Event(
+            token=form.cleaned_data["recaptcha"],
+            site_key="6LdEFEgiAAAAALhfxgxkrl1jugj2YQvkYwEeNv8D",
+            expected_action="register",
+        )
         if ip := self.request.META.get("REMOTE_ADDR"):
             message += f", IP: {ip}"
-        if host := self.request.META.get("REMOTE_HOST "):
-            message += f", host: {host}"
+            event.user_ip_address = ip
         if user_agent := self.request.META.get("HTTP_USER_AGENT"):
             message += f", user agent: {user_agent}"
+            event.user_agent = user_agent
+        assessment = recaptcha.Assessment(event=event)
+        request = recaptcha.CreateAssessmentRequest(
+            assessment=assessment, parent="projects/acbeo-ch"
+        )
         logger = logging.getLogger("spam-protection")
+        try:
+            client = recaptcha.RecaptchaEnterpriseServiceClient.from_service_account_info(
+                settings.RECAPTCHA_SERVICE_ACCOUNT_INFO
+            )
+            response = client.create_assessment(request)
+            if score := response.risk_analysis.score:
+                message += f", reCAPTCHA score {score}"
+        except Exception as err:
+            logger.info(err)
+
         logger.info(message)
         return super().form_valid(form)
 

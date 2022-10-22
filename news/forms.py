@@ -68,6 +68,7 @@ class PilotCreationForm(forms.ModelForm):
     accept_safety_concept = forms.BooleanField(required=False)
     password1 = forms.CharField()
     password2 = forms.CharField()
+    recaptcha = forms.CharField(required=False)
 
     class Meta:
         model = Pilot
