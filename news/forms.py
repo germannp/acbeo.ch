@@ -10,13 +10,15 @@ class ContactForm(forms.Form):
     email = forms.EmailField(required=True)
     subject = forms.CharField(required=True)
     message = forms.CharField(required=True)
+    recaptcha = forms.CharField(required=False)
 
     def send_mail(self):
+        message = self.cleaned_data["message"] + "\n\n" + self.cleaned_data["email"]
         send_mail(
             subject="Kontaktformular: " + self.cleaned_data["subject"],
-            message=self.cleaned_data["message"],
+            message=message,
             from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[settings.INFO_EMAIL, self.cleaned_data["email"]],
+            recipient_list=[settings.INFO_EMAIL],
             fail_silently=False,
         )
 

@@ -24,7 +24,7 @@ class PostDetailView(generic.DetailView):
     template_name = "news/post.html"
 
 
-class ContactFormView(LoginRequiredMixin, SuccessMessageMixin, generic.FormView):
+class ContactFormView(SuccessMessageMixin, generic.FormView):
     form_class = ContactForm
     template_name = "news/contact.html"
     success_url = reverse_lazy("home")
@@ -39,6 +39,33 @@ class ContactFormView(LoginRequiredMixin, SuccessMessageMixin, generic.FormView)
         return initial
 
     def form_valid(self, form):
+        message = f"{form['email'].value()} sent {form['subject'].value()}"
+        event = recaptcha.Event(
+            token=form.cleaned_data["recaptcha"],
+            site_key="6LdEFEgiAAAAALhfxgxkrl1jugj2YQvkYwEeNv8D",
+            expected_action="contact",
+        )
+        if ip := self.request.META.get("REMOTE_ADDR"):
+            message += f", IP: {ip}"
+            event.user_ip_address = ip
+        if user_agent := self.request.META.get("HTTP_USER_AGENT"):
+            message += f", user agent: {user_agent}"
+            event.user_agent = user_agent
+        assessment = recaptcha.Assessment(event=event)
+        request = recaptcha.CreateAssessmentRequest(
+            assessment=assessment, parent="projects/acbeo-ch"
+        )
+        logger = logging.getLogger("spam-protection")
+        try:
+            client = recaptcha.RecaptchaEnterpriseServiceClient.from_service_account_info(
+                settings.RECAPTCHA_SERVICE_ACCOUNT_INFO
+            )
+            response = client.create_assessment(request)
+            if score := response.risk_analysis.score:
+                message += f", reCAPTCHA score {score}"
+        except Exception as err:
+            logger.info(err)
+        logger.info(message)
         form.send_mail()
         return super().form_valid(form)
 
@@ -75,7 +102,6 @@ class PilotCreateView(SuccessMessageMixin, generic.CreateView):
                 message += f", reCAPTCHA score {score}"
         except Exception as err:
             logger.info(err)
-
         logger.info(message)
         return super().form_valid(form)
 

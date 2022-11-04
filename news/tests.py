@@ -99,22 +99,38 @@ class ContactFormViewTests(TestCase):
         self.assertTemplateUsed(response, "news/contact.html")
         self.assertContains(response, subject)
 
-    def test_contact(self):
-        response = self.client.post(
-            reverse("contact"), data=self.email_data, follow=True
-        )
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "news/index.html")
-        self.assertContains(response, "Nachricht abgesendet.")
-        self.assertEqual(1, len(mail.outbox))
+    @mock.patch(
+        "news.views.recaptcha.RecaptchaEnterpriseServiceClient.from_service_account_info"
+    )
+    def test_contact(self, MockedClient):
+        mocked_response = mock.MagicMock(risk_analysis=mock.MagicMock(score=1337))
+        mocked_client = mock.MagicMock()
+        mocked_client.create_assessment.return_value = mocked_response
+        MockedClient.return_value = mocked_client
+
+        with self.assertLogs("spam-protection", level="INFO") as cm:
+            response = self.client.post(
+                reverse("contact"), data=self.email_data, follow=True
+            )
+            self.assertEqual(response.status_code, HTTPStatus.OK)
+            self.assertTemplateUsed(response, "news/index.html")
+            self.assertContains(response, "Nachricht abgesendet.")
+            self.assertEqual(1, len(mail.outbox))
+            self.assertEqual(
+                mail.outbox[0].subject, "Kontaktformular: " + self.email_data["subject"]
+            )
+            self.assertEqual(mail.outbox[0].from_email, "dev@example.com")
+            self.assertEqual(mail.outbox[0].to, ["info@example.com"])
+            self.assertEqual(
+                mail.outbox[0].body,
+                self.email_data["message"] + "\n\n" + self.email_data["email"],
+            )
         self.assertEqual(
-            mail.outbox[0].subject, "Kontaktformular: " + self.email_data["subject"]
+            cm.output,
+            [
+                "INFO:spam-protection:from@example.com sent Subject, IP: 127.0.0.1, reCAPTCHA score 1337"
+            ],
         )
-        self.assertEqual(mail.outbox[0].from_email, "dev@example.com")
-        self.assertEqual(
-            mail.outbox[0].to, ["info@example.com", self.email_data["email"]]
-        )
-        self.assertEqual(mail.outbox[0].body, self.email_data["message"])
 
 
 class PilotCreationViewTests(TestCase):
@@ -171,7 +187,7 @@ class PilotCreationViewTests(TestCase):
             [
                 "INFO:spam-protection:Value error",
                 "INFO:spam-protection:John Doe registered, IP: 127.0.0.1",
-            ]
+            ],
         )
 
     def test_required_fields_and_form_is_prefilled(self):
