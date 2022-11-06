@@ -56,14 +56,15 @@ class TrainingCreateForm(forms.Form):
             raise ValidationError(
                 "Es können höchstens 31 Trainings auf einmal erstellt werden."
             )
-        
+
         priority_date = cleaned_data.get("priority_date")
         if not (priority_date and last_day):
             return
 
         if priority_date > last_day:
-            raise ValidationError("Das Vorrang-Datum kann nicht nach dem letzten Tag sein.")
-
+            raise ValidationError(
+                "Das Vorrang-Datum kann nicht nach dem letzten Tag sein."
+            )
 
     def create_trainings(self):
         day = self.cleaned_data["first_day"]
@@ -91,7 +92,9 @@ class TrainingUpdateForm(forms.ModelForm):
             return
 
         if priority_date > self.instance.date:
-            raise ValidationError("Das Vorrang-Datum kann nicht nach dem Training sein.")
+            raise ValidationError(
+                "Das Vorrang-Datum kann nicht nach dem Training sein."
+            )
 
 
 class EmergencyMailForm(forms.ModelForm):

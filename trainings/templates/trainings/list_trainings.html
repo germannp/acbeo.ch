@@ -26,29 +26,29 @@
                 {% if training.info %}
                 {{ training.info }}
                 {% endif %}
-                <div class="table-responsive-lg">
-                    <table class="table table-hover">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
                         <thead>
                             <tr>
                                 <th scope="col">#</th>
-                                <th class="col-xl-2 col-lg-3 col-sm-4 col-xs-8" scope="col">Pilot·in</th>
+                                <th scope="col">Pilot·in</th>
                                 <th scope="col">Status</th>
                                 <th scope="col">Rolle</th>
                                 <th scope="col">Einschreibedatum</th>
                                 <th scope="col">Verbindlichkeit</th>
                                 <th scope="col">Zeitplan</th>
                                 <th scope="col">Wetterwunsch</th>
-                                <th scope="col">Kommentar</th>
+                                <th scope="col" style="min-width: 300px">Kommentar</th>
                             </tr>
                         </thead>
                         <tbody class="table-group-divider">
                             {% for signup in training.signups.all %}
                             <tr {% if signup.get_status_display == 'Canceled' %}class="text-muted"{% endif %}>
                                 <td>{{ forloop.counter }}</td>
-                                <td>{{ signup.pilot }}
+                                <td class="text-nowrap">{{ signup.pilot }}
                                     {% if signup.pilot == request.user %}
                                     <a href="{% url 'update_signup' date=training.date.isoformat %}?next={% url 'trainings' %}&page={{ page_obj.number }}&training={{ forloop.parentloop.counter }}"
-                                        class="btn btn-primary btn-sm bi bi-pencil-square" />
+                                        class="bi bi-pencil-square" />
                                     {% endif %}
                                 </td>
                                 <td>
@@ -69,13 +69,13 @@
                                     Leiter·in
                                     {% endif %}
                                 </td>
-                                <td>{{ signup.signed_up_on | date:"D., j. E G:i" }}</td>
+                                <td class="text-nowrap">{{ signup.signed_up_on | date:"D., j. M. G:i" }}</td>
                                 <td>
                                     {% if signup.get_status_display != 'Canceled' %}
                                         {% if signup.is_certain %}100%{% else %}<span class="text-warning">75%</span>{% endif %}
                                     {% endif %}
                                 </td>
-                                <td>
+                                <td class="text-nowrap">
                                     {% if signup.get_status_display != 'Canceled' %}
                                         {% if signup.for_time == signup.Time.WholeDay %}Ganzer Tag{% endif %}
                                         {% if signup.for_time == signup.Time.ArriveLate %}<span class="text-warning">Kommt später</span>{% endif %}

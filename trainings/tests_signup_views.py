@@ -37,7 +37,7 @@ class SingupListViewTests(TestCase):
         with self.assertNumQueries(9):
             response = self.client.get(reverse("my_signups"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_signups.html")
+        self.assertTemplateUsed(response, "trainings/list_my_signups.html")
         self.assertContains(
             response,
             TODAY.strftime("%a., %d. %b. %Y").replace(" 0", " ").replace("..", "."),
@@ -56,7 +56,7 @@ class SingupListViewTests(TestCase):
         with self.assertNumQueries(8):
             response = self.client.get(reverse("my_signups"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_signups.html")
+        self.assertTemplateUsed(response, "trainings/list_my_signups.html")
         self.assertContains(
             response,
             TOMORROW.strftime("%a., %d. %b. %Y").replace(" 0", " ").replace("..", "."),
@@ -78,7 +78,7 @@ class SingupListViewTests(TestCase):
         with self.assertNumQueries(9):
             response = self.client.get(reverse("my_signups"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_signups.html")
+        self.assertTemplateUsed(response, "trainings/list_my_signups.html")
 
         self.signup.refresh_from_db()
         self.assertEqual(self.signup.status, Signup.Status.Selected)
@@ -93,7 +93,7 @@ class SingupListViewTests(TestCase):
             with self.assertNumQueries(8):
                 response = self.client.get(reverse("my_signups"))
             self.assertEqual(response.status_code, HTTPStatus.OK)
-            self.assertTemplateUsed(response, "trainings/list_signups.html")
+            self.assertTemplateUsed(response, "trainings/list_my_signups.html")
             self.assertContains(response, i)
             if i < 6:
                 self.assertContains(response, "text-warning")
@@ -115,7 +115,7 @@ class SingupListViewTests(TestCase):
                 with self.assertNumQueries(8):
                     response = self.client.get(reverse("my_signups"))
                 self.assertEqual(response.status_code, HTTPStatus.OK)
-                self.assertTemplateUsed(response, "trainings/list_signups.html")
+                self.assertTemplateUsed(response, "trainings/list_my_signups.html")
                 self.assertNotContains(response, "bi-hourglass-split")
                 if warning:
                     self.assertContains(response, "text-warning")
@@ -132,7 +132,7 @@ class SingupListViewTests(TestCase):
                 with self.assertNumQueries(7):
                     response = self.client.get(reverse("my_signups"))
                 self.assertEqual(response.status_code, HTTPStatus.OK)
-                self.assertTemplateUsed(response, "trainings/list_signups.html")
+                self.assertTemplateUsed(response, "trainings/list_my_signups.html")
                 self.assertNotContains(response, "bi-hourglass-split")
                 if muted:
                     self.assertContains(response, "text-muted")
@@ -376,7 +376,7 @@ class SignupUpdateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_signups.html")
+        self.assertTemplateUsed(response, "trainings/list_my_signups.html")
         self.assertContains(response, "bi-x-octagon")
 
         with self.assertNumQueries(13):
@@ -388,7 +388,7 @@ class SignupUpdateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_signups.html")
+        self.assertTemplateUsed(response, "trainings/list_my_signups.html")
         self.assertContains(response, "bi-cloud-check")
 
     def test_update_is_certain(self):

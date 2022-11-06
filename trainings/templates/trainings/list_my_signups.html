@@ -17,29 +17,29 @@
                 {% else %}Vergangene Trainings{% endif %}
             </h5>
             <div class="card-body">
-                <div class="table-responsive-lg">
-                    <table class="table table-hover">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
                         <thead>
                             <tr>
                                 <th scope="col">#</th>
-                                <th class="col-xl-2 col-lg-3" scope="col">Datum</th>
-                                <th class="col-sm-1" scope="col">Pilot·innen</th>
-                                <th class="col-sm-1" scope="col">Status</th>
+                                <th scope="col">Datum</th>
+                                <th scope="col">Pilot·innen</th>
+                                <th scope="col">Status</th>
                                 <th scope="col">Verbindlichkeit</th>
                                 <th scope="col">Zeitplan</th>
                                 <th scope="col">Wetterwunsch</th>
-                                <th scope="col">Trainingsinfo</th>
-                                <th scope="col">Kommentar</th>
+                                <th scope="col" style="min-width: 300px">Trainingsinfo</th>
+                                <th scope="col" style="min-width: 300px">Kommentar</th>
                             </tr>
                         </thead>
                         <tbody class="table-group-divider">
                             {% for signup in signups %}
                             <tr {% if signup.get_status_display == 'Canceled' %}class="text-muted"{% endif %}>
                                 <td>{{ forloop.counter }}</td>
-                                <td>{{ signup.training.date | date:"D., j. M. Y" }}
+                                <td class="text-nowrap">{{ signup.training.date | date:"D., j. M. Y" }}
                                     {% if time == "future" %}
                                     <a href="{% url 'update_signup' date=signup.training.date.isoformat %}?next={% url 'my_signups' %}"
-                                        class="btn btn-primary btn-sm bi bi-pencil-square" /a>
+                                        class="bi bi-pencil-square" /a>
                                         {% endif %}
                                 </td>
                                 <td>
@@ -62,7 +62,7 @@
                                     {% if signup.is_certain %}100%{% else %}<span class="text-warning">75%</span>{% endif %}
                                     {% endif %}
                                 </td>
-                                <td>
+                                <td class="text-nowrap">
                                     {% if signup.for_time == signup.Time.WholeDay %}Ganzer Tag{% endif %}
                                     {% if signup.for_time == signup.Time.ArriveLate %}<span class="text-warning">Komme später</span>{% endif %}
                                     {% if signup.for_time == signup.Time.LeaveEarly %}<span class="text-warning">Gehe früher</span>{% endif %}

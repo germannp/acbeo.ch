@@ -104,7 +104,7 @@ class EmergencyMailView(OrgaRequiredMixin, SuccessMessageMixin, generic.UpdateVi
 
 class SignupListView(LoginRequiredMixin, generic.ListView):
     context_object_name = "future_and_past_signups"
-    template_name = "trainings/list_signups.html"
+    template_name = "trainings/list_my_signups.html"
 
     def get_queryset(self):
         today = datetime.date.today()
