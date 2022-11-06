@@ -22,6 +22,10 @@
             <main class="form">
                 <form method="post">
                     {% csrf_token %}
+                    <div class="form-floating md-3">
+                        <input type="text" name="username" class="form-control" placeholder="text">
+                        <label for="floatingInput">Leer lassen!</label>
+                    </div>
                     <div class="form-floating mb-3">
                         <input type="text" name="first_name" class="form-control" placeholder="text"
                             {% if form.first_name.value %}value="{{ form.first_name.value }}"{% endif %}>
@@ -64,32 +68,18 @@
                             einverstanden.
                         </label>
                     </div>
-                    <input type="hidden" name="recaptcha" id="id_recaptcha">
+                    <input type="hidden" name="javascript" id="id_javascript">
                     <button class="btn btn-primary mb-2" type="submit">Konto erstellen</button>
                     <a href="javascript:history.back()" class="btn btn-outline-dark mb-2">Abbrechen</a>
                 </form>
             </main>
             Falls du bereits ein Konto hast, bitte <a href="{% url 'login' %}?next={{ next }}">einloggen</a>.
-            <div><small class="text-muted">Diese Seite ist durch reCAPTCHA Enterprise geschützt und es gelten die
-                <a href="https://policies.google.com/privacy">Datenschutzerklärung</a> und
-                <a href="https://policies.google.com/terms">Nutzungsbedinungen</a> von Google.</small></div>
         </div>
     </div>
-
 </div>
 
-<style>
-    .grecaptcha-badge {
-        visibility: hidden;
-    }
-</style>
-<script src="https://www.google.com/recaptcha/enterprise.js?render=6LdEFEgiAAAAALhfxgxkrl1jugj2YQvkYwEeNv8D"></script>
 <script>
-    grecaptcha.enterprise.ready(function () {
-        grecaptcha.enterprise.execute("6LdEFEgiAAAAALhfxgxkrl1jugj2YQvkYwEeNv8D", { action: "register" }).then(function (token) {
-            document.getElementById("id_recaptcha").value = token;
-        });
-    });
+    document.getElementById("id_javascript").value = "JavaScript active"
 </script>
 
 {% endblock content %}

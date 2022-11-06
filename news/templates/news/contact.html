@@ -20,6 +20,10 @@
             <main class="form">
                 <form method="post">
                     {% csrf_token %}
+                    <div class="form-floating md-3">
+                        <input type="text" name="name" class="form-control" placeholder="text">
+                        <label for="floatingInput">Leer lassen!</label>
+                    </div>
                     <div class="form-floating mb-3">
                         <input type="email" name="email" class="form-control" placeholder="text" 
                         {% if form.email.value %} value="{{ form.email.value }}" {% endif %} required>
@@ -35,30 +39,17 @@
                         {% if form.message.value %} value="{{ form.message.value }}" {% endif %} required></textarea>
                         <label for="message">Nachricht</label>
                     </div>
-                    <input type="hidden" name="recaptcha" id="id_recaptcha">
+                    <input type="hidden" name="javascript" id="id_javascript">
                     <button class="btn btn-primary" type="submit">Absenden</button>
                     <a href="javascript:history.back()" class="btn btn-outline-dark">Abbrechen</a>
                 </form>
             </main>
-            <div><small class="text-muted">Dieses Formular ist durch reCAPTCHA Enterprise geschützt und es gelten die
-                <a href="https://policies.google.com/privacy">Datenschutzerklärung</a> und
-                <a href="https://policies.google.com/terms">Nutzungsbedinungen</a> von Google.</small></div>
         </div>
     </div>
 </div>
 
-<style>
-    .grecaptcha-badge {
-        visibility: hidden;
-    }
-</style>
-<script src="https://www.google.com/recaptcha/enterprise.js?render=6LdEFEgiAAAAALhfxgxkrl1jugj2YQvkYwEeNv8D"></script>
 <script>
-    grecaptcha.enterprise.ready(function () {
-        grecaptcha.enterprise.execute("6LdEFEgiAAAAALhfxgxkrl1jugj2YQvkYwEeNv8D", { action: "contact" }).then(function (token) {
-            document.getElementById("id_recaptcha").value = token;
-        });
-    });
+    document.getElementById("id_javascript").value = "JavaScript active"
 </script>
 
 {% endblock content %}

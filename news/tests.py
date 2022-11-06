@@ -1,5 +1,4 @@
 from http import HTTPStatus
-from unittest import mock
 
 from django.core import mail
 from django.test import RequestFactory, SimpleTestCase, TestCase
@@ -68,7 +67,26 @@ class ContactFormViewTests(TestCase):
             "email": "from@example.com",
             "subject": "Subject",
             "message": "Message",
+            "javascript": "JavaScript active",
         }
+
+    def test_contact(self):
+        response = self.client.post(
+            reverse("contact"), data=self.email_data, follow=True
+        )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "news/index.html")
+        self.assertContains(response, "Nachricht abgesendet.")
+        self.assertEqual(1, len(mail.outbox))
+        self.assertEqual(
+            mail.outbox[0].subject, "Kontaktformular: " + self.email_data["subject"]
+        )
+        self.assertEqual(mail.outbox[0].from_email, "dev@example.com")
+        self.assertEqual(mail.outbox[0].to, ["info@example.com"])
+        self.assertEqual(
+            mail.outbox[0].body,
+            self.email_data["message"] + "\n\n" + self.email_data["email"],
+        )
 
     def test_required_fields_and_form_is_prefilled(self):
         for required_field in self.email_data.keys():
@@ -99,38 +117,15 @@ class ContactFormViewTests(TestCase):
         self.assertTemplateUsed(response, "news/contact.html")
         self.assertContains(response, subject)
 
-    @mock.patch(
-        "news.views.recaptcha.RecaptchaEnterpriseServiceClient.from_service_account_info"
-    )
-    def test_contact(self, MockedClient):
-        mocked_response = mock.MagicMock(risk_analysis=mock.MagicMock(score=1337))
-        mocked_client = mock.MagicMock()
-        mocked_client.create_assessment.return_value = mocked_response
-        MockedClient.return_value = mocked_client
-
-        with self.assertLogs("spam-protection", level="INFO") as cm:
-            response = self.client.post(
-                reverse("contact"), data=self.email_data, follow=True
-            )
-            self.assertEqual(response.status_code, HTTPStatus.OK)
-            self.assertTemplateUsed(response, "news/index.html")
-            self.assertContains(response, "Nachricht abgesendet.")
-            self.assertEqual(1, len(mail.outbox))
-            self.assertEqual(
-                mail.outbox[0].subject, "Kontaktformular: " + self.email_data["subject"]
-            )
-            self.assertEqual(mail.outbox[0].from_email, "dev@example.com")
-            self.assertEqual(mail.outbox[0].to, ["info@example.com"])
-            self.assertEqual(
-                mail.outbox[0].body,
-                self.email_data["message"] + "\n\n" + self.email_data["email"],
-            )
-        self.assertEqual(
-            cm.output,
-            [
-                "INFO:spam-protection:from@example.com sent Subject, IP: 127.0.0.1, reCAPTCHA score 1337"
-            ],
+    def test_name_honeypot(self):
+        self.email_data.update({"name": "John Doe"})
+        response = self.client.post(
+            reverse("contact"), data=self.email_data, follow=True
         )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "news/contact.html")
+        self.assertContains(response, "Nachricht konnte nicht gesendet werden.")
+        self.assertEqual(0, len(mail.outbox))
 
 
 class PilotCreationViewTests(TestCase):
@@ -142,53 +137,21 @@ class PilotCreationViewTests(TestCase):
         "password1": "qhTJ]?QZ.F}v5(nA",
         "password2": "qhTJ]?QZ.F}v5(nA",
         "accept_safety_concept": True,
+        "javascript": "JavaScript active",
     }
 
-    @mock.patch(
-        "news.views.recaptcha.RecaptchaEnterpriseServiceClient.from_service_account_info"
-    )
-    def test_create_pilot(self, MockedClient):
-        mocked_response = mock.MagicMock(risk_analysis=mock.MagicMock(score=1337))
-        mocked_client = mock.MagicMock()
-        mocked_client.create_assessment.return_value = mocked_response
-        MockedClient.return_value = mocked_client
-
-        with self.assertLogs("spam-protection", level="INFO") as cm:
-            response = self.client.post(
-                reverse("register"), data=self.pilot_data, follow=True
-            )
-            self.assertEqual(response.status_code, HTTPStatus.OK)
-            self.assertTemplateUsed(response, "news/login.html")
-            self.assertEqual(1, len(Pilot.objects.all()))
-        self.assertEqual(
-            cm.output,
-            [
-                "INFO:spam-protection:John Doe registered, IP: 127.0.0.1, reCAPTCHA score 1337"
-            ],
+    def test_create_pilot(self):
+        response = self.client.post(
+            reverse("register"), data=self.pilot_data, follow=True
         )
-
-    @mock.patch(
-        "news.views.recaptcha.RecaptchaEnterpriseServiceClient.from_service_account_info"
-    )
-    def test_recaptcha_failure(self, MockedClient):
-        mocked_client = mock.MagicMock()
-        mocked_client.create_assessment.side_effect = ValueError("Value error")
-        MockedClient.return_value = mocked_client
-
-        with self.assertLogs("spam-protection", level="INFO") as cm:
-            response = self.client.post(
-                reverse("register"), data=self.pilot_data, follow=True
-            )
-            self.assertEqual(response.status_code, HTTPStatus.OK)
-            self.assertTemplateUsed(response, "news/login.html")
-            self.assertEqual(1, len(Pilot.objects.all()))
-        self.assertEqual(
-            cm.output,
-            [
-                "INFO:spam-protection:Value error",
-                "INFO:spam-protection:John Doe registered, IP: 127.0.0.1",
-            ],
-        )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "news/login.html")
+        self.assertContains(response, "Konto angelegt.")
+        self.assertEqual(1, len(Pilot.objects.all()))
+        created_pilot = Pilot.objects.first()
+        self.assertEqual(created_pilot.first_name, self.pilot_data["first_name"])
+        self.assertEqual(created_pilot.last_name, self.pilot_data["last_name"])
+        self.assertEqual(created_pilot.phone, self.pilot_data["phone"])
 
     def test_required_fields_and_form_is_prefilled(self):
         for required_field in self.pilot_data.keys():
@@ -228,7 +191,8 @@ class PilotCreationViewTests(TestCase):
         pilot_data = {
             key: value
             for key, value in self.pilot_data.items()
-            if key not in ["password1", "password2", "accept_safety_concept"]
+            if key
+            not in ["password1", "password2", "accept_safety_concept", "javascript"]
         }
         Pilot.objects.create(**pilot_data)
 
@@ -239,6 +203,16 @@ class PilotCreationViewTests(TestCase):
         self.assertTemplateUsed(response, "news/register.html")
         self.assertContains(response, "Pilot mit diesem Email existiert bereits.")
         self.assertEqual(1, len(Pilot.objects.all()))
+
+    def test_username_honeypot(self):
+        self.pilot_data.update({"username": "doej"})
+        response = self.client.post(
+            reverse("register"), data=self.pilot_data, follow=True
+        )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "news/register.html")
+        self.assertContains(response, "Konto konnte nicht angelegt werden.")
+        self.assertEqual(0, len(Pilot.objects.all()))
 
 
 class PilotUpdateViewTests(TestCase):

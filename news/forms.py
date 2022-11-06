@@ -10,7 +10,22 @@ class ContactForm(forms.Form):
     email = forms.EmailField(required=True)
     subject = forms.CharField(required=True)
     message = forms.CharField(required=True)
-    recaptcha = forms.CharField(required=False)
+
+    # Spam protection
+    name = forms.CharField(required=False)
+    javascript = forms.CharField(required=False)
+
+    def clean_name(self):
+        name = self.cleaned_data.get("name")
+        if name:
+            raise ValidationError("Nachricht konnte nicht gesendet werden.")
+        return name
+
+    def clean_javascript(self):
+        javascript = self.cleaned_data.get("javascript")
+        if javascript != "JavaScript active":
+            raise ValidationError("Du musst JavaScript aktivieren.")
+        return javascript
 
     def send_mail(self):
         message = self.cleaned_data["message"] + "\n\n" + self.cleaned_data["email"]
@@ -70,7 +85,10 @@ class PilotCreationForm(forms.ModelForm):
     accept_safety_concept = forms.BooleanField(required=False)
     password1 = forms.CharField()
     password2 = forms.CharField()
-    recaptcha = forms.CharField(required=False)
+
+    # Spam protection
+    username = forms.CharField(required=False)
+    javascript = forms.CharField(required=False)
 
     class Meta:
         model = Pilot
@@ -90,6 +108,18 @@ class PilotCreationForm(forms.ModelForm):
         if password1 and password2 and password1 != password2:
             raise ValidationError("Passwörter müssen gleich sein.")
         return password2
+
+    def clean_username(self):
+        username = self.cleaned_data.get("username")
+        if username:
+            raise ValidationError("Konto konnte nicht angelegt werden.")
+        return username
+
+    def clean_javascript(self):
+        javascript = self.cleaned_data.get("javascript")
+        if javascript != "JavaScript active":
+            raise ValidationError("Du musst JavaScript aktivieren.")
+        return javascript
 
     def save(self, commit=True):
         pilot = super().save(commit=False)
