@@ -6,46 +6,51 @@
 
 {% block content %}
 
-<div class="col-md-4">
-    {% if form.errors %}
-    {% for error_list in form.errors.values %}
-    {% for error in error_list %}
-    <div class="alert my-4 alert-warning">{{ error }}</div>
-    {% endfor %}
-    {% endfor %}
-    {% endif %}
+<div class="row mt-2">
 
-    <div class="card my-4">
-        <div class="card-body">
-            <main class="form">
-                <form method="post">
-                    {% csrf_token %}
-                    <div class="form-floating md-3">
-                        <input type="text" name="name" class="form-control" placeholder="text">
-                        <label for="floatingInput">Leer lassen!</label>
-                    </div>
-                    <div class="form-floating mb-3">
-                        <input type="email" name="email" class="form-control" placeholder="text" 
-                        {% if form.email.value %} value="{{ form.email.value }}" {% endif %} required>
-                        <label for="floatingInput">Email</label>
-                    </div>
-                    <div class="form-floating mb-3">
-                        <input type="text" name="subject" class="form-control" placeholder="text"
-                        {% if form.subject.value %} value="{{ form.subject.value }}" {% endif %} required>
-                        <label for="floatingInput">Betreff</label>
-                    </div>
-                    <div class="form-floating mb-3">
-                        <textarea class="form-control" placeholder="text" name="message" style="height: 200px"
-                        {% if form.message.value %} value="{{ form.message.value }}" {% endif %} required></textarea>
-                        <label for="message">Nachricht</label>
-                    </div>
-                    <input type="hidden" name="javascript" id="id_javascript">
-                    <button class="btn btn-primary" type="submit">Absenden</button>
-                    <a href="javascript:history.back()" class="btn btn-outline-dark">Abbrechen</a>
-                </form>
-            </main>
+    <div class="col left">
+        {% if form.errors %}
+        {% for error_list in form.errors.values %}
+        {% for error in error_list %}
+        <div class="alert mb-4 alert-warning">{{ error }}</div>
+        {% endfor %}
+        {% endfor %}
+        {% endif %}
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <main class="form">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="form-floating md-3">
+                            <input type="text" name="name" class="form-control" placeholder="text">
+                            <label for="floatingInput">Leer lassen!</label>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <input type="email" name="email" class="form-control" placeholder="text" 
+                            {% if form.email.value %} value="{{ form.email.value }}" {% endif %} required>
+                            <label for="floatingInput">Email</label>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <input type="text" name="subject" class="form-control" placeholder="text"
+                            {% if form.subject.value %} value="{{ form.subject.value }}" {% endif %} required>
+                            <label for="floatingInput">Betreff</label>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <textarea class="form-control" placeholder="text" name="message" style="height: 200px"
+                            {% if form.message.value %} value="{{ form.message.value }}" {% endif %} required></textarea>
+                            <label for="message">Nachricht</label>
+                        </div>
+                        <input type="hidden" name="javascript" id="id_javascript">
+                        <button class="btn btn-primary" type="submit">Absenden</button>
+                        <a href="javascript:history.back()" class="btn btn-outline-dark">Abbrechen</a>
+                    </form>
+                </main>
+            </div>
         </div>
     </div>
+
+    {% include 'news/sidebar.html' %}
 </div>
 
 <script>

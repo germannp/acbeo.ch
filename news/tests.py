@@ -214,6 +214,20 @@ class PilotCreationViewTests(TestCase):
         self.assertContains(response, "Konto konnte nicht angelegt werden.")
         self.assertEqual(0, len(Pilot.objects.all()))
 
+    def test_logged_in_users_cannot_register(self):
+        pilot_data = {
+            key: value
+            for key, value in self.pilot_data.items()
+            if key
+            not in ["password1", "password2", "accept_safety_concept", "javascript"]
+        }
+        pilot = Pilot.objects.create(**pilot_data)
+        self.client.force_login(pilot)
+
+        response = self.client.get(reverse("register"))
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
+        self.assertTemplateUsed(response, "403.html")
+
 
 class PilotUpdateViewTests(TestCase):
     def setUp(self):

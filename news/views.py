@@ -39,7 +39,12 @@ class ContactFormView(SuccessMessageMixin, generic.FormView):
         return super().form_valid(form)
 
 
-class PilotCreateView(SuccessMessageMixin, generic.CreateView):
+class LoginForbiddenMixin(UserPassesTestMixin):
+    def test_func(self):
+        return not self.request.user.is_authenticated
+
+
+class PilotCreateView(LoginForbiddenMixin, SuccessMessageMixin, generic.CreateView):
     form_class = PilotCreationForm
     template_name = "news/register.html"
     success_message = "Konto angelegt."

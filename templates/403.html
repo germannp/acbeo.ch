@@ -3,3 +3,23 @@
 {% block title %}Zugriff verboten{% endblock title %}
 
 {% block headline %}Zugriff verboten{% endblock headline %}
+
+{% block content %}
+
+<div class="row mt-2">
+
+    <div class="col left">
+        <div class="card mb-4">
+            <div class="card-body">
+                <p class="card-text">
+                    Manche Seiten sind z. B. nur für Leiter·innen einsehbar und man kann sich nicht registrieren, wenn
+                    man bereits angemeldet ist. Bitte <a href="{% url 'logout' %}?next={{ request.path }}">abmelden</a>
+                    zum Konto wechseln.</p>
+            </div>
+        </div>
+    </div>
+
+    {% include 'news/sidebar.html' %}
+</div>
+
+{% endblock content %}
