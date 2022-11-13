@@ -2,6 +2,7 @@ from django.conf import settings
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils.timezone import now
 
 
 class Post(models.Model):
@@ -11,7 +12,7 @@ class Post(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="posts"
     )
     content = models.TextField()
-    created_on = models.DateTimeField(auto_now_add=True)
+    created_on = models.DateTimeField(default=now)
 
     class Meta:
         ordering = ["-created_on"]
