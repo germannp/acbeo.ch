@@ -32,10 +32,11 @@ can be edited directly. Normal pilot accounts can be registered over the website
 
 The code is organized as follows: Django project folder, `acbeo`, contains the settings. 
 In particular, `acbeo/settings.py` reads secrets from environmental variables, which 
-need to be configured for deployment. The logic is organized in two Django apps: `news` 
-contains the front page and user management and `trainings` the tool for organizing 
-trainings. Within each app `url.py` contains paths to views, which load, manipulate, and 
-save models mapped to the database, and render data and forms in templates.
+need to be configured for deployment. The logic is organized in Django apps: `news` 
+contains the front page and user management, `trainings` the tool for organizing 
+trainings, and `bookkeeping` the tool for creating reports and bills during a training. 
+Within each app `url.py` contains paths to views, which load, manipulate, and save models 
+mapped to the database, and render data and forms in templates.
 
 To customize Bootstrap, it's source code and [SASS](https://sass-lang.com/) are required. 
 These can be installed using `$ nmp i bootstrap@5.2.0 sass`. Then the stylesheets can be

@@ -83,7 +83,7 @@ class TrainingCreateForm(forms.Form):
 class TrainingUpdateForm(forms.ModelForm):
     class Meta:
         model = Training
-        exclude = ["date", "emergency_mail_sender"]
+        exclude = ("date", "emergency_mail_sender")
 
     def clean(self):
         cleaned_data = super().clean()
@@ -113,7 +113,7 @@ class EmergencyMailForm(forms.ModelForm):
 
     class Meta:
         model = Training
-        fields = []
+        fields = tuple()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -177,7 +177,7 @@ class SignupCreateForm(forms.ModelForm):
 
     class Meta:
         model = Signup
-        exclude = ["pilot", "training", "status"]
+        exclude = ("pilot", "training", "status")
 
     def clean_date(self):
         date = self.cleaned_data["date"]
@@ -196,7 +196,7 @@ class SignupCreateForm(forms.ModelForm):
 class SignupUpdateForm(forms.ModelForm):
     class Meta:
         model = Signup
-        exclude = ["pilot", "training", "status"]
+        exclude = ("pilot", "training", "status")
 
     def clean(self):
         cleaned_data = super().clean()

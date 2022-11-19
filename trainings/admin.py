@@ -29,7 +29,7 @@ class SignupAdmin(admin.ModelAdmin):
         "comment",
     )
     ordering = ("-training", "status", "signed_up_on")
-    search_fields = ["training", "pilot"]
+    search_fields = ("training", "pilot")
 
 
 admin.site.register(Signup, SignupAdmin)

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Berichte{% endblock title %}
+
+{% block headline %}Berichte{% endblock headline %}
+
+{% block content %}
+
+<div class="row mt-2">
+
+    <div class="col-md-12 left">
+    
+        <div class="card mb-4">
+            <h5 class="card-header">{{ reports.0.training.date | date:"Y" }}</h5>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Datum</th>
+                                <th scope="col">Kassenstand Anfang</th>
+                                <th scope="col">Kassenstand Ende</th>
+                            </tr>
+                        </thead>
+                        <tbody class="table-group-divider">
+                            {% for report in reports %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td class="text-nowrap">{{ report.training.date | date:"D., j. M. Y" }}
+                                    <a href="{% url 'update_report' date=report.training.date.isoformat %}"
+                                        class="bi bi-pencil-square" /a>
+                                </td>
+                                <td>{{ report.cash_at_start }}</td>
+                                <td>{{ report.cash_at_end }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock content %}

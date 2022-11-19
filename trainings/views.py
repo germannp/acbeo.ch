@@ -9,8 +9,7 @@ from django.urls import reverse_lazy
 from django.views import generic
 
 from . import forms
-from .models import Training, Signup
-
+from .models import Signup, Training
 
 locale.setlocale(locale.LC_TIME, "de_CH")
 
@@ -37,6 +36,7 @@ class TrainingListView(LoginRequiredMixin, generic.ListView):
         context = super().get_context_data(**kwargs)
         today = datetime.date.today()
         context["day_after_tomorrow"] = today + datetime.timedelta(days=2)
+        context["today"] = today
         return context
 
 

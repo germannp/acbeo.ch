@@ -99,11 +99,11 @@ class TrainingListViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
         self.assertNotContains(
-            response, YESTERDAY.strftime("%A, %d. %B").replace(" 0", " ")
+            response, YESTERDAY.strftime("%A, %d. %b").replace(" 0", " ")
         )
-        self.assertContains(response, TODAY.strftime("%A, %d. %B").replace(" 0", " "))
+        self.assertContains(response, TODAY.strftime("%A, %d. %b").replace(" 0", " "))
         self.assertContains(
-            response, TOMORROW.strftime("%A, %d. %B").replace(" 0", " ")
+            response, TOMORROW.strftime("%A, %d. %b").replace(" 0", " ")
         )
 
     def test_showing_either_signup_or_update_button(self):
@@ -169,32 +169,17 @@ class TrainingListViewTests(TestCase):
                 else:
                     self.assertNotContains(response, "text-muted")
 
-    def test_update_info_and_emergency_mail_buttons_shown_and_disabled(self):
+    def test_update_info_button(self):
         with self.assertNumQueries(11):
             response = self.client.get(reverse("trainings"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
-        for i in range(3):
+        for i in range(4):
             date = TODAY + timedelta(days=i)
-            self.assertContains(
-                response, reverse("emergency_mail", kwargs={"date": date})
-            )
             self.assertContains(
                 response,
                 reverse("update_training", kwargs={"date": date}),
             )
-        date = TODAY + timedelta(days=3)
-        self.assertNotContains(
-            response, reverse("emergency_mail", kwargs={"date": date})
-        )
-        self.assertContains(response, reverse("update_training", kwargs={"date": date}))
-
-        self.assertNotContains(response, "disabled")
-        self.todays_training.emergency_mail_sender = self.orga
-        self.todays_training.save()
-        with self.assertNumQueries(10):
-            response = self.client.get(reverse("trainings"))
-        self.assertContains(response, "disabled")
 
     def test_page_and_training_are_in_next_urls_of_update_buttons(self):
         for i in range(3, 10):
@@ -207,6 +192,36 @@ class TrainingListViewTests(TestCase):
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
         self.assertContains(response, "trainings/&page=2&training=1")
         self.assertContains(response, "ansagen/?page=2&training=1")
+
+    def test_emergency_mail_button(self):
+        with self.assertNumQueries(11):
+            response = self.client.get(reverse("trainings"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        for i in range(3):
+            date = TODAY + timedelta(days=i)
+            self.assertContains(
+                response,
+                reverse("emergency_mail", kwargs={"date": date}),
+            )
+        date = TODAY + timedelta(days=3)
+        self.assertNotContains(
+            response, reverse("emergency_mail", kwargs={"date": date})
+        )
+
+        self.assertNotContains(response, "disabled")
+        self.todays_training.emergency_mail_sender = self.orga
+        self.todays_training.save()
+        with self.assertNumQueries(10):
+            response = self.client.get(reverse("trainings"))
+        self.assertContains(response, "disabled")
+
+    def test_report_button(self):
+        with self.assertNumQueries(11):
+            response = self.client.get(reverse("trainings"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertEquals(1, str(response.content).count(reverse("create_report")))
 
 
 class TrainingCreateViewTests(TestCase):
@@ -434,7 +449,7 @@ class TrainingUpdateViewTests(TestCase):
         self.client.force_login(self.orga)
         self.training = Training.objects.create(date=TODAY)
 
-    def test_orga_required(self):
+    def test_orga_required_to_see(self):
         guest = get_user_model().objects.create(email="guest@example.com")
         self.client.force_login(guest)
         with self.assertNumQueries(2):
@@ -607,7 +622,7 @@ class EmergencyMailViewTests(TestCase):
         Signup(pilot=self.pilot_b, training=training_in_a_week).save()
         training_in_a_week.select_signups()
 
-    def test_orga_required(self):
+    def test_orga_required_to_see(self):
         guest = get_user_model().objects.create(email="guest@example.com")
         self.client.force_login(guest)
         with self.assertNumQueries(2):

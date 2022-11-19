@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Trainingsbericht erstellen{% endblock title %}
+
+{% block headline %}Trainingsbericht erstellen{% endblock headline %}
+
+{% block content %}
+
+<div class="row mt-2">
+    <div class="col-xl-4 col-lg-5">
+        {% if form.errors %}
+        {% for error_list in form.errors.values %}
+        {% for error in error_list %}
+        <div class="alert mb-4 alert-warning">{{ error | safe }}</div>
+        {% endfor %}
+        {% endfor %}
+        {% endif %}
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <main class="form">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="form-floating mb-3">
+                            <input type="number" name="cash_at_start" class="form-control" placeholder="text">
+                            <label>Kassenstand vor dem Training</label>
+                        </div>
+                        <button class="btn btn-primary" type="submit">Erstellen</button>
+                        <a href="javascript:history.back()" class="btn btn-outline-dark">Abbrechen</a>
+                    </form>
+                </main>
+            </div>
+        </div>
+    </div>
+
+{% endblock content %}

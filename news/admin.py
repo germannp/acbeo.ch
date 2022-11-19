@@ -7,7 +7,7 @@ from .models import Post, Pilot
 
 class PostAdmin(admin.ModelAdmin):
     list_display = ("title", "author", "created_on")
-    search_fields = ["author", "content"]
+    search_fields = ("author", "content")
     prepopulated_fields = {"slug": ("title",)}
 
 
@@ -38,7 +38,7 @@ class PilotAdmin(BaseUserAdmin):
     search_fields = ("first_name", "last_name", "email", "phone")
     list_filter = ("role", "is_active")
     filter_horizontal = ()
-    actions = [make_member, make_orga]
+    actions = (make_member, make_orga)
 
     # Fields for creating Pilot from admin site
     add_fieldsets = (

@@ -61,11 +61,18 @@
                             <li><a class="dropdown-item" href="{% url 'about_trainings' %}">Praktische Infos</a></li>
                         </ul>
                     </li>
-                    <li class="nav-item">
-                        {% if request.user.is_staff %}
-                        <a class="nav-link" href="/admin/">Admin</a>
-                        {% endif %}
+                    {% if request.user.is_orga %}
+                    <li class="nav-item dropup">
+                        <a class="nav-link dropdown-toggle" href="#" id="dropdown04" data-bs-toggle="dropdown"
+                            aria-expanded="false">Abrechnung</a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{% url 'reports' %}">Berichte</a></li>
+                        </ul>
                     </li>
+                    {% endif %}
+                    {% if request.user.is_staff %}
+                    <a class="nav-link" href="/admin/">Admin</a>
+                    {% endif %}
                     <li class="nav-item">
                     {% if request.user.is_authenticated %}
                     <li class="nav-item dropup">

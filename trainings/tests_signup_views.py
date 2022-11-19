@@ -203,7 +203,7 @@ class SignupCreateViewTests(TestCase):
         self.assertEqual(len(trainings), len(dates))
         for date, training in zip(dates, trainings):
             self.assertEqual(date, training.date)
-            self.assertEqual(training.priority_date.strftime("%A"), "Mittwoch")
+            self.assertEqual("Mittwoch", training.priority_date.strftime("%A"))
             self.assertLess(training.priority_date, training.date)
             self.assertLessEqual(
                 training.date - training.priority_date, timedelta(days=7)
