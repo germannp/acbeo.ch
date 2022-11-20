@@ -9,8 +9,7 @@ from .models import Post
 
 
 class PostListView(generic.ListView):
-    context_object_name = "posts"
-    queryset = Post.objects.all()
+    model = Post
     paginate_by = 3
     template_name = "news/index.html"
 

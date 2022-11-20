@@ -555,7 +555,7 @@ class TrainingUpdateViewTests(TestCase):
         self.assertTemplateUsed(response, "trainings/update_training.html")
         self.assertContains(response, "alert-warning")
 
-    def test_cannot_update_past_or_non_existing_trainings_404(self):
+    def test_cannot_update_past_or_non_existing_trainings(self):
         Training(date=YESTERDAY).save()
         with self.assertNumQueries(3):
             response = self.client.get(
@@ -730,7 +730,7 @@ class EmergencyMailViewTests(TestCase):
         self.assertTemplateUsed(response, "trainings/emergency_mail.html")
         self.assertContains(response, "Bitte genau zwei Notfallkontakte ausgewählen.")
 
-    def test_cannot_send_emergency_mail_for_past_or_non_existing_trainings_404(self):
+    def test_cannot_send_emergency_mail_for_past_or_non_existing_trainings(self):
         with self.assertNumQueries(3):
             response = self.client.post(
                 reverse("emergency_mail", kwargs={"date": YESTERDAY}),
@@ -754,7 +754,7 @@ class EmergencyMailViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.assertTemplateUsed(response, "404.html")
 
-    def test_cannot_send_emergency_mail_for_trainings_far_ahead_404(self):
+    def test_cannot_send_emergency_mail_for_trainings_far_ahead(self):
         with self.assertNumQueries(3):
             response = self.client.post(
                 reverse("emergency_mail", kwargs={"date": self.in_a_week}),

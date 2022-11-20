@@ -53,7 +53,7 @@ class PostDetailViewTests(TestCase):
         self.assertContains(response, "Author")
         self.assertNotContains(response, "author@example.com")
 
-    def test_post_not_found_404(self):
+    def test_post_not_found(self):
         response = self.client.get(reverse("post", kwargs={"slug": "missing"}))
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.assertTemplateUsed(response, "404.html")

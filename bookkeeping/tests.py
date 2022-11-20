@@ -24,7 +24,7 @@ class ReportListViewTests(TestCase):
         self.client.force_login(self.orga)
 
         training = Training.objects.create(date=TODAY)
-        self.report = Report.objects.create(training=training, cash_at_start=1337)
+        Report(training=training, cash_at_start=1337).save()
 
     def test_orga_required_to_see(self):
         guest = get_user_model().objects.create(email="guest@example.com")
@@ -46,6 +46,84 @@ class ReportListViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "base.html")
         self.assertNotContains(response, reverse("reports"))
+
+    def test_pagination_by_year(self):
+        with self.assertNumQueries(6):
+            response = self.client.get(reverse("reports"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/list_reports.html")
+        self.assertNotContains(
+            response, reverse("reports", kwargs={"year": TODAY.year + 1})
+        )
+        self.assertNotContains(
+            response, reverse("reports", kwargs={"year": TODAY.year - 1})
+        )
+
+        for date in [
+            YESTERDAY,
+            TODAY - timedelta(days=365),
+            TODAY - 2 * timedelta(days=365),
+        ]:
+            training = Training.objects.create(date=date)
+            Report(training=training, cash_at_start=1337).save()
+
+        with self.assertNumQueries(6):
+            response = self.client.get(reverse("reports"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/list_reports.html")
+        self.assertContains(
+            response, reverse("reports", kwargs={"year": TODAY.year - 1})
+        )
+        self.assertNotContains(
+            response, reverse("reports", kwargs={"year": TODAY.year - 2})
+        )
+
+        with self.assertNumQueries(5):
+            response = self.client.get(
+                reverse("reports", kwargs={"year": TODAY.year - 1})
+            )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/list_reports.html")
+        self.assertContains(response, reverse("reports", kwargs={"year": TODAY.year}))
+        self.assertContains(
+            response, reverse("reports", kwargs={"year": TODAY.year - 2})
+        )
+
+        with self.assertNumQueries(5):
+            response = self.client.get(
+                reverse("reports", kwargs={"year": TODAY.year - 2})
+            )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/list_reports.html")
+        self.assertNotContains(
+            response, reverse("reports", kwargs={"year": TODAY.year})
+        )
+        self.assertContains(
+            response, reverse("reports", kwargs={"year": TODAY.year - 1})
+        )
+        self.assertNotContains(
+            response, reverse("reports", kwargs={"year": TODAY.year - 3})
+        )
+
+    def test_no_reports_in_year_404(self):
+        with self.assertNumQueries(4):
+            response = self.client.get(reverse("reports", kwargs={"year": 1984}))
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
+        self.assertTemplateUsed(response, "404.html")
+
+        Report.objects.all().delete()
+        with self.assertNumQueries(4):
+            response = self.client.get(reverse("reports"))
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
+        self.assertTemplateUsed(response, "404.html")
+
+        training = Training.objects.create(date=TODAY - timedelta(days=365))
+        Report(training=training, cash_at_start=1337).save()
+        with self.assertNumQueries(6):
+            response = self.client.get(reverse("reports"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/list_reports.html")
+        self.assertNotContains(response, TODAY.year)
 
 
 class ReportCreateViewTests(TestCase):

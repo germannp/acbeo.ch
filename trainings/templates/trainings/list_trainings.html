@@ -10,7 +10,7 @@
 
     <div class="col left">
 
-        {% for training in trainings %}
+        {% for training in training_list %}
         <div class="card mb-4" id="training_{{ forloop.counter }}">
             <h5 class="card-header">{{ training.date | date:"l, j. M." }} 
                 {% if request.user.is_orga %}
@@ -109,7 +109,7 @@
         </div>
         {% endfor %}
 
-        {% if not trainings %}
+        {% if not training_list %}
         <p>Im Moment ist niemand für ein kommendes Training eingeschrieben.</p>
         <a href="{% url 'signup' %}" class="btn btn-secondary">Einschreiben</a>
         {% else %}

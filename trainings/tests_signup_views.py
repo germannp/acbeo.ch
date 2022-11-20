@@ -256,7 +256,7 @@ class SignupCreateViewTests(TestCase):
         self.assertContains(response, "alert-warning")
         self.assertEqual(0, len(Signup.objects.all()))
 
-    def test_cannot_signup_for_non_existent_date_404(self):
+    def test_cannot_signup_for_non_existent_date(self):
         with self.assertNumQueries(2):
             response = self.client.get(
                 reverse("signup", kwargs={"date": "2022-13-13"}),
@@ -493,7 +493,7 @@ class SignupUpdateViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "trainings/list_trainings.html")
 
-    def test_cannot_update_past_or_non_existent_signup_404(self):
+    def test_cannot_update_past_or_non_existent_signup(self):
         training = Training.objects.create(date=YESTERDAY)
         Signup(pilot=self.pilot, training=training).save()
         with self.assertNumQueries(2):

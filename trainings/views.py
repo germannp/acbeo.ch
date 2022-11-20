@@ -15,7 +15,6 @@ locale.setlocale(locale.LC_TIME, "de_CH")
 
 
 class TrainingListView(LoginRequiredMixin, generic.ListView):
-    context_object_name = "trainings"
     paginate_by = 4
     template_name = "trainings/list_trainings.html"
 
