@@ -31,6 +31,13 @@ class ReportListView(OrgaRequiredMixin, generic.ListView):
         if not reports:
             raise Http404(f"Keine Berichte im Jahr {year}.")
 
+        for previous_report, report in zip(reports, reports[1:]):
+            if previous_report.cash_at_end is None:
+                report.difference_between_reports = "❓"
+            else:
+                report.difference_between_reports = (
+                    report.cash_at_start - previous_report.cash_at_end
+                )
         return reports
 
     def get_context_data(self, **kwargs):

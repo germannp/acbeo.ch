@@ -19,8 +19,9 @@
                             <tr>
                                 <th scope="col">#</th>
                                 <th scope="col">Datum</th>
-                                <th scope="col">Kassenstand Anfang</th>
-                                <th scope="col">Kassenstand Ende</th>
+                                <th scope="col">Kasse Anfang</th>
+                                <th scope="col">Diff. Vortraining</th>
+                                <th scope="col">Kasse Ende</th>
                             </tr>
                         </thead>
                         <tbody class="table-group-divider">
@@ -32,6 +33,7 @@
                                         class="bi bi-pencil-square" /a>
                                 </td>
                                 <td>{{ report.cash_at_start }}</td>
+                                <td>{{ report.difference_between_reports }}</td>
                                 <td>{{ report.cash_at_end }}</td>
                             </tr>
                             {% endfor %}

@@ -24,7 +24,7 @@ class ReportListViewTests(TestCase):
         self.client.force_login(self.orga)
 
         training = Training.objects.create(date=TODAY)
-        Report(training=training, cash_at_start=1337).save()
+        self.report = Report.objects.create(training=training, cash_at_start=1337)
 
     def test_orga_required_to_see(self):
         guest = get_user_model().objects.create(email="guest@example.com")
@@ -104,6 +104,21 @@ class ReportListViewTests(TestCase):
         self.assertNotContains(
             response, reverse("reports", kwargs={"year": TODAY.year - 3})
         )
+
+    def test_difference_between_reports(self):
+        difference_between_reports = 420
+        training = Training.objects.create(date=YESTERDAY)
+        Report(
+            training=training,
+            cash_at_start=1,
+            cash_at_end=self.report.cash_at_start - difference_between_reports,
+        ).save()
+
+        with self.assertNumQueries(6):
+            response = self.client.get(reverse("reports"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/list_reports.html")
+        self.assertContains(response, difference_between_reports)
 
     def test_no_reports_in_year_404(self):
         with self.assertNumQueries(4):
