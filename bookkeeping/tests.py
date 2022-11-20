@@ -64,20 +64,34 @@ class ReportCreateViewTests(TestCase):
         self.assertTemplateUsed(response, "403.html")
 
     def test_existing_training_required(self):
-        with self.assertNumQueries(3):
+        with self.assertNumQueries(4):
             response = self.client.get(reverse("create_report"))
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.assertTemplateUsed(response, "404.html")
 
         Training(date=TODAY).save()
-        with self.assertNumQueries(4):
+        with self.assertNumQueries(5):
             response = self.client.get(reverse("create_report"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/create_report.html")
 
+    def test_only_in_menu_if_training_exists(self):
+        with self.assertNumQueries(4):
+            response = self.client.get(reverse("home"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "base.html")
+        self.assertNotContains(response, reverse("create_report"))
+
+        Training(date=TODAY).save()
+        with self.assertNumQueries(4):
+            response = self.client.get(reverse("home"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "base.html")
+        self.assertContains(response, reverse("create_report"))
+
     def test_create_report(self):
         Training(date=TODAY).save()
-        with self.assertNumQueries(11):
+        with self.assertNumQueries(12):
             response = self.client.post(
                 reverse("create_report"), data={"cash_at_start": 1337}, follow=True
             )
@@ -88,12 +102,12 @@ class ReportCreateViewTests(TestCase):
     def test_redirect_to_existing_report(self):
         training = Training.objects.create(date=TODAY)
         report = Report.objects.create(training=training, cash_at_start=1337)
-        with self.assertNumQueries(9):
+        with self.assertNumQueries(10):
             response = self.client.get(reverse("create_report"), follow=True)
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/update_report.html")
 
-        with self.assertNumQueries(9):
+        with self.assertNumQueries(10):
             response = self.client.post(
                 reverse("create_report"), data={"cash_at_start": 666}, follow=True
             )

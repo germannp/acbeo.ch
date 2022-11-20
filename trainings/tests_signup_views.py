@@ -99,7 +99,7 @@ class SingupListViewTests(TestCase):
                 self.assertContains(response, "text-warning")
             else:
                 self.assertNotContains(response, "text-warning")
-        
+
         # Signups that are not is_certain and for WholeDay
         for is_certain, for_time, warning in [
             (True, Signup.Time.WholeDay, False),
@@ -108,7 +108,9 @@ class SingupListViewTests(TestCase):
             (True, Signup.Time.LeaveEarly, True),
             (True, Signup.Time.Individually, True),
         ]:
-            with self.subTest(is_certain=is_certain, for_time=for_time, warning=warning):
+            with self.subTest(
+                is_certain=is_certain, for_time=for_time, warning=warning
+            ):
                 self.signup.is_certain = is_certain
                 self.signup.for_time = for_time
                 self.signup.save()
@@ -160,7 +162,7 @@ class SignupCreateViewTests(TestCase):
         self.next_saturday = date(2007, 1, 13)
         self.assertEqual(self.next_saturday.strftime("%A"), "Samstag")
 
-    @mock.patch("trainings.views.datetime.date")
+    @mock.patch("trainings.views.date")
     @mock.patch("trainings.views.reverse_lazy")
     def test_default_date_is_next_saturday(self, mocked_reverse, mocked_date):
         mocked_reverse.return_value = ""
@@ -182,9 +184,13 @@ class SignupCreateViewTests(TestCase):
                 self.assertTemplateUsed(response, "trainings/signup.html")
                 self.assertContains(response, default_date.isoformat())
 
-    @mock.patch("trainings.forms.datetime", wraps=datetime)
-    def test_default_priority_date_is_wednesday_before_training(self, mocked_date):
-        mocked_date.date.today.return_value = self.monday
+    @mock.patch("trainings.forms.date", wraps=date)
+    @mock.patch("trainings.views.date", wraps=date)
+    def test_default_priority_date_is_wednesday_before_training(
+        self, views_date, forms_date
+    ):
+        views_date.today.return_value = self.monday
+        forms_date.today.return_value = self.monday
         dates = [
             self.wednesday,
             self.saturday,
