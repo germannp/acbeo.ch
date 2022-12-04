@@ -248,13 +248,22 @@ class SignupCreateViewTests(TestCase):
         self.assertContains(response, "alert-warning")
         self.assertEqual(0, len(Signup.objects.all()))
 
-    def test_cannot_signup_more_than_a_year_ahead(self):
+    def test_cannot_signup_more_than_a_year_ahead_and_form_prefilled(self):
         with self.assertNumQueries(2):
-            response = self.client.post(reverse("signup"), data={"date": "2048-12-01"})
+            response = self.client.get(reverse("signup"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "trainings/signup.html")
+        self.assertContains(response, 'value="True" required checked')
+
+        with self.assertNumQueries(2):
+            response = self.client.post(
+                reverse("signup"), data={"date": "2048-12-01", "is_certain": False}
+            )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "trainings/signup.html")
         self.assertContains(response, "alert-warning")
         self.assertEqual(0, len(Signup.objects.all()))
+        self.assertContains(response, 'value="False" required checked')
 
     def test_cannot_signup_for_non_existent_date(self):
         with self.assertNumQueries(2):

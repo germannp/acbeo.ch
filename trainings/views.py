@@ -19,16 +19,16 @@ class TrainingListView(LoginRequiredMixin, generic.ListView):
     template_name = "trainings/list_trainings.html"
 
     def get_queryset(self):
-        trainings = Training.objects.filter(
-            date__gte=date.today()
-        ).prefetch_related("signups__pilot")
+        trainings = Training.objects.filter(date__gte=date.today()).prefetch_related(
+            "signups__pilot"
+        )
         for training in trainings:
             training.select_signups()
         # Selecting signups can alter their order, but Signup instances cannot be sorted.
         # Refreshing them from the DB is the best solution I found 🤷
-        trainings = Training.objects.filter(
-            date__gte=date.today()
-        ).prefetch_related("signups__pilot")
+        trainings = Training.objects.filter(date__gte=date.today()).prefetch_related(
+            "signups__pilot"
+        )
         return trainings
 
     def get_context_data(self, **kwargs):
@@ -131,21 +131,17 @@ class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateVi
     form_class = forms.SignupCreateForm
     template_name = "trainings/signup.html"
 
-    def get_context_data(self, **kwargs):
+    def get_initial(self):
         """Set default date based on url pattern"""
-        context = super().get_context_data(**kwargs)
         if "date" in self.kwargs:
-            context["date"] = self.kwargs["date"]
-            return context
+            return {"date": self.kwargs["date"]}
 
         today = date.today()
         if today.weekday() >= 5:  # Saturdays and Sundays
-            context["date"] = today
-            return context
+            return {"date": today.isoformat()}
 
         next_saturday = today + timedelta(days=(5 - today.weekday()) % 7)
-        context["date"] = next_saturday
-        return context
+        return {"date": next_saturday.isoformat()}
 
     def form_valid(self, form):
         """Fill in training and pilot"""
