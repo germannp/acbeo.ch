@@ -65,6 +65,9 @@ class Pilot(AbstractBaseUser):
 
     USERNAME_FIELD = "email"
 
+    class Meta:
+        ordering = ["first_name", "last_name"]
+
     def __str__(self):
         return self.first_name + " " + self.last_name
 

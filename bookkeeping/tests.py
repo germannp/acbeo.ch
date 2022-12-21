@@ -226,13 +226,13 @@ class ReportCreateViewTests(TestCase):
 
 class ReportUpdateViewTests(TestCase):
     def setUp(self):
-        self.guest = get_user_model().objects.create(
-            first_name="Guest", email="guest@example.com"
-        )
         self.orga = get_user_model().objects.create(
             first_name="Orga", email="orga@example.com", role=get_user_model().Role.Orga
         )
         self.client.force_login(self.orga)
+        self.guest = get_user_model().objects.create(
+            first_name="Guest", email="guest@example.com"
+        )
 
         training = Training.objects.create(date=TODAY)
         now = datetime.now()
@@ -346,16 +346,16 @@ class ReportUpdateViewTests(TestCase):
 
 class TestRunCreateView(TestCase):
     def setUp(self):
+        self.orga = get_user_model().objects.create(
+            first_name="Orga", email="orga@example.com", role=get_user_model().Role.Orga
+        )
+        self.client.force_login(self.orga)
         self.guest = get_user_model().objects.create(
             first_name="Guest", email="guest@example.com"
         )
         guest_2 = get_user_model().objects.create(
             first_name="Guest 2", email="guest_2@example.com"
         )
-        self.orga = get_user_model().objects.create(
-            first_name="Orga", email="orga@example.com", role=get_user_model().Role.Orga
-        )
-        self.client.force_login(self.orga)
 
         training = Training.objects.create(date=TODAY)
         now = datetime.now()
@@ -388,9 +388,29 @@ class TestRunCreateView(TestCase):
         with self.assertNumQueries(17):
             response = self.client.get(reverse("create_run"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/create_run.html")
 
         for signup in Signup.objects.all():
             self.assertEqual(signup.status, Signup.Status.Selected)
+
+    def test_forms_prefilled(self):
+        with self.assertNumQueries(17):
+            response = self.client.get(reverse("create_run"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/create_run.html")
+        self.assertContains(response, f'value="{Run.Kind.Flight}" checked')
+        self.assertNotContains(response, f'value="{Run.Kind.Flight}" \\n')
+
+    def test_pilots_listed_alphabetically(self):
+        with self.assertNumQueries(17):
+            response = self.client.get(reverse("create_run"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/create_run.html")
+        response_before_guest_2, response_after_guest_2 = str(response.content).split(
+            "Guest 2"
+        )
+        self.assertTrue("Guest" in response_before_guest_2)
+        self.assertTrue("Orga" in response_after_guest_2)
 
     def test_only_one_bus_per_run_allowed(self):
         with self.assertNumQueries(15):
