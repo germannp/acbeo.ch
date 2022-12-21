@@ -8,14 +8,6 @@
 
 <div class="row mt-2">
     <div class="col-xl-4 col-lg-5">
-        {% if form.errors %}
-        {% for error_list in form.errors.values %}
-        {% for error in error_list %}
-        <div class="alert mb-4 alert-warning">{{ error }}</div>
-        {% endfor %}
-        {% endfor %}
-        {% endif %}
-
         <div class="card mb-4">
             <h5 class="card-header">{{ form.instance.training.date | date:"l, j. E" }}</h5>
             <div class="card-body">
