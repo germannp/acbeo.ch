@@ -125,11 +125,18 @@ class RunCreateView(OrgaRequiredMixin, generic.TemplateView):
     template_name = "bookkeeping/create_run.html"
     success_url = reverse_lazy("create_report")
 
+    def get(self, *args, **kwargs):
+        """Redirect to create_report if no report exists"""
+        training = get_object_or_404(Training, date=date.today())
+        if not Report.objects.filter(training=training).exists():
+            return redirect(self.success_url)
+
+        return super().get(*args, **kwargs)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["Kind"] = Run.Kind
         training = get_object_or_404(Training, date=date.today())
-        get_object_or_404(Report, training=training)  # Redirect to create-report?
         selected_pilots = training.selected_pilots
         if "formset" in context:
             formset = context["formset"]

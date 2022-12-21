@@ -374,11 +374,18 @@ class TestRunCreateView(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
         self.assertTemplateUsed(response, "403.html")
 
+    def test_redirect_to_create_report_if_no_report_exists(self):
+        Report.objects.all().delete()
+        with self.assertNumQueries(9):
+            response = self.client.get(reverse("create_run"), follow=True)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/create_report.html")
+
     def test_get_create_run_selects_signups(self):
         for signup in Signup.objects.all():
             self.assertEqual(signup.status, Signup.Status.Waiting)
 
-        with self.assertNumQueries(16):
+        with self.assertNumQueries(17):
             response = self.client.get(reverse("create_run"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
@@ -386,7 +393,7 @@ class TestRunCreateView(TestCase):
             self.assertEqual(signup.status, Signup.Status.Selected)
 
     def test_only_one_bus_per_run_allowed(self):
-        with self.assertNumQueries(16):
+        with self.assertNumQueries(15):
             response = self.client.post(
                 reverse("create_run"),
                 data={
@@ -408,7 +415,7 @@ class TestRunCreateView(TestCase):
         self.assertEqual(0, len(Run.objects.all()))
 
     def test_at_most_two_boats_per_run_allowed(self):
-        with self.assertNumQueries(16):
+        with self.assertNumQueries(15):
             response = self.client.post(
                 reverse("create_run"),
                 data={
@@ -430,7 +437,7 @@ class TestRunCreateView(TestCase):
         self.assertEqual(0, len(Run.objects.all()))
 
     def test_number_of_selected_pilots_changed(self):
-        with self.assertNumQueries(25):
+        with self.assertNumQueries(26):
             response = self.client.post(
                 reverse("create_run"),
                 data={
