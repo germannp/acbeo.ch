@@ -182,6 +182,16 @@ class ReportCreateViewTests(TestCase):
         self.assertTemplateUsed(response, "base.html")
         self.assertContains(response, reverse("create_report"))
 
+    def test_only_positive_integers_allowed_for_cash(self):
+        Training(date=TODAY).save()
+        with self.assertNumQueries(3):
+            response = self.client.post(
+                reverse("create_report"), data={"cash_at_start": -666}, follow=True
+            )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/create_report.html")
+        self.assertEqual(0, len(Report.objects.all()))
+
     def test_create_report(self):
         Training(date=TODAY).save()
         with self.assertNumQueries(12):
@@ -234,3 +244,18 @@ class ReportUpdateViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/update_report.html")
         self.assertContains(response, self.report.cash_at_start)
+
+    def test_only_positive_integers_allowed_for_cash(self):
+        with self.assertNumQueries(15):
+            response = self.client.post(
+                reverse("update_report", kwargs={"date": TODAY}),
+                data={"cash_at_start": -666, "cash_at_end": -666},
+                follow=True,
+            )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/update_report.html")
+
+        self.report.refresh_from_db()
+        self.assertEqual(1337, self.report.cash_at_start)
+        self.assertNotEqual(-666, self.report.cash_at_end)
+
