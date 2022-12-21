@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Run erstellen{% endblock title %}
+
+{% block headline %}Run erstellen{% endblock headline %}
+
+{% block content %}
+
+<div class="row mt-2">
+    <div class="col-xl-4 col-lg-5">
+        {% if formset.non_form_errors %}
+        {% for error in formset.non_form_errors %}
+        <div class="alert mb-4 alert-warning">{{ error | safe }}</div>
+        {% endfor %}
+        {% endif %}
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <main class="form">
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ formset.management_form }}
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">#</th>
+                                        <th scope="col">Pilot·in</th>
+                                        <th scope="col">🪂</th>
+                                        <th scope="col">🚌</th>
+                                        <th scope="col">🚢</th>
+                                        <th scope="col">❌</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="table-group-divider">
+                                    {% for form in formset|slice:":{{ formset.number_of_selected_pilots }}" %}
+                                    <tr>
+                                        <td>{{ forloop.counter }}</td>
+                                        <td class="text-nowrap">
+                                            {{ form.pilot }}
+                                            <input type="hidden" name="form-{{ forloop.counter0 }}-id" id="id_form-{{ forloop.counter0 }}-id">
+                                        </td>
+                                        <td>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="radio"
+                                                    name="form-{{ forloop.counter0 }}-kind"
+                                                    id="id_form-{{ forloop.counter0 }}-kind"
+                                                    value="{{ Kind.Flight }}" {% if form.instance.kind == Kind.Flight %}checked{% endif %}
+                                                    required>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="radio"
+                                                    name="form-{{ forloop.counter0 }}-kind"
+                                                    id="id_form-{{ forloop.counter0 }}-kind"
+                                                    value="{{ Kind.Bus }}" {% if form.instance.kind == Kind.Bus %}checked{% endif %}
+                                                    required>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="radio"
+                                                    name="form-{{ forloop.counter0 }}-kind"
+                                                    id="id_form-{{ forloop.counter0 }}-kind"
+                                                    value="{{ Kind.Boat }}" {% if form.instance.kind == Kind.Boat %}checked{% endif %}
+                                                    required>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="radio"
+                                                    name="form-{{ forloop.counter0 }}-kind"
+                                                    id="id_form-{{ forloop.counter0 }}-kind"
+                                                    value="{{ Kind.Break }}" {% if form.instance.kind == Kind.Break %}checked{% endif %}
+                                                    required>
+                                                </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <button class="btn btn-primary" type="submit">Speichern</button>
+                        <a href="{% url 'create_report' %}" class="btn btn-outline-dark">Abbrechen</a>
+                    </form>
+                </main>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}

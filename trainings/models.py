@@ -38,6 +38,16 @@ class Training(models.Model):
     def pilots(self):
         return [signup.pilot for signup in self.signups.all()]
 
+    @property
+    def selected_pilots(self):
+        self.select_signups()
+        return [
+            signup.pilot
+            for signup in self.signups.all().order_by("pilot")
+            if signup.is_selected
+        ]
+
+    @property
     def number_of_motivated_pilots(self):
         return sum(signup.is_motivated for signup in self.signups.all())
 
@@ -102,12 +112,24 @@ class Signup(models.Model):
         )
 
     @property
+    def is_selected(self):
+        return self.status == self.Status.Selected
+
+    @property
     def is_selected_orga(self):
         return self.status == self.Status.Selected and self.pilot.is_orga
 
     @property
     def is_waiting_orga(self):
         return self.status == self.Status.Waiting and self.pilot.is_orga
+
+    @property
+    def is_cancelable(self):
+        if hasattr(self.training, "report"):
+            runs = self.training.report.runs.filter(pilot=self.pilot)
+            return not any(run.is_relevant_for_bill for run in runs)
+
+        return True
 
     def select(self):
         if self.status != self.Status.Waiting:
@@ -116,6 +138,7 @@ class Signup(models.Model):
         self.save()
 
     def cancel(self):
+        assert self.is_cancelable, f"Trying to cancel {self} relevant for billing!"
         self.signed_up_on = make_aware(datetime.now())
         self.status = self.Status.Canceled
         # Not saving, because called before saving updates from form

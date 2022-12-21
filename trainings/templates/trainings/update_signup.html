@@ -99,7 +99,9 @@
                         <div class="d-grid gap-1 d-sm-block">
                             <button class="btn btn-primary" type="submit" name="save">Speichern</button>
                             {% if form.instance.get_status_display != 'Canceled' %}
-                            <button class="btn btn-danger" type="submit" name="cancel">Abmelden</button>
+                                {% if form.instance.is_cancelable %}
+                                <button class="btn btn-danger" type="submit" name="cancel">Abmelden</button>
+                                {% endif %}
                             {% else %}
                             <button class="btn btn-success" type="submit" name="resignup">Wieder anmelden</button>
                             {% endif %}

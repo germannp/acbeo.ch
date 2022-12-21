@@ -2,33 +2,67 @@
 
 {% block title %}Bericht{% endblock title %}
 
-{% block headline %}Bericht{% endblock headline %}
+{% block headline %}{{ report.training.date | date:"D., j. E" }}{% endblock headline %}
 
 {% block content %}
 
 <div class="row mt-2">
-    <div class="col-xl-4 col-lg-5">
-        {% if form.errors %}
-        {% for error_list in form.errors.values %}
-        {% for error in error_list %}
-        <div class="alert mb-4 alert-warning">{{ error | safe }}</div>
-        {% endfor %}
-        {% endfor %}
-        {% endif %}
 
+    <div class="col left">
         <div class="card mb-4">
-            <h5 class="card-header">{{ form.instance.training.date | date:"l, j. E" }}</h5>
+            <h5 class="card-header">Runs
+                {% if request.user.is_orga and report.training.date == today %}
+                <a href="{% url 'create_run' %}" class="bi bi-plus-square"></a>
+                {% endif %}
+            </h5>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Pilot·in</th>
+                                {% for time in times_of_runs %}
+                                <th scope="col" class="text-nowrap">{{ time | date:"G:i" }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody class="table-group-divider">
+                            {% for pilot, runs in runs_by_pilot.items %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td class="text-nowrap">{{ pilot }}</td>
+                                {% for run in runs %}
+                                <td>
+                                    {% if run.get_kind_display == 'Flight' %}🪂
+                                    {% elif run.get_kind_display == 'Bus' %}🚌
+                                    {% elif run.get_kind_display == 'Boat' %}🚢
+                                    {% else %}❌{% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-lg-4">
+        <div class="card mb-4">
+            <h5 class="card-header">Kassenstand</h5>
             <div class="card-body">
                 <main class="form">
                     <form method="post">
                         {% csrf_token %}
                         <div class="form-floating mb-3">
-                            <input type="number" name="cash_at_start" class="form-control" placeholder="text"
+                            <input type="number" min="0" name="cash_at_start" class="form-control" placeholder="text"
                                 {% if form.cash_at_start.value %}value="{{ form.cash_at_start.value }}"{% endif %}>
                             <label>Kassenstand vor dem Training</label>
                         </div>
                         <div class="form-floating mb-3">
-                            <input type="number" name="cash_at_end" class="form-control" placeholder="text"
+                            <input type="number" min="0" name="cash_at_end" class="form-control" placeholder="text"
                                 {% if form.cash_at_end.value %}value="{{ form.cash_at_end.value }}"{% endif %}>
                             <label>Kassenstand nach dem Training</label>
                         </div>
@@ -40,4 +74,4 @@
         </div>
     </div>
 
-{% endblock content %}
+    {% endblock content %}

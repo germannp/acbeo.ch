@@ -209,12 +209,12 @@ class TrainingListViewTests(TestCase):
             response, reverse("emergency_mail", kwargs={"date": date})
         )
 
-        self.assertNotContains(response, "disabled")
+        self.assertNotContains(response, "text-muted")
         self.todays_training.emergency_mail_sender = self.orga
         self.todays_training.save()
         with self.assertNumQueries(11):
             response = self.client.get(reverse("trainings"))
-        self.assertContains(response, "disabled")
+        self.assertContains(response, "text-muted")
 
     def test_report_button(self):
         with self.assertNumQueries(12):

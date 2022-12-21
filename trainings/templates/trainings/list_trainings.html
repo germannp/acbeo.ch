@@ -15,13 +15,16 @@
             <h5 class="card-header">{{ training.date | date:"l, j. M." }} 
                 {% if request.user.is_orga %}
                 <a href="{% url 'update_training' date=training.date.isoformat %}?page={{ page_obj.number }}&training={{ forloop.counter }}"
-                    class="btn btn-primary btn-sm bi bi-pencil-square"></a>
+                    class="bi bi-pencil-square"></a>
                     {% if training.date <= day_after_tomorrow %}
-                    <a href="{% url 'emergency_mail' date=training.date.isoformat %}"
-                        class="btn btn-danger btn-sm bi bi-envelope-exclamation {% if training.emergency_mail_sender %}disabled{% endif %}"></a>
+                        {% if not training.emergency_mail_sender %}
+                        <a href="{% url 'emergency_mail' date=training.date.isoformat %}" class="text-danger bi bi-envelope-exclamation"></a>
+                        {% else %}
+                        <i class="text-muted bi bi-envelope-exclamation"></i>
+                        {% endif %}
                     {% endif %}
                     {% if training.date == today %}
-                    <a href="{% url 'create_report' %}" class="btn btn-primary btn-sm bi bi-clipboard"></a>
+                    <a href="{% url 'create_report' %}" class="bi bi-clipboard"></a>
                     {% endif %}
                 {% endif %}
             </h5>
