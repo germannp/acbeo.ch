@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 
-{% block title %}Run erstellen{% endblock title %}
+{% block title %}Run bearbeiten{% endblock title %}
 
-{% block headline %}Run erstellen{% endblock headline %}
+{% block headline %}Run von {{ time_of_run | date:"G:i" }} bearbeiten{% endblock headline %}
 
 {% block content %}
 
@@ -70,7 +70,7 @@
                                             </div>
                                         </td>
                                     </tr>
-
+                                    
                                     {% for hidden in form.hidden_fields %}
                                     {{ hidden }}
                                     {% endfor %}
@@ -79,8 +79,11 @@
                                 </tbody>
                             </table>
                         </div>
-                        <button class="btn btn-primary" type="submit">Speichern</button>
-                        <a href="{% url 'create_report' %}" class="btn btn-outline-dark">Abbrechen</a>
+                        <div class="d-grid gap-1 d-sm-block">
+                            <button class="btn btn-primary" type="submit" name="save">Speichern</button>
+                            <button class="btn btn-danger" type="submit" name="delete">Löschen</button>
+                            <a href="{% url 'create_report' %}" class="btn btn-outline-dark">Abbrechen</a>
+                        </div>
                     </form>
                 </main>
             </div>

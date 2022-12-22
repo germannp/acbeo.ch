@@ -43,6 +43,15 @@
                             </tr>
                             {% endfor %}
                         </tbody>
+                        {% if request.user.is_orga and report.training.date == today %}
+                        <tfoot class="table-group-divider">
+                            <td></td>
+                            <td></td>
+                            {% for time in times_of_runs %}
+                            <td><a href="{% url 'update_run' run=forloop.counter %}" class="bi bi-pencil-square"></a></td>
+                            {% endfor %}
+                        </tfoot>
+                        {% endif %}
                     </table>
                 </div>
             </div>

@@ -13,5 +13,6 @@ urlpatterns = [
     path("<int:year>/", views.ReportListView.as_view(), name="reports"),
     path("erstellen/", views.ReportCreateView.as_view(), name="create_report"),
     path("<date:date>/", views.ReportUpdateView.as_view(), name="update_report"),
-    path("run-erstellen", views.RunCreateView.as_view(), name="create_run"),
+    path("run-erstellen/", views.RunCreateView.as_view(), name="create_run"),
+    path("run-bearbeiten/<int:run>/", views.RunUpdateView.as_view(), name="update_run"),
 ]

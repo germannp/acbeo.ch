@@ -23,5 +23,5 @@ class BaseRunFormSet(forms.BaseModelFormSet):
 
 
 RunFormset = modelformset_factory(
-    Run, fields=("kind",), formset=BaseRunFormSet, extra=30
+    Run, fields=("kind",), formset=BaseRunFormSet, extra=0
 )

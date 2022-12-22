@@ -22,7 +22,7 @@ class ReportListView(OrgaRequiredMixin, generic.ListView):
         if not (year := self.kwargs.get("year")):
             years = Report.objects.dates("training__date", "year")
             if not years:
-                raise Http404(f"Noch keine Berichte.")
+                raise Http404("Noch keine Berichte vorhanden.")
 
             year = max([date.year for date in years])
             self.kwargs["year"] = year
@@ -114,7 +114,7 @@ class ReportUpdateView(OrgaRequiredMixin, generic.UpdateView):
                             for run in runs
                             if run.pilot == pilot and run.created_on == time
                         ),
-                        None
+                        None,
                     )
                 )
         context["runs_by_pilot"] = runs_by_pilot
@@ -187,4 +187,81 @@ class RunCreateView(OrgaRequiredMixin, generic.TemplateView):
             )
         else:
             messages.success(self.request, "Run erstellt.")
+        return HttpResponseRedirect(self.success_url)
+
+
+class RunUpdateView(OrgaRequiredMixin, generic.TemplateView):
+    template_name = "bookkeeping/update_run.html"
+    success_url = reverse_lazy("create_report")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["Kind"] = Run.Kind
+        training = get_object_or_404(Training, date=date.today())
+        report = get_object_or_404(Report, training=training)
+        times_of_runs = sorted(set(run.created_on for run in report.runs.all()))
+        if (num_run := self.kwargs["run"] - 1) >= len(times_of_runs):
+            raise Http404(f"Kein {num_run}. Run gefunden.")
+
+        time_of_run = times_of_runs[num_run]
+        context["time_of_run"] = time_of_run
+        runs = report.runs.filter(created_on=time_of_run)
+        if "formset" in context:
+            formset = context["formset"]
+        else:
+            formset = forms.RunFormset(queryset=runs)
+        for form, run in zip(formset, runs):
+            form.pilot = run.pilot
+        context["formset"] = formset
+        return context
+
+    def post(self, request, *args, **kwargs):
+        formset = forms.RunFormset(request.POST)
+        if formset.is_valid() and "delete" in request.POST:
+            return self.delete_run(formset)
+
+        if formset.is_valid():
+            return self.formset_valid(formset)
+
+        return self.render_to_response(self.get_context_data(formset=formset))
+
+    def formset_valid(self, formset):
+        training = get_object_or_404(Training.objects, date=date.today())
+        report = get_object_or_404(Report, training=training)
+        times_of_runs = sorted(set(run.created_on for run in report.runs.all()))
+        num_run = self.kwargs["run"] - 1
+        runs = report.runs.filter(created_on=times_of_runs[num_run])
+        for form, run in zip(formset, runs):
+            form.instance.pk = run.pk
+            form.instance.pilot = run.pilot
+            form.instance.report = report
+            form.instance.created_on = times_of_runs[num_run]
+        formset.save()
+        messages.success(self.request, "Run bearbeitet.")
+        return HttpResponseRedirect(self.success_url)
+
+    def delete_run(self, formset):
+        training = get_object_or_404(Training, date=date.today())
+        report = get_object_or_404(Report, training=training)
+        times_of_runs = sorted(set(run.created_on for run in report.runs.all()))
+        num_run = self.kwargs["run"] - 1
+        runs = Run.objects.filter(created_on=times_of_runs[num_run])
+
+        # Pedestrian sanity checks to reduce risk of deleting runs in parallel
+        if len(formset) != len(runs):
+            messages.warning(
+                self.request, "Run hat sich verändert und wurde nicht gelöscht!"
+            )
+            return HttpResponseRedirect(self.success_url)
+
+        for form, run in zip(formset, runs):
+            if form.instance.kind == run.kind:
+                continue
+            messages.warning(
+                self.request, "Run hat sich verändert und wurde nicht gelöscht!"
+            )
+            return HttpResponseRedirect(self.success_url)
+
+        runs.delete()
+        messages.success(self.request, "Run gelöscht.")
         return HttpResponseRedirect(self.success_url)
