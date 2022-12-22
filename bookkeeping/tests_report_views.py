@@ -372,3 +372,9 @@ class ReportUpdateViewTests(TestCase):
             .replace("\n", "")
         )
         self.assertTrue(orga_column.endswith("<td>❌</td><td>🪂</td>"))
+
+    def test_no_existing_report_404(self):
+        with self.assertNumQueries(4):
+            response = self.client.get(reverse("update_report", kwargs={"date": YESTERDAY}))
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
+        self.assertTemplateUsed(response, "404.html")
