@@ -578,3 +578,26 @@ class SignupUpdateViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "trainings/update_signup.html")
         self.assertNotContains(response, "btn btn-danger")
+
+    def test_cannot_cancel_signup_with_relevant_runs(self):
+        report = Report.objects.create(training=self.training, cash_at_start=1337)
+        Run(
+            pilot=self.pilot,
+            report=report,
+            kind=Run.Kind.Flight,
+            created_on=timezone.now(),
+        ).save()
+        self.assertFalse(self.signup.is_cancelable)
+
+        with self.assertRaises(AssertionError):
+            self.client.post(
+                reverse("update_signup", kwargs={"date": TODAY})
+                + "?next="
+                + reverse("my_signups"),
+                data={
+                    "cancel": "",
+                    "is_certain": self.signup.is_certain,
+                    "for_time": self.signup.for_time,
+                },
+                follow=True,
+            )

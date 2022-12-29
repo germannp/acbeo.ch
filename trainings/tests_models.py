@@ -3,8 +3,10 @@ from unittest import mock
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from django.utils import timezone
 
 from .models import Training, Signup
+from bookkeeping.models import Report, Run
 
 
 TODAY = date.today()
@@ -162,12 +164,12 @@ class TrainingTests(TestCase):
 
 class SignupTests(TestCase):
     def setUp(self):
-        pilot = get_user_model().objects.create(
+        self.pilot = get_user_model().objects.create(
             email="pilot@example.com", role=get_user_model().Role.Member
         )
         self.training = Training.objects.create(date=TOMORROW, priority_date=TOMORROW)
         self.signup = Signup.objects.create(
-            pilot=pilot, training=self.training, status=Signup.Status.Selected
+            pilot=self.pilot, training=self.training, status=Signup.Status.Selected
         )
         self.time_selected = self.signup.signed_up_on
 
@@ -282,3 +284,21 @@ class SignupTests(TestCase):
                 self.signup.is_certain = is_certain
                 self.signup.for_time = for_time
                 self.assertEqual(self.signup.is_motivated, is_motivated)
+
+    def test_is_cancelable(self):
+        report = Report.objects.create(training=self.training, cash_at_start=1337)
+        for kind, is_cancelable in [
+            (Run.Kind.Flight, False),
+            (Run.Kind.Bus, False),
+            (Run.Kind.Boat, False),
+            (Run.Kind.Break, True),
+        ]:
+            with self.subTest(kind=kind, is_cancelable=is_cancelable):
+                Run.objects.all().delete()
+                Run(
+                    pilot=self.pilot,
+                    report=report,
+                    kind=kind,
+                    created_on=timezone.now(),
+                ).save()
+                self.assertEqual(self.signup.is_cancelable, is_cancelable)

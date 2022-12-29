@@ -104,7 +104,7 @@ class ContactFormViewTests(TestCase):
                 self.assertContains(response, value)
             self.assertEqual(0, len(mail.outbox))
 
-    def test_pilot_email_prefilled(self):
+    def test_pilot_email_is_prefilled(self):
         response = self.client.get(reverse("contact"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "news/contact.html")
