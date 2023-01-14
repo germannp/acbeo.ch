@@ -249,7 +249,7 @@ class SignupCreateViewTests(TestCase):
         self.assertContains(response, "alert-warning")
         self.assertEqual(0, len(Signup.objects.all()))
 
-    def test_cannot_signup_more_than_a_year_ahead_and_form_prefilled(self):
+    def test_cannot_signup_more_than_a_year_ahead_and_form_is_prefilled(self):
         with self.assertNumQueries(2):
             response = self.client.get(reverse("signup"))
         self.assertEqual(response.status_code, HTTPStatus.OK)

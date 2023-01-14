@@ -1,23 +1,48 @@
 from datetime import date, timedelta
+from itertools import product
 
 from django.contrib.auth import get_user_model
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
 
-from .models import Report, Run
-from trainings.models import Signup, Training
+from .models import Bill, Report, Run
+from trainings.models import Training
 
 
 TODAY = date.today()
 YESTERDAY = TODAY - timedelta(days=1)
 
 
+class TestReport(TestCase):
+    def setUp(self):
+        self.orga = get_user_model().objects.create(
+            first_name="Orga", email="orga@example.com"
+        )
+        self.pilot = get_user_model().objects.create(
+            first_name="Pilot", email="pilot@example.com"
+        )
+        training = Training.objects.create(date=TODAY)
+        self.report = Report.objects.create(
+            training=training, cash_at_start=1337, cash_at_end=2337
+        )
+
+    def test_details(self):
+        self.assertEqual(self.report.details["difference"], 1000)
+        self.assertEqual(self.report.details["revenue"], 0)
+
+        Bill(pilot=self.orga, report=self.report, payed=700).save()
+        self.assertEqual(self.report.details["difference"], 300)
+        self.assertEqual(self.report.details["revenue"], 700)
+
+        Bill(pilot=self.pilot, report=self.report, payed=300).save()
+        self.assertEqual(self.report.details["difference"], 0)
+        self.assertEqual(self.report.details["revenue"], 1000)
+
+
 class TestRun(SimpleTestCase):
     def setUp(self):
         self.pilot = get_user_model()(first_name="Pilot", email="pilot@example.com")
         training = Training(date=TODAY)
-        now = timezone.now()
-        Signup(pilot=self.pilot, training=training, signed_up_on=now)
         self.report = Report(training=training, cash_at_start=1337)
 
     def test_is_relevant_for_bill(self):
@@ -35,3 +60,98 @@ class TestRun(SimpleTestCase):
                     created_on=timezone.now(),
                 )
                 self.assertEqual(run.is_relevant_for_bill, is_relevant_for_bill)
+
+    def test_is_flight(self):
+        for kind, is_flight in [
+            (Run.Kind.Flight, True),
+            (Run.Kind.Bus, False),
+            (Run.Kind.Boat, False),
+            (Run.Kind.Break, False),
+        ]:
+            with self.subTest(kind=kind, is_flight=is_flight):
+                run = Run(
+                    pilot=self.pilot,
+                    report=self.report,
+                    kind=kind,
+                    created_on=timezone.now(),
+                )
+                self.assertEqual(run.is_flight, is_flight)
+
+    def test_is_service(self):
+        for kind, is_service in [
+            (Run.Kind.Flight, False),
+            (Run.Kind.Bus, True),
+            (Run.Kind.Boat, True),
+            (Run.Kind.Break, False),
+        ]:
+            with self.subTest(kind=kind, is_service=is_service):
+                run = Run(
+                    pilot=self.pilot,
+                    report=self.report,
+                    kind=kind,
+                    created_on=timezone.now(),
+                )
+                self.assertEqual(run.is_service, is_service)
+
+
+class TestBill(TestCase):
+    def setUp(self):
+        self.pilot = get_user_model().objects.create(
+            first_name="Pilot", email="pilot@example.com"
+        )
+        training = Training.objects.create(date=TODAY)
+        self.report = Report.objects.create(training=training, cash_at_start=1337)
+
+    def test_details(self):
+        for num_flights, num_buses, num_boats, num_breaks in product(
+            range(1, 9), range(1, 3), range(1, 3), range(3)
+        ):
+            with self.subTest(
+                num_flights=num_flights,
+                num_buses=num_buses,
+                num_boats=num_boats,
+                num_breaks=num_breaks,
+            ):
+                now = timezone.now()
+                for _ in range(num_flights):
+                    now += timedelta(hours=1)
+                    Run(
+                        pilot=self.pilot,
+                        report=self.report,
+                        kind=Run.Kind.Flight,
+                        created_on=now,
+                    ).save()
+                for _ in range(num_buses):
+                    now += timedelta(hours=1)
+                    Run(
+                        pilot=self.pilot,
+                        report=self.report,
+                        kind=Run.Kind.Bus,
+                        created_on=now,
+                    ).save()
+                for _ in range(num_boats):
+                    now += timedelta(hours=1)
+                    Run(
+                        pilot=self.pilot,
+                        report=self.report,
+                        kind=Run.Kind.Boat,
+                        created_on=now,
+                    ).save()
+                for _ in range(num_breaks):
+                    now += timedelta(hours=1)
+                    Run(
+                        pilot=self.pilot,
+                        report=self.report,
+                        kind=Run.Kind.Break,
+                        created_on=now,
+                    ).save()
+
+                bill = Bill(pilot=self.pilot, report=self.report)
+                self.assertEqual(bill.details["num_flights"], num_flights)
+                self.assertEqual(bill.details["num_services"], num_buses + num_boats)
+                self.assertEqual(
+                    bill.details["to_pay"],
+                    (num_flights - (num_buses + num_boats)) * Bill.PRICE_OF_FLIGHT,
+                )
+
+                Run.objects.all().delete()  # Tear down sub test.

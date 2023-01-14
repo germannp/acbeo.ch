@@ -31,7 +31,7 @@
                             {% for pilot, runs in runs_by_pilot.items %}
                             <tr>
                                 <td>{{ forloop.counter }}</td>
-                                <td class="text-nowrap">{{ pilot }}</td>
+                                <td class="text-nowrap">{{ pilot }} <a href="{% url 'create_bill' date=report.training.date.isoformat pilot=pilot.pk %}" class="bi bi-cart3"></a></td>
                                 {% for run in runs %}
                                 <td>
                                     {% if run.get_kind_display == 'Flight' %}🪂
@@ -70,6 +70,14 @@
                                 {% if form.cash_at_start.value %}value="{{ form.cash_at_start.value }}"{% endif %}>
                             <label>Kassenstand vor dem Training</label>
                         </div>
+                        <table class="table table-sm table-hover">
+                            <tbody>
+                                <tr>
+                                    <td>Einnahmen</td>
+                                    <td>{{ report.details.revenue }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
                         <div class="form-floating mb-3">
                             <input type="number" min="0" name="cash_at_end" class="form-control" placeholder="text"
                                 {% if form.cash_at_end.value %}value="{{ form.cash_at_end.value }}"{% endif %}>

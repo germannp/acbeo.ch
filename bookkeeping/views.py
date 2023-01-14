@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 
 from django.contrib import messages
+from django.contrib.auth import get_user_model
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
@@ -8,7 +9,7 @@ from django.utils import timezone
 from django.views import generic
 
 from . import forms
-from .models import Report, Run
+from .models import Bill, Report, Run
 from trainings.views import OrgaRequiredMixin
 from trainings.models import Training
 
@@ -28,9 +29,11 @@ class ReportListView(OrgaRequiredMixin, generic.ListView):
             self.kwargs["year"] = year
         since = date(year=year, month=1, day=1)
         until = date(year=year + 1, month=1, day=1)
-        reports = Report.objects.filter(
-            training__date__gte=since, training__date__lt=until
-        ).select_related("training")
+        reports = (
+            Report.objects.filter(training__date__gte=since, training__date__lt=until)
+            .select_related("training")
+            .prefetch_related("bills")
+        )
         if not reports:
             raise Http404(f"Keine Berichte im Jahr {year}.")
 
@@ -265,3 +268,42 @@ class RunUpdateView(OrgaRequiredMixin, generic.TemplateView):
         runs.delete()
         messages.success(self.request, "Run gelöscht.")
         return HttpResponseRedirect(self.success_url)
+
+
+class BillCreateView(OrgaRequiredMixin, generic.CreateView):
+    model = Bill
+    fields = ("payed",)
+    template_name = "bookkeeping/create_bill.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        pilot = get_object_or_404(get_user_model(), pk=self.kwargs["pilot"])
+        training = get_object_or_404(Training, date=self.kwargs["date"])
+        report = get_object_or_404(Report, training=training)
+        bill = Bill(pilot=pilot, report=report)
+        context["bill"] = bill
+        context["details"] = bill.details
+        return context
+
+    def form_valid(self, form):
+        """Fill in pilot and report"""
+        pilot = get_object_or_404(get_user_model(), pk=self.kwargs["pilot"])
+        training = get_object_or_404(Training.objects, date=self.kwargs["date"])
+        report = get_object_or_404(Report, training=training)
+        if Bill.objects.filter(pilot=pilot, report=report).exists():
+            messages.warning(self.request, f"{pilot} hat bereits bezahlt.")
+            return HttpResponseRedirect(self.get_success_url())
+
+        form.instance.pilot = pilot
+        form.instance.report = report
+        if form.instance.payed < form.instance.details["to_pay"]:
+            form.add_error(
+                None, f"{pilot} muss {form.instance.details['to_pay']} bezahlen."
+            )
+            return super().form_invalid(form)
+
+        messages.success(self.request, f"Bezahlung von {pilot} gespeichert.")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy("update_report", kwargs={"date": self.kwargs["date"]})

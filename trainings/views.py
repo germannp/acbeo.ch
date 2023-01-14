@@ -144,7 +144,8 @@ class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateVi
         return {"date": next_saturday.isoformat()}
 
     def form_valid(self, form):
-        """Fill in training and pilot"""
+        """Fill in pilot and training"""
+        pilot = self.request.user
         self.date = form.cleaned_data["date"]
         if Training.objects.filter(date=self.date).exists():
             training = Training.objects.get(date=self.date)
@@ -155,7 +156,6 @@ class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateVi
             training = Training.objects.create(
                 date=self.date, priority_date=wednesday_before
             )
-        pilot = self.request.user
         if Signup.objects.filter(pilot=pilot, training=training).exists():
             form.add_error(
                 None,
@@ -163,6 +163,7 @@ class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateVi
                 f"{self.date.strftime(' %d. %B %Y').replace (' 0', ' ')}, bereits eingeschrieben.",
             )
             return super().form_invalid(form)
+
         form.instance.pilot = pilot
         form.instance.training = training
         return super().form_valid(form)

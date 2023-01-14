@@ -65,7 +65,7 @@ class TestRunCreateView(TestCase):
         for signup in Signup.objects.all():
             self.assertEqual(signup.status, Signup.Status.Selected)
 
-    def test_forms_prefilled(self):
+    def test_forms_are_prefilled(self):
         with self.assertNumQueries(17):
             response = self.client.get(reverse("create_run"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
@@ -148,7 +148,7 @@ class TestRunCreateView(TestCase):
         self.assertEqual(0, len(Run.objects.all()))
 
     def test_create_run(self):
-        with self.assertNumQueries(43):
+        with self.assertNumQueries(44):
             response = self.client.post(
                 reverse("create_run"),
                 data={
@@ -176,7 +176,7 @@ class TestRunCreateView(TestCase):
             created_on=timezone.now() - timedelta(minutes=2),
         ).save()
 
-        with self.assertNumQueries(44):
+        with self.assertNumQueries(45):
             response = self.client.post(
                 reverse("create_run"),
                 data={
@@ -252,7 +252,7 @@ class TestRunUpdateView(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.assertTemplateUsed(response, "404.html")
 
-    def test_forms_prefilled(self):
+    def test_forms_are_prefilled(self):
         with self.assertNumQueries(10):
             response = self.client.get(reverse("update_run", kwargs={"run": 1}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
@@ -273,7 +273,7 @@ class TestRunUpdateView(TestCase):
         self.assertTrue("Orga" in response_after_guest_2)
 
     def test_update_run(self):
-        with self.assertNumQueries(40):
+        with self.assertNumQueries(41):
             response = self.client.post(
                 reverse("update_run", kwargs={"run": 1}),
                 data={
@@ -302,7 +302,7 @@ class TestRunUpdateView(TestCase):
         self.assertEqual(Run.Kind.Break, self.orga_run.kind)
 
     def test_run_with_changed_number_of_pilots_cannot_be_deleted(self):
-        with self.assertNumQueries(31):
+        with self.assertNumQueries(32):
             response = self.client.post(
                 reverse("update_run", kwargs={"run": 1}),
                 data={
@@ -322,7 +322,7 @@ class TestRunUpdateView(TestCase):
         self.assertEqual(3, len(Run.objects.all()))
 
     def test_run_with_changed_kind_cannot_be_deleted(self):
-        with self.assertNumQueries(31):
+        with self.assertNumQueries(32):
             response = self.client.post(
                 reverse("update_run", kwargs={"run": 1}),
                 data={
@@ -343,7 +343,7 @@ class TestRunUpdateView(TestCase):
         self.assertEqual(3, len(Run.objects.all()))
 
     def test_delete_run(self):
-        with self.assertNumQueries(29):
+        with self.assertNumQueries(30):
             response = self.client.post(
                 reverse("update_run", kwargs={"run": 1}),
                 data={

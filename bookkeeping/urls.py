@@ -1,5 +1,3 @@
-from datetime import date
-
 from django.urls import path, register_converter
 
 from . import views
@@ -15,4 +13,9 @@ urlpatterns = [
     path("<date:date>/", views.ReportUpdateView.as_view(), name="update_report"),
     path("run-erstellen/", views.RunCreateView.as_view(), name="create_run"),
     path("run-bearbeiten/<int:run>/", views.RunUpdateView.as_view(), name="update_run"),
+    path(
+        "<date:date>/bezahlen/<int:pilot>/",
+        views.BillCreateView.as_view(),
+        name="create_bill",
+    ),
 ]
