@@ -16,7 +16,7 @@ TODAY = date.today()
 YESTERDAY = TODAY - timedelta(days=1)
 
 
-class TestBillCreateView(TestCase):
+class BillCreateViewTests(TestCase):
     def setUp(self):
         orga = get_user_model().objects.create(
             first_name="Orga", email="orga@example.com", role=get_user_model().Role.Orga

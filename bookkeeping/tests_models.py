@@ -13,7 +13,7 @@ TODAY = date.today()
 YESTERDAY = TODAY - timedelta(days=1)
 
 
-class TestReport(TestCase):
+class ReportTests(TestCase):
     def setUp(self):
         orga = get_user_model().objects.create(
             first_name="Orga", email="orga@example.com"
@@ -41,7 +41,7 @@ class TestReport(TestCase):
         self.assertEqual(self.report.details["revenue"], 1000)
 
 
-class TestRun(SimpleTestCase):
+class RunTests(SimpleTestCase):
     def setUp(self):
         pilot = get_user_model()(first_name="Pilot", email="pilot@example.com")
         training = Training(date=TODAY)
@@ -97,7 +97,7 @@ class TestRun(SimpleTestCase):
                 self.assertEqual(run.is_service, is_service)
 
 
-class TestBill(TestCase):
+class BillTests(TestCase):
     def setUp(self):
         pilot = get_user_model().objects.create(
             first_name="Pilot", email="pilot@example.com"

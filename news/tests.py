@@ -128,7 +128,7 @@ class ContactFormViewTests(TestCase):
         self.assertEqual(0, len(mail.outbox))
 
 
-class PilotCreationViewTests(TestCase):
+class PilotCreateViewTests(TestCase):
     pilot_data = {
         "email": "test@mail.com",
         "first_name": "John",

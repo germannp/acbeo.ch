@@ -16,7 +16,7 @@ TODAY = date.today()
 YESTERDAY = TODAY - timedelta(days=1)
 
 
-class TestRunCreateView(TestCase):
+class RunCreateViewTests(TestCase):
     def setUp(self):
         orga = get_user_model().objects.create(
             first_name="Orga", email="orga@example.com", role=get_user_model().Role.Orga
@@ -235,7 +235,7 @@ class TestRunCreateView(TestCase):
         self.assertEqual(4, len(Run.objects.all()))
 
 
-class TestRunUpdateView(TestCase):
+class RunUpdateViewTests(TestCase):
     def setUp(self):
         orga = get_user_model().objects.create(
             first_name="Orga", email="orga@example.com", role=get_user_model().Role.Orga
