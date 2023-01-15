@@ -28,10 +28,16 @@
                             </tr>
                         </thead>
                         <tbody class="table-group-divider">
-                            {% for pilot, runs in runs_by_pilot.items %}
+                            {% for signup, runs in runs_by_signup.items %}
                             <tr>
                                 <td>{{ forloop.counter }}</td>
-                                <td class="text-nowrap">{{ pilot }} <a href="{% url 'create_bill' date=report.training.date.isoformat pilot=pilot.pk %}" class="bi bi-cart3"></a></td>
+                                <td class="text-nowrap">{{ signup.pilot }}
+                                    {% if signup.is_payed %}
+                                        <i class="bi bi-check-lg"></i>
+                                    {% else %}
+                                        <a href="{% url 'create_bill' date=report.training.date.isoformat signup=signup.pk %}" class="bi bi-cart3"></a>
+                                    {% endif %}
+                                </td>
                                 {% for run in runs %}
                                 <td>
                                     {% if run.get_kind_display == 'Flight' %}🪂

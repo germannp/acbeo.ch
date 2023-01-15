@@ -14,7 +14,7 @@ urlpatterns = [
     path("run-erstellen/", views.RunCreateView.as_view(), name="create_run"),
     path("run-bearbeiten/<int:run>/", views.RunUpdateView.as_view(), name="update_run"),
     path(
-        "<date:date>/bezahlen/<int:pilot>/",
+        "<date:date>/bezahlen/<int:signup>/",
         views.BillCreateView.as_view(),
         name="create_bill",
     ),

@@ -1,8 +1,8 @@
-from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 
-from trainings.models import Training
+from trainings.models import Signup, Training
 
 
 class Report(models.Model):
@@ -34,19 +34,17 @@ class Report(models.Model):
 class Run(models.Model):
     Kind = models.IntegerChoices("Kind", "Flight Bus Boat Break")
 
-    pilot = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="runs"
-    )
+    signup = models.ForeignKey(Signup, on_delete=models.CASCADE, related_name="runs")
     report = models.ForeignKey(Report, on_delete=models.CASCADE, related_name="runs")
     kind = models.SmallIntegerField(choices=Kind.choices)
     created_on = models.DateTimeField()
 
     class Meta:
-        unique_together = (("pilot", "report", "created_on"),)
-        ordering = ("report", "created_on", "pilot")
+        unique_together = (("signup", "report", "created_on"),)
+        ordering = ("report", "created_on", "signup__pilot")
 
     def __str__(self):
-        return f"{self.pilot} {self.get_kind_display()} on {self.report}"
+        return f"{self.signup.pilot} {self.get_kind_display()} on {self.report}"
 
     @property
     def is_relevant_for_bill(self):
@@ -64,22 +62,20 @@ class Run(models.Model):
 class Bill(models.Model):
     PRICE_OF_FLIGHT = 9
 
-    pilot = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="bills"
-    )
+    signup = models.OneToOneField(Signup, on_delete=models.CASCADE, related_name="bill")
     report = models.ForeignKey(Report, on_delete=models.CASCADE, related_name="bills")
     payed = models.SmallIntegerField()
 
     class Meta:
-        unique_together = (("pilot", "report"),)
+        unique_together = (("signup", "report"),)
 
     def __str__(self):
-        return f"{self.pilot} for {self.report}"
+        return f"{self.signup.pilot} for {self.report}"
 
     @property
     def details(self):
         """Compute details in one place, to keep database calls low"""
-        runs = self.report.runs.filter(pilot=self.pilot)
+        runs = self.signup.runs.all()
         num_flights = len([run for run in runs if run.is_flight])
         num_services = len([run for run in runs if run.is_service])
         return {

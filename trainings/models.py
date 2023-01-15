@@ -39,12 +39,21 @@ class Training(models.Model):
         return [signup.pilot for signup in self.signups.all()]
 
     @property
-    def selected_pilots(self):
+    def selected_signups(self):
         self.select_signups()
         return [
-            signup.pilot
+            signup
             for signup in self.signups.all().order_by("pilot")
             if signup.is_selected
+        ]
+
+    @property
+    def active_signups(self):
+        self.select_signups()
+        return [
+            signup
+            for signup in self.signups.all().order_by("pilot")
+            if signup.is_selected and not signup.is_payed
         ]
 
     @property
@@ -125,11 +134,15 @@ class Signup(models.Model):
 
     @property
     def is_cancelable(self):
-        if hasattr(self.training, "report"):
-            runs = self.training.report.runs.filter(pilot=self.pilot)
+        if hasattr(self, "runs"):
+            runs = self.runs.all()
             return not any(run.is_relevant_for_bill for run in runs)
 
         return True
+
+    @property
+    def is_payed(self):
+        return hasattr(self, "bill")
 
     def select(self):
         if self.status != self.Status.Waiting:

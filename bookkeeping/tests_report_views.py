@@ -18,14 +18,15 @@ YESTERDAY = TODAY - timedelta(days=1)
 
 class ReportListViewTests(TestCase):
     def setUp(self):
-        self.orga = get_user_model().objects.create(
+        orga = get_user_model().objects.create(
             email="orga@example.com", role=get_user_model().Role.Orga
         )
-        self.client.force_login(self.orga)
+        self.client.force_login(orga)
 
         training = Training.objects.create(date=TODAY)
+        signup = Signup.objects.create(pilot=orga, training=training)
         self.report = Report.objects.create(training=training, cash_at_start=1337)
-        self.bill = Bill.objects.create(pilot=self.orga, report=self.report, payed=420)
+        self.bill = Bill.objects.create(signup=signup, report=self.report, payed=420)
 
     def test_orga_required_to_see(self):
         guest = get_user_model().objects.create(email="guest@example.com")
@@ -247,19 +248,23 @@ class ReportCreateViewTests(TestCase):
 
 class ReportUpdateViewTests(TestCase):
     def setUp(self):
-        self.orga = get_user_model().objects.create(
+        orga = get_user_model().objects.create(
             first_name="Orga", email="orga@example.com", role=get_user_model().Role.Orga
         )
-        self.client.force_login(self.orga)
+        self.client.force_login(orga)
         self.guest = get_user_model().objects.create(
             first_name="Guest", email="guest@example.com"
         )
 
         training = Training.objects.create(date=TODAY)
         now = timezone.now()
-        Signup(pilot=self.orga, training=training, signed_up_on=now).save()
+        self.orga_signup = Signup.objects.create(
+            pilot=orga, training=training, signed_up_on=now
+        )
         now += timedelta(hours=1)
-        Signup(pilot=self.guest, training=training, signed_up_on=now).save()
+        self.guest_signup = Signup.objects.create(
+            pilot=self.guest, training=training, signed_up_on=now
+        )
 
         self.report = Report.objects.create(training=training, cash_at_start=1337)
 
@@ -274,7 +279,7 @@ class ReportUpdateViewTests(TestCase):
         for signup in Signup.objects.all():
             self.assertEqual(signup.status, Signup.Status.Waiting)
 
-        with self.assertNumQueries(16):
+        with self.assertNumQueries(18):
             response = self.client.get(reverse("update_report", kwargs={"date": TODAY}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
@@ -282,36 +287,43 @@ class ReportUpdateViewTests(TestCase):
             self.assertEqual(signup.status, Signup.Status.Selected)
 
     def test_form_is_prefilled(self):
-        with self.assertNumQueries(16):
+        with self.assertNumQueries(18):
             response = self.client.get(reverse("update_report", kwargs={"date": TODAY}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/update_report.html")
         self.assertContains(response, self.report.cash_at_start)
 
     def test_links_to_pay_shown(self):
-        with self.assertNumQueries(16):
+        Bill(signup=self.orga_signup, report=self.report, payed=420).save()
+        with self.assertNumQueries(18):
             response = self.client.get(reverse("update_report", kwargs={"date": TODAY}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/update_report.html")
         self.assertContains(
             response,
-            reverse("create_bill", kwargs={"date": TODAY, "pilot": self.orga.pk}),
+            reverse(
+                "create_bill", kwargs={"date": TODAY, "signup": self.guest_signup.pk}
+            ),
         )
-        self.assertContains(
+        self.assertNotContains(
             response,
-            reverse("create_bill", kwargs={"date": TODAY, "pilot": self.orga.pk}),
+            reverse(
+                "create_bill", kwargs={"date": TODAY, "signup": self.orga_signup.pk}
+            ),
         )
 
     def test_revenue_shown(self):
-        bill = Bill.objects.create(pilot=self.orga, report=self.report, payed=420)
-        with self.assertNumQueries(16):
+        bill = Bill.objects.create(
+            signup=self.orga_signup, report=self.report, payed=420
+        )
+        with self.assertNumQueries(18):
             response = self.client.get(reverse("update_report", kwargs={"date": TODAY}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/update_report.html")
         self.assertContains(response, bill.payed)
 
     def test_only_positive_integers_allowed_for_cash(self):
-        with self.assertNumQueries(16):
+        with self.assertNumQueries(18):
             response = self.client.post(
                 reverse("update_report", kwargs={"date": TODAY}),
                 data={"cash_at_start": -666, "cash_at_end": -666},
@@ -325,7 +337,7 @@ class ReportUpdateViewTests(TestCase):
         self.assertNotEqual(-666, self.report.cash_at_end)
 
     def test_create_run_button_only_shown_on_training_day(self):
-        with self.assertNumQueries(16):
+        with self.assertNumQueries(18):
             response = self.client.get(reverse("update_report", kwargs={"date": TODAY}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/update_report.html")
@@ -345,12 +357,12 @@ class ReportUpdateViewTests(TestCase):
 
     def test_update_run_buttons_only_shown_on_training_day(self):
         Run(
-            pilot=self.guest,
+            signup=self.guest_signup,
             report=self.report,
             kind=Run.Kind.Flight,
             created_on=timezone.now() - timedelta(minutes=10),
         ).save()
-        with self.assertNumQueries(17):
+        with self.assertNumQueries(19):
             response = self.client.get(reverse("update_report", kwargs={"date": TODAY}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/update_report.html")
@@ -360,7 +372,7 @@ class ReportUpdateViewTests(TestCase):
         training = Training.objects.create(date=YESTERDAY)
         report = Report.objects.create(training=training, cash_at_start=1337)
         Run(
-            pilot=self.guest,
+            signup=self.guest_signup,
             report=report,
             kind=Run.Kind.Flight,
             created_on=timezone.now() - timedelta(minutes=20),
@@ -375,7 +387,7 @@ class ReportUpdateViewTests(TestCase):
         self.assertNotContains(response, "bi bi-pencil-square")
 
     def test_pilots_listed_alphabetically(self):
-        with self.assertNumQueries(16):
+        with self.assertNumQueries(18):
             response = self.client.get(reverse("update_report", kwargs={"date": TODAY}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/update_report.html")
@@ -384,19 +396,19 @@ class ReportUpdateViewTests(TestCase):
 
     def test_list_of_runs_with_signup_not_in_every_run(self):
         Run(
-            pilot=self.guest,
+            signup=self.guest_signup,
             report=self.report,
             kind=Run.Kind.Flight,
             created_on=timezone.now() - timedelta(minutes=10),
         ).save()
         Run(
-            pilot=self.orga,
+            signup=self.orga_signup,
             report=self.report,
             kind=Run.Kind.Flight,
             created_on=timezone.now(),
         ).save()
 
-        with self.assertNumQueries(18):
+        with self.assertNumQueries(20):
             response = self.client.get(reverse("update_report", kwargs={"date": TODAY}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/update_report.html")

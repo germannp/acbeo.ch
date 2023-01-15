@@ -6,7 +6,7 @@ from django.test import TestCase
 from django.utils import timezone
 
 from .models import Training, Signup
-from bookkeeping.models import Report, Run
+from bookkeeping.models import Bill, Report, Run
 
 
 TODAY = date.today()
@@ -296,9 +296,16 @@ class SignupTests(TestCase):
             with self.subTest(kind=kind, is_cancelable=is_cancelable):
                 Run.objects.all().delete()
                 Run(
-                    pilot=self.pilot,
+                    signup=self.signup,
                     report=report,
                     kind=kind,
                     created_on=timezone.now(),
                 ).save()
                 self.assertEqual(self.signup.is_cancelable, is_cancelable)
+
+    def test_is_payed(self):
+        report = Report.objects.create(training=self.training, cash_at_start=1337)
+        self.assertFalse(self.signup.is_payed)
+
+        Bill(signup=self.signup, report=report, payed=420).save()
+        self.assertTrue(self.signup.is_payed)

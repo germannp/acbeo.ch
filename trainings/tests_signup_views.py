@@ -339,7 +339,7 @@ class SignupUpdateViewTests(TestCase):
         self.assertContains(response, "bi-cloud-haze2-fill")
         self.assertContains(response, "Test comment")
 
-        with self.assertNumQueries(16):
+        with self.assertNumQueries(15):
             response = self.client.post(
                 reverse("update_signup", kwargs={"date": TODAY}),
                 data={
@@ -379,7 +379,7 @@ class SignupUpdateViewTests(TestCase):
         self.assertContains(response, "Test comment")
 
     def test_cancel_and_resignup_from_signups_list(self):
-        with self.assertNumQueries(14):
+        with self.assertNumQueries(13):
             response = self.client.post(
                 reverse("update_signup", kwargs={"date": TODAY})
                 + "?next="
@@ -550,13 +550,13 @@ class SignupUpdateViewTests(TestCase):
 
         report = Report.objects.create(training=self.training, cash_at_start=1337)
         Run(
-            pilot=self.pilot,
+            signup=self.signup,
             report=report,
             kind=Run.Kind.Break,
             created_on=timezone.now(),
         ).save()
 
-        with self.assertNumQueries(8):
+        with self.assertNumQueries(6):
             response = self.client.get(
                 reverse("update_signup", kwargs={"date": TODAY}),
             )
@@ -565,13 +565,13 @@ class SignupUpdateViewTests(TestCase):
         self.assertContains(response, "btn btn-danger")
 
         Run(
-            pilot=self.pilot,
+            signup=self.signup,
             report=report,
             kind=Run.Kind.Flight,
             created_on=timezone.now(),
         ).save()
 
-        with self.assertNumQueries(8):
+        with self.assertNumQueries(6):
             response = self.client.get(
                 reverse("update_signup", kwargs={"date": TODAY}),
             )
@@ -582,7 +582,7 @@ class SignupUpdateViewTests(TestCase):
     def test_cannot_cancel_signup_with_relevant_runs(self):
         report = Report.objects.create(training=self.training, cash_at_start=1337)
         Run(
-            pilot=self.pilot,
+            signup=self.signup,
             report=report,
             kind=Run.Kind.Flight,
             created_on=timezone.now(),

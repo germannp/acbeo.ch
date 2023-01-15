@@ -1,7 +1,6 @@
 from datetime import date, timedelta
 
 from django.contrib import messages
-from django.contrib.auth import get_user_model
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
@@ -11,7 +10,7 @@ from django.views import generic
 from . import forms
 from .models import Bill, Report, Run
 from trainings.views import OrgaRequiredMixin
-from trainings.models import Training
+from trainings.models import Signup, Training
 
 
 class ReportListView(OrgaRequiredMixin, generic.ListView):
@@ -105,22 +104,22 @@ class ReportUpdateView(OrgaRequiredMixin, generic.UpdateView):
         runs = self.object.runs.all()
         times_of_runs = sorted(set(run.created_on for run in runs))
         context["times_of_runs"] = times_of_runs
-        runs_by_pilot = {}
-        for pilot in self.object.training.selected_pilots:
+        runs_by_signup = {}
+        for signup in self.object.training.selected_signups:
             # Templates don't work with defaultdict, so we do nested loops.
-            runs_by_pilot[pilot] = []
+            runs_by_signup[signup] = []
             for time in times_of_runs:
-                runs_by_pilot[pilot].append(
+                runs_by_signup[signup].append(
                     next(
                         (
                             run
                             for run in runs
-                            if run.pilot == pilot and run.created_on == time
+                            if run.signup == signup and run.created_on == time
                         ),
                         None,
                     )
                 )
-        context["runs_by_pilot"] = runs_by_pilot
+        context["runs_by_signup"] = runs_by_signup
         return context
 
 
@@ -140,20 +139,20 @@ class RunCreateView(OrgaRequiredMixin, generic.TemplateView):
         context = super().get_context_data(**kwargs)
         context["Kind"] = Run.Kind
         training = get_object_or_404(Training, date=date.today())
-        selected_pilots = training.selected_pilots
+        active_signups = training.active_signups
         if "formset" in context:
             formset = context["formset"]
         else:
             data = {
-                "form-TOTAL_FORMS": len(selected_pilots),
+                "form-TOTAL_FORMS": len(active_signups),
                 "form-INITIAL_FORMS": 0,
             }
             data.update(
-                {f"form-{i}-kind": Run.Kind.Flight for i in range(len(selected_pilots))}
+                {f"form-{i}-kind": Run.Kind.Flight for i in range(len(active_signups))}
             )
             formset = forms.RunFormset(data)
-        for form, pilot in zip(formset, selected_pilots):
-            form.pilot = pilot
+        for form, signup in zip(formset, active_signups):
+            form.signup = signup
         context["formset"] = formset
         return context
 
@@ -169,7 +168,7 @@ class RunCreateView(OrgaRequiredMixin, generic.TemplateView):
             Training.objects.prefetch_related("signups__pilot"),
             date=date.today(),
         )
-        if not len(training.selected_pilots) == len(formset):
+        if not len(training.active_signups) == len(formset):
             messages.warning(
                 self.request, "Die Anzahl der Teilnehmenden hat sich verändert."
             )
@@ -177,8 +176,8 @@ class RunCreateView(OrgaRequiredMixin, generic.TemplateView):
 
         report = get_object_or_404(Report, training=training)
         created_on = timezone.now()
-        for form, pilot in zip(formset, training.selected_pilots):
-            form.instance.pilot = pilot
+        for form, signup in zip(formset, training.active_signups):
+            form.instance.signup = signup
             form.instance.report = report
             form.instance.created_on = created_on
         previous_run = report.runs.order_by("created_on").last()
@@ -186,7 +185,7 @@ class RunCreateView(OrgaRequiredMixin, generic.TemplateView):
         if previous_run and created_on - previous_run.created_on < timedelta(minutes=5):
             messages.warning(
                 self.request,
-                f"Run erstellt, aber Achtung, es wurde vor weniger als fünf Minuten bereits ein Run erstellt!",
+                "Run erstellt, aber Achtung, es wurde vor weniger als fünf Minuten bereits ein Run erstellt!",
             )
         else:
             messages.success(self.request, "Run erstellt.")
@@ -214,7 +213,7 @@ class RunUpdateView(OrgaRequiredMixin, generic.TemplateView):
         else:
             formset = forms.RunFormset(queryset=runs)
         for form, run in zip(formset, runs):
-            form.pilot = run.pilot
+            form.signup = run.signup
         context["formset"] = formset
         return context
 
@@ -235,8 +234,14 @@ class RunUpdateView(OrgaRequiredMixin, generic.TemplateView):
         num_run = self.kwargs["run"] - 1
         runs = report.runs.filter(created_on=times_of_runs[num_run])
         for form, run in zip(formset, runs):
+            if run.signup.is_payed and run.kind != form.instance.kind:
+                messages.warning(
+                    self.request, f"{run.signup.pilot} hat bereits bezahlt."
+                )
+                return self.render_to_response(self.get_context_data(formset=formset))
+
             form.instance.pk = run.pk
-            form.instance.pilot = run.pilot
+            form.instance.signup = run.signup
             form.instance.report = report
             form.instance.created_on = times_of_runs[num_run]
         formset.save()
@@ -249,6 +254,15 @@ class RunUpdateView(OrgaRequiredMixin, generic.TemplateView):
         times_of_runs = sorted(set(run.created_on for run in report.runs.all()))
         num_run = self.kwargs["run"] - 1
         runs = Run.objects.filter(created_on=times_of_runs[num_run])
+
+        for run in runs:
+            if not run.signup.is_payed:
+                continue
+            messages.warning(
+                self.request,
+                f"{run.signup.pilot} hat bereits bezahlt, Run wurde nicht gelöscht!",
+            )
+            return HttpResponseRedirect(self.success_url)
 
         # Pedestrian sanity checks to reduce risk of deleting runs in parallel
         if len(formset) != len(runs):
@@ -277,32 +291,32 @@ class BillCreateView(OrgaRequiredMixin, generic.CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        pilot = get_object_or_404(get_user_model(), pk=self.kwargs["pilot"])
+        signup = get_object_or_404(Signup, pk=self.kwargs["signup"])
         training = get_object_or_404(Training, date=self.kwargs["date"])
         report = get_object_or_404(Report, training=training)
-        bill = Bill(pilot=pilot, report=report)
+        bill = Bill(signup=signup, report=report)
         context["bill"] = bill
         context["details"] = bill.details
         return context
 
     def form_valid(self, form):
         """Fill in pilot and report"""
-        pilot = get_object_or_404(get_user_model(), pk=self.kwargs["pilot"])
-        training = get_object_or_404(Training.objects, date=self.kwargs["date"])
-        report = get_object_or_404(Report, training=training)
-        if Bill.objects.filter(pilot=pilot, report=report).exists():
-            messages.warning(self.request, f"{pilot} hat bereits bezahlt.")
+        signup = get_object_or_404(Signup, pk=self.kwargs["signup"])
+        if signup.is_payed:
+            messages.warning(self.request, f"{signup.pilot} hat bereits bezahlt.")
             return HttpResponseRedirect(self.get_success_url())
 
-        form.instance.pilot = pilot
+        form.instance.signup = signup
+        training = get_object_or_404(Training.objects, date=self.kwargs["date"])
+        report = get_object_or_404(Report, training=training)
         form.instance.report = report
         if form.instance.payed < form.instance.details["to_pay"]:
             form.add_error(
-                None, f"{pilot} muss {form.instance.details['to_pay']} bezahlen."
+                None, f"{signup.pilot} muss {form.instance.details['to_pay']} bezahlen."
             )
             return super().form_invalid(form)
 
-        messages.success(self.request, f"Bezahlung von {pilot} gespeichert.")
+        messages.success(self.request, f"Bezahlung von {signup.pilot} gespeichert.")
         return super().form_valid(form)
 
     def get_success_url(self):

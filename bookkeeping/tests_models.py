@@ -6,7 +6,7 @@ from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
 
 from .models import Bill, Report, Run
-from trainings.models import Training
+from trainings.models import Signup, Training
 
 
 TODAY = date.today()
@@ -15,13 +15,15 @@ YESTERDAY = TODAY - timedelta(days=1)
 
 class TestReport(TestCase):
     def setUp(self):
-        self.orga = get_user_model().objects.create(
+        orga = get_user_model().objects.create(
             first_name="Orga", email="orga@example.com"
         )
-        self.pilot = get_user_model().objects.create(
+        pilot = get_user_model().objects.create(
             first_name="Pilot", email="pilot@example.com"
         )
         training = Training.objects.create(date=TODAY)
+        self.orga_signup = Signup.objects.create(pilot=orga, training=training)
+        self.pilot_signup = Signup.objects.create(pilot=pilot, training=training)
         self.report = Report.objects.create(
             training=training, cash_at_start=1337, cash_at_end=2337
         )
@@ -30,19 +32,20 @@ class TestReport(TestCase):
         self.assertEqual(self.report.details["difference"], 1000)
         self.assertEqual(self.report.details["revenue"], 0)
 
-        Bill(pilot=self.orga, report=self.report, payed=700).save()
+        Bill(signup=self.orga_signup, report=self.report, payed=700).save()
         self.assertEqual(self.report.details["difference"], 300)
         self.assertEqual(self.report.details["revenue"], 700)
 
-        Bill(pilot=self.pilot, report=self.report, payed=300).save()
+        Bill(signup=self.pilot_signup, report=self.report, payed=300).save()
         self.assertEqual(self.report.details["difference"], 0)
         self.assertEqual(self.report.details["revenue"], 1000)
 
 
 class TestRun(SimpleTestCase):
     def setUp(self):
-        self.pilot = get_user_model()(first_name="Pilot", email="pilot@example.com")
+        pilot = get_user_model()(first_name="Pilot", email="pilot@example.com")
         training = Training(date=TODAY)
+        self.signup = Signup(pilot=pilot, training=training)
         self.report = Report(training=training, cash_at_start=1337)
 
     def test_is_relevant_for_bill(self):
@@ -54,7 +57,7 @@ class TestRun(SimpleTestCase):
         ]:
             with self.subTest(kind=kind, is_relevant_for_bill=is_relevant_for_bill):
                 run = Run(
-                    pilot=self.pilot,
+                    signup=self.signup,
                     report=self.report,
                     kind=kind,
                     created_on=timezone.now(),
@@ -70,7 +73,7 @@ class TestRun(SimpleTestCase):
         ]:
             with self.subTest(kind=kind, is_flight=is_flight):
                 run = Run(
-                    pilot=self.pilot,
+                    signup=self.signup,
                     report=self.report,
                     kind=kind,
                     created_on=timezone.now(),
@@ -86,7 +89,7 @@ class TestRun(SimpleTestCase):
         ]:
             with self.subTest(kind=kind, is_service=is_service):
                 run = Run(
-                    pilot=self.pilot,
+                    signup=self.signup,
                     report=self.report,
                     kind=kind,
                     created_on=timezone.now(),
@@ -96,10 +99,11 @@ class TestRun(SimpleTestCase):
 
 class TestBill(TestCase):
     def setUp(self):
-        self.pilot = get_user_model().objects.create(
+        pilot = get_user_model().objects.create(
             first_name="Pilot", email="pilot@example.com"
         )
         training = Training.objects.create(date=TODAY)
+        self.signup = Signup.objects.create(pilot=pilot, training=training)
         self.report = Report.objects.create(training=training, cash_at_start=1337)
 
     def test_details(self):
@@ -116,7 +120,7 @@ class TestBill(TestCase):
                 for _ in range(num_flights):
                     now += timedelta(hours=1)
                     Run(
-                        pilot=self.pilot,
+                        signup=self.signup,
                         report=self.report,
                         kind=Run.Kind.Flight,
                         created_on=now,
@@ -124,7 +128,7 @@ class TestBill(TestCase):
                 for _ in range(num_buses):
                     now += timedelta(hours=1)
                     Run(
-                        pilot=self.pilot,
+                        signup=self.signup,
                         report=self.report,
                         kind=Run.Kind.Bus,
                         created_on=now,
@@ -132,7 +136,7 @@ class TestBill(TestCase):
                 for _ in range(num_boats):
                     now += timedelta(hours=1)
                     Run(
-                        pilot=self.pilot,
+                        signup=self.signup,
                         report=self.report,
                         kind=Run.Kind.Boat,
                         created_on=now,
@@ -140,13 +144,13 @@ class TestBill(TestCase):
                 for _ in range(num_breaks):
                     now += timedelta(hours=1)
                     Run(
-                        pilot=self.pilot,
+                        signup=self.signup,
                         report=self.report,
                         kind=Run.Kind.Break,
                         created_on=now,
                     ).save()
 
-                bill = Bill(pilot=self.pilot, report=self.report)
+                bill = Bill(signup=self.signup, report=self.report)
                 self.assertEqual(bill.details["num_flights"], num_flights)
                 self.assertEqual(bill.details["num_services"], num_buses + num_boats)
                 self.assertEqual(
