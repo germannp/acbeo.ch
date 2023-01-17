@@ -58,6 +58,11 @@ class Run(models.Model):
     def is_service(self):
         return self.kind in (self.Kind.Bus, self.Kind.Boat)
 
+    def save(self, *args, **kwargs):
+        if self.signup.is_payed:
+            raise ValidationError(f"{self.signup.pilot} hat bereits bezahlt.")
+        super().save(*args, **kwargs)
+
 
 class Bill(models.Model):
     PRICE_OF_FLIGHT = 9

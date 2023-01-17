@@ -2,6 +2,7 @@ from datetime import date, timedelta
 from itertools import product
 
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
 
@@ -96,15 +97,25 @@ class RunTests(SimpleTestCase):
                 )
                 self.assertEqual(run.is_service, is_service)
 
+    def test_cannot_save_run_for_payed_signup(self):
+        Bill(signup=self.signup, report=self.report)
+        self.assertTrue(self.signup.is_payed)
+        with self.assertRaises(ValidationError):
+            Run(
+                signup=self.signup,
+                report=self.report,
+                kind=Run.Kind.Flight,
+                created_on=timezone.now(),
+            ).save()
+
 
 class BillTests(TestCase):
     def setUp(self):
-        pilot = get_user_model().objects.create(
+        self.pilot = get_user_model().objects.create(
             first_name="Pilot", email="pilot@example.com"
         )
-        training = Training.objects.create(date=TODAY)
-        self.signup = Signup.objects.create(pilot=pilot, training=training)
-        self.report = Report.objects.create(training=training, cash_at_start=1337)
+        self.training = Training.objects.create(date=TODAY)
+        self.report = Report.objects.create(training=self.training, cash_at_start=1337)
 
     def test_details(self):
         for num_flights, num_buses, num_boats, num_breaks in product(
@@ -116,11 +127,12 @@ class BillTests(TestCase):
                 num_boats=num_boats,
                 num_breaks=num_breaks,
             ):
+                signup = Signup.objects.create(pilot=self.pilot, training=self.training)
                 now = timezone.now()
                 for _ in range(num_flights):
                     now += timedelta(hours=1)
                     Run(
-                        signup=self.signup,
+                        signup=signup,
                         report=self.report,
                         kind=Run.Kind.Flight,
                         created_on=now,
@@ -128,7 +140,7 @@ class BillTests(TestCase):
                 for _ in range(num_buses):
                     now += timedelta(hours=1)
                     Run(
-                        signup=self.signup,
+                        signup=signup,
                         report=self.report,
                         kind=Run.Kind.Bus,
                         created_on=now,
@@ -136,7 +148,7 @@ class BillTests(TestCase):
                 for _ in range(num_boats):
                     now += timedelta(hours=1)
                     Run(
-                        signup=self.signup,
+                        signup=signup,
                         report=self.report,
                         kind=Run.Kind.Boat,
                         created_on=now,
@@ -144,13 +156,13 @@ class BillTests(TestCase):
                 for _ in range(num_breaks):
                     now += timedelta(hours=1)
                     Run(
-                        signup=self.signup,
+                        signup=signup,
                         report=self.report,
                         kind=Run.Kind.Break,
                         created_on=now,
                     ).save()
 
-                bill = Bill(signup=self.signup, report=self.report)
+                bill = Bill(signup=signup, report=self.report)
                 self.assertEqual(bill.details["num_flights"], num_flights)
                 self.assertEqual(bill.details["num_services"], num_buses + num_boats)
                 self.assertEqual(
@@ -158,4 +170,6 @@ class BillTests(TestCase):
                     (num_flights - (num_buses + num_boats)) * Bill.PRICE_OF_FLIGHT,
                 )
 
-                Run.objects.all().delete()  # Tear down sub test.
+                # Tear down sub test.
+                Run.objects.all().delete()
+                signup.delete()
