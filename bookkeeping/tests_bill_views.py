@@ -14,6 +14,7 @@ locale.setlocale(locale.LC_TIME, "de_CH")
 
 TODAY = date.today()
 YESTERDAY = TODAY - timedelta(days=1)
+TOMORROW = TODAY + timedelta(days=1)
 
 
 class BillCreateViewTests(TestCase):
@@ -63,21 +64,25 @@ class BillCreateViewTests(TestCase):
         self.client.force_login(self.guest)
         with self.assertNumQueries(2):
             response = self.client.get(
-                reverse(
-                    "create_bill",
-                    kwargs={"date": TODAY, "signup": self.guest_signup.pk},
-                )
+                reverse("create_bill", kwargs={"signup": self.guest_signup.pk})
             )
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
         self.assertTemplateUsed(response, "403.html")
 
+    def test_pilot_and_date_shown(self):
+        with self.assertNumQueries(8):
+            response = self.client.get(
+                reverse("create_bill", kwargs={"signup": self.guest_signup.pk})
+            )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/create_bill.html")
+        self.assertContains(response, self.guest)
+        self.assertContains(response, TODAY.strftime("%a, %d. %b."))
+
     def test_form_is_prefilled(self):
         with self.assertNumQueries(8):
             response = self.client.get(
-                reverse(
-                    "create_bill",
-                    kwargs={"date": TODAY, "signup": self.guest_signup.pk},
-                )
+                reverse("create_bill", kwargs={"signup": self.guest_signup.pk})
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/create_bill.html")
@@ -86,12 +91,9 @@ class BillCreateViewTests(TestCase):
 
     def test_must_pay_enough(self):
         to_pay = Bill(signup=self.guest_signup, report=self.report).details["to_pay"]
-        with self.assertNumQueries(15):
+        with self.assertNumQueries(14):
             response = self.client.post(
-                reverse(
-                    "create_bill",
-                    kwargs={"date": TODAY, "signup": self.guest_signup.pk},
-                ),
+                reverse("create_bill", kwargs={"signup": self.guest_signup.pk}),
                 data={"payed": to_pay - 1},
                 follow=True,
             )
@@ -104,10 +106,7 @@ class BillCreateViewTests(TestCase):
         to_pay = Bill(signup=self.guest_signup, report=self.report).details["to_pay"]
         with self.assertNumQueries(27):
             response = self.client.post(
-                reverse(
-                    "create_bill",
-                    kwargs={"date": TODAY, "signup": self.guest_signup.pk},
-                ),
+                reverse("create_bill", kwargs={"signup": self.guest_signup.pk}),
                 data={"payed": to_pay},
                 follow=True,
             )
@@ -121,10 +120,7 @@ class BillCreateViewTests(TestCase):
     def test_cannot_pay_twice(self):
         with self.assertNumQueries(27):
             response = self.client.post(
-                reverse(
-                    "create_bill",
-                    kwargs={"date": TODAY, "signup": self.guest_signup.pk},
-                ),
+                reverse("create_bill", kwargs={"signup": self.guest_signup.pk}),
                 data={"payed": 420},
                 follow=True,
             )
@@ -132,12 +128,9 @@ class BillCreateViewTests(TestCase):
         self.assertTemplateUsed(response, "bookkeeping/update_report.html")
         self.assertEqual(1, len(Bill.objects.all()))
 
-        with self.assertNumQueries(21):
+        with self.assertNumQueries(22):
             response = self.client.post(
-                reverse(
-                    "create_bill",
-                    kwargs={"date": TODAY, "signup": self.guest_signup.pk},
-                ),
+                reverse("create_bill", kwargs={"signup": self.guest_signup.pk}),
                 data={"payed": 420},
                 follow=True,
             )
@@ -146,33 +139,21 @@ class BillCreateViewTests(TestCase):
         self.assertContains(response, f"{self.guest} hat bereits bezahlt.")
         self.assertEqual(1, len(Bill.objects.all()))
 
-    def test_pilot_not_found_404(self):
+    def test_signup_not_found_404(self):
         with self.assertNumQueries(4):
-            response = self.client.get(
-                reverse("create_bill", kwargs={"date": TODAY, "signup": 666})
-            )
+            response = self.client.get(reverse("create_bill", kwargs={"signup": 666}))
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.assertTemplateUsed(response, "404.html")
 
     def test_report_not_fround_404(self):
+        training = Training.objects.create(date=TOMORROW)
+        now = timezone.now()
+        signup = Signup.objects.create(
+            pilot=self.guest, training=training, signed_up_on=now
+        )
         with self.assertNumQueries(5):
             response = self.client.get(
-                reverse(
-                    "create_bill",
-                    kwargs={"date": YESTERDAY, "signup": self.guest_signup.pk},
-                )
-            )
-        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
-        self.assertTemplateUsed(response, "404.html")
-
-    def test_no_runs_found_404(self):
-        self.assertEqual(len(Run.objects.filter(signup=self.orga_signup)), 0)
-        with self.assertNumQueries(5):
-            response = self.client.get(
-                reverse(
-                    "create_bill",
-                    kwargs={"date": YESTERDAY, "signup": self.orga_signup.pk},
-                )
+                reverse("create_bill", kwargs={"signup": signup.pk})
             )
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.assertTemplateUsed(response, "404.html")

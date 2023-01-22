@@ -291,9 +291,10 @@ class BillCreateView(OrgaRequiredMixin, generic.CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        signup = get_object_or_404(Signup, pk=self.kwargs["signup"])
-        training = get_object_or_404(Training, date=self.kwargs["date"])
-        report = get_object_or_404(Report, training=training)
+        signup = get_object_or_404(
+            Signup.objects.select_related("training"), pk=self.kwargs["signup"]
+        )
+        report = get_object_or_404(Report, training=signup.training)
         bill = Bill(signup=signup, report=report)
         context["bill"] = bill
         context["details"] = bill.details
@@ -301,14 +302,15 @@ class BillCreateView(OrgaRequiredMixin, generic.CreateView):
 
     def form_valid(self, form):
         """Fill in pilot and report"""
-        signup = get_object_or_404(Signup, pk=self.kwargs["signup"])
+        signup = get_object_or_404(
+            Signup.objects.select_related("training"), pk=self.kwargs["signup"]
+        )
         if signup.is_payed:
             messages.warning(self.request, f"{signup.pilot} hat bereits bezahlt.")
             return HttpResponseRedirect(self.get_success_url())
 
         form.instance.signup = signup
-        training = get_object_or_404(Training.objects, date=self.kwargs["date"])
-        report = get_object_or_404(Report, training=training)
+        report = get_object_or_404(Report, training=signup.training)
         form.instance.report = report
         if form.instance.payed < form.instance.details["to_pay"]:
             form.add_error(
@@ -320,4 +322,7 @@ class BillCreateView(OrgaRequiredMixin, generic.CreateView):
         return super().form_valid(form)
 
     def get_success_url(self):
-        return reverse_lazy("update_report", kwargs={"date": self.kwargs["date"]})
+        signup = get_object_or_404(
+            Signup.objects.select_related("training"), pk=self.kwargs["signup"]
+        )
+        return reverse_lazy("update_report", kwargs={"date": signup.training.date})

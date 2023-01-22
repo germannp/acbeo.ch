@@ -301,15 +301,11 @@ class ReportUpdateViewTests(TestCase):
         self.assertTemplateUsed(response, "bookkeeping/update_report.html")
         self.assertContains(
             response,
-            reverse(
-                "create_bill", kwargs={"date": TODAY, "signup": self.guest_signup.pk}
-            ),
+            reverse("create_bill", kwargs={"signup": self.guest_signup.pk}),
         )
         self.assertNotContains(
             response,
-            reverse(
-                "create_bill", kwargs={"date": TODAY, "signup": self.orga_signup.pk}
-            ),
+            reverse("create_bill", kwargs={"signup": self.orga_signup.pk}),
         )
 
     def test_revenue_shown(self):
