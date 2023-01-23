@@ -66,7 +66,7 @@
 
     <div class="col-xl-3 col-lg-4">
         <div class="card mb-4">
-            <h5 class="card-header">Kassenstand</h5>
+            <h5 class="card-header">Kasse</h5>
             <div class="card-body">
                 <main class="form">
                     <form method="post">
@@ -82,6 +82,12 @@
                                     <td>Einnahmen</td>
                                     <td>{{ report.details.revenue }}</td>
                                 </tr>
+                                {% for expense in report.expenses.all %}
+                                <tr>
+                                    <td>{{ expense.reason }}</td>
+                                    <td>- {{ expense.amount }}</td>
+                                </tr>
+                                {% endfor %}
                             </tbody>
                         </table>
                         <div class="form-floating mb-3">
@@ -89,8 +95,11 @@
                                 {% if form.cash_at_end.value %}value="{{ form.cash_at_end.value }}"{% endif %}>
                             <label>Kassenstand nach dem Training</label>
                         </div>
-                        <button class="btn btn-primary" type="submit">Speichern</button>
-                        <a href="javascript:history.back()" class="btn btn-outline-dark">Abbrechen</a>
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'create_expense' date=report.training.date.isoformat %}" class="btn btn-primary">Ausgabe erfassen</a>
+                            <button class="btn btn-primary" type="submit">Speichern</button>
+                            <a href="javascript:history.back()" class="btn btn-outline-dark">Abbrechen</a>
+                        </div>
                     </form>
                 </main>
             </div>

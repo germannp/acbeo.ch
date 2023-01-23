@@ -44,21 +44,21 @@ class BillCreateViewTests(TestCase):
             report=self.report,
             kind=Run.Kind.Flight,
             created_on=now,
-        )
+        ).save()
         now += timedelta(hours=1)
         Run(
             signup=self.guest_signup,
             report=self.report,
             kind=Run.Kind.Flight,
             created_on=now,
-        )
+        ).save()
         now += timedelta(hours=1)
         Run(
             signup=self.guest_signup,
             report=self.report,
             kind=Run.Kind.Bus,
             created_on=now,
-        )
+        ).save()
 
     def test_orga_required_to_see(self):
         self.client.force_login(self.guest)
@@ -104,7 +104,7 @@ class BillCreateViewTests(TestCase):
 
     def test_create_bill(self):
         to_pay = Bill(signup=self.guest_signup, report=self.report).details["to_pay"]
-        with self.assertNumQueries(27):
+        with self.assertNumQueries(31):
             response = self.client.post(
                 reverse("create_bill", kwargs={"signup": self.guest_signup.pk}),
                 data={"payed": to_pay},
@@ -118,7 +118,7 @@ class BillCreateViewTests(TestCase):
         self.assertEqual(to_pay, created_bill.payed)
 
     def test_cannot_pay_twice(self):
-        with self.assertNumQueries(27):
+        with self.assertNumQueries(31):
             response = self.client.post(
                 reverse("create_bill", kwargs={"signup": self.guest_signup.pk}),
                 data={"payed": 420},
@@ -128,7 +128,7 @@ class BillCreateViewTests(TestCase):
         self.assertTemplateUsed(response, "bookkeeping/update_report.html")
         self.assertEqual(1, len(Bill.objects.all()))
 
-        with self.assertNumQueries(22):
+        with self.assertNumQueries(26):
             response = self.client.post(
                 reverse("create_bill", kwargs={"signup": self.guest_signup.pk}),
                 data={"payed": 420},

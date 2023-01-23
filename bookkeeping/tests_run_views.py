@@ -186,7 +186,7 @@ class RunCreateViewTests(TestCase):
         self.assertEqual(0, len(Run.objects.all()))
 
     def test_create_run(self):
-        with self.assertNumQueries(47):
+        with self.assertNumQueries(48):
             response = self.client.post(
                 reverse("create_run"),
                 data={
@@ -214,7 +214,7 @@ class RunCreateViewTests(TestCase):
             created_on=timezone.now() - timedelta(minutes=2),
         ).save()
 
-        with self.assertNumQueries(48):
+        with self.assertNumQueries(49):
             response = self.client.post(
                 reverse("create_run"),
                 data={
@@ -341,7 +341,7 @@ class RunUpdateViewTests(TestCase):
         self.assertContains(response, f"{self.guest} hat bereits bezahlt.")
 
     def test_update_run(self):
-        with self.assertNumQueries(47):
+        with self.assertNumQueries(48):
             response = self.client.post(
                 reverse("update_run", kwargs={"run": 1}),
                 data={
@@ -370,7 +370,7 @@ class RunUpdateViewTests(TestCase):
         self.assertEqual(Run.Kind.Break, self.orga_run.kind)
 
     def test_run_with_changed_number_of_pilots_cannot_be_deleted(self):
-        with self.assertNumQueries(41):
+        with self.assertNumQueries(42):
             response = self.client.post(
                 reverse("update_run", kwargs={"run": 1}),
                 data={
@@ -390,7 +390,7 @@ class RunUpdateViewTests(TestCase):
         self.assertEqual(3, len(Run.objects.all()))
 
     def test_run_with_changed_kind_cannot_be_deleted(self):
-        with self.assertNumQueries(41):
+        with self.assertNumQueries(42):
             response = self.client.post(
                 reverse("update_run", kwargs={"run": 1}),
                 data={
@@ -415,7 +415,7 @@ class RunUpdateViewTests(TestCase):
         self.assertTrue(self.guest_signup.is_payed)
         self.assertEqual(3, len(Run.objects.all()))
 
-        with self.assertNumQueries(38):
+        with self.assertNumQueries(39):
             response = self.client.post(
                 reverse("update_run", kwargs={"run": 1}),
                 data={
@@ -436,7 +436,7 @@ class RunUpdateViewTests(TestCase):
         self.assertEqual(3, len(Run.objects.all()))
 
     def test_delete_run(self):
-        with self.assertNumQueries(39):
+        with self.assertNumQueries(40):
             response = self.client.post(
                 reverse("update_run", kwargs={"run": 1}),
                 data={

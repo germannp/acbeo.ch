@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
 
-from .models import Bill, Report, Run
+from .models import Bill, Expense, Report, Run
 from trainings.models import Signup, Training
 
 
@@ -32,14 +32,27 @@ class ReportTests(TestCase):
     def test_details(self):
         self.assertEqual(self.report.details["difference"], 1000)
         self.assertEqual(self.report.details["revenue"], 0)
+        self.assertEqual(self.report.details["expenses"], 0)
 
         Bill(signup=self.orga_signup, report=self.report, payed=700).save()
         self.assertEqual(self.report.details["difference"], 300)
         self.assertEqual(self.report.details["revenue"], 700)
+        self.assertEqual(self.report.details["expenses"], 0)
 
         Bill(signup=self.pilot_signup, report=self.report, payed=300).save()
         self.assertEqual(self.report.details["difference"], 0)
         self.assertEqual(self.report.details["revenue"], 1000)
+        self.assertEqual(self.report.details["expenses"], 0)
+
+        Expense(report=self.report, reason="Gas", amount=100).save()
+        self.assertEqual(self.report.details["difference"], 100)
+        self.assertEqual(self.report.details["revenue"], 1000)
+        self.assertEqual(self.report.details["expenses"], 100)
+
+        Expense(report=self.report, reason="Parking", amount=200).save()
+        self.assertEqual(self.report.details["difference"], 300)
+        self.assertEqual(self.report.details["revenue"], 1000)
+        self.assertEqual(self.report.details["expenses"], 300)
 
 
 class RunTests(SimpleTestCase):

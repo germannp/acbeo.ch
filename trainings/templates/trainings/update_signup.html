@@ -88,7 +88,7 @@
                                 value="{{ form.comment.value }}">
                             <label for="floatingInput">Kommentar</label>
                         </div>
-                        <div class="d-grid gap-1 d-sm-block">
+                        <div class="d-grid gap-2 d-sm-block">
                             <button class="btn btn-primary" type="submit" name="save">Speichern</button>
                             {% if form.instance.get_status_display != 'Canceled' %}
                                 {% if form.instance.is_cancelable %}

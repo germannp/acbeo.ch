@@ -18,4 +18,9 @@ urlpatterns = [
         views.BillCreateView.as_view(),
         name="create_bill",
     ),
+    path(
+        "<date:date>/ausgabe-erfassen/",
+        views.ExpenseCreateView.as_view(),
+        name="create_expense",
+    ),
 ]

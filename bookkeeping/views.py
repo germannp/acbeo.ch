@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.views import generic
 
 from . import forms
-from .models import Bill, Report, Run
+from .models import Bill, Expense, Report, Run
 from trainings.views import OrgaRequiredMixin
 from trainings.models import Signup, Training
 
@@ -32,6 +32,7 @@ class ReportListView(OrgaRequiredMixin, generic.ListView):
             Report.objects.filter(training__date__gte=since, training__date__lt=until)
             .select_related("training")
             .prefetch_related("bills")
+            .prefetch_related("expenses")
         )
         if not reports:
             raise Http404(f"Keine Berichte im Jahr {year}.")
@@ -96,7 +97,9 @@ class ReportUpdateView(OrgaRequiredMixin, generic.UpdateView):
 
     def get_object(self):
         training = get_object_or_404(Training, date=self.kwargs["date"])
-        return get_object_or_404(Report, training=training)
+        return get_object_or_404(
+            Report.objects.prefetch_related("expenses"), training=training
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -282,6 +285,33 @@ class RunUpdateView(OrgaRequiredMixin, generic.TemplateView):
         runs.delete()
         messages.success(self.request, "Run gelöscht.")
         return HttpResponseRedirect(self.success_url)
+
+
+class ExpenseCreateView(OrgaRequiredMixin, generic.CreateView):
+    model = Expense
+    fields = ("reason", "amount")
+    template_name = "bookkeeping/create_expense.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        training = get_object_or_404(Training, date=self.kwargs["date"])
+        get_object_or_404(Report, training=training)
+        context["date"] = self.kwargs["date"]
+        return context
+
+    def form_valid(self, form):
+        """Fill in report"""
+        training = get_object_or_404(Training, date=self.kwargs["date"])
+        report = get_object_or_404(Report, training=training)
+        form.instance.report = report
+        messages.success(
+            self.request,
+            f"Ausgabe für {form.instance.reason} über {form.instance.amount} gespeichert.",
+        )
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy("update_report", kwargs={"date": self.kwargs["date"]})
 
 
 class BillCreateView(OrgaRequiredMixin, generic.CreateView):

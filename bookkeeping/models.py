@@ -21,12 +21,14 @@ class Report(models.Model):
     def details(self):
         """Compute details in one place, to keep database calls low"""
         revenue = sum(bill.payed for bill in self.bills.all())
+        expenses = sum(expense.amount for expense in self.expenses.all())
         if self.cash_at_end:
-            difference = (self.cash_at_end) - (self.cash_at_start + revenue)
+            difference = (self.cash_at_end) - (self.cash_at_start + revenue - expenses)
         else:
             difference = None
         return {
             "revenue": revenue,
+            "expenses": expenses,
             "difference": difference,
         }
 
@@ -64,12 +66,20 @@ class Run(models.Model):
         super().save(*args, **kwargs)
 
 
+class Expense(models.Model):
+    report = models.ForeignKey(
+        Report, on_delete=models.CASCADE, related_name="expenses"
+    )
+    reason = models.CharField(max_length=50)
+    amount = models.SmallIntegerField(validators=[MinValueValidator(0)])
+
+
 class Bill(models.Model):
     PRICE_OF_FLIGHT = 9
 
     signup = models.OneToOneField(Signup, on_delete=models.CASCADE, related_name="bill")
     report = models.ForeignKey(Report, on_delete=models.CASCADE, related_name="bills")
-    payed = models.SmallIntegerField()
+    payed = models.SmallIntegerField(validators=[MinValueValidator(0)])
 
     class Meta:
         unique_together = (("signup", "report"),)
