@@ -25,7 +25,9 @@ class ReportListViewTests(TestCase):
 
         training = Training.objects.create(date=TODAY)
         signup = Signup.objects.create(pilot=orga, training=training)
-        self.report = Report.objects.create(training=training, cash_at_start=1337)
+        self.report = Report.objects.create(
+            training=training, cash_at_start=1337, remarks="Some remarks."
+        )
         self.bill = Bill.objects.create(signup=signup, report=self.report, payed=420)
         self.expense = Expense.objects.create(
             report=self.report, reason="Gas", amount=13
@@ -156,6 +158,13 @@ class ReportListViewTests(TestCase):
         self.assertTemplateUsed(response, "bookkeeping/list_reports.html")
         self.assertContains(response, difference_within_report)
 
+    def test_remarks_shown(self):
+        with self.assertNumQueries(8):
+            response = self.client.get(reverse("reports"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/list_reports.html")
+        self.assertContains(response, self.report.remarks)
+
     def test_no_reports_in_year_404(self):
         with self.assertNumQueries(4):
             response = self.client.get(reverse("reports", kwargs={"year": 1984}))
@@ -279,7 +288,9 @@ class ReportUpdateViewTests(TestCase):
             pilot=self.guest, training=training, signed_up_on=now
         )
 
-        self.report = Report.objects.create(training=training, cash_at_start=1337)
+        self.report = Report.objects.create(
+            training=training, cash_at_start=1337, remarks="Some remarks."
+        )
 
     def test_orga_required_to_see(self):
         self.client.force_login(self.guest)
@@ -305,6 +316,7 @@ class ReportUpdateViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/update_report.html")
         self.assertContains(response, self.report.cash_at_start)
+        self.assertContains(response, self.report.remarks)
 
     def test_links_to_pay_shown(self):
         Bill(signup=self.orga_signup, report=self.report, payed=420).save()
@@ -475,6 +487,25 @@ class ReportUpdateViewTests(TestCase):
             .replace("\n", "")
         )
         self.assertTrue(orga_column.endswith("<td>❌</td><td>🪂</td>"))
+
+    def test_update_report(self):
+        cash_at_end = 2000
+        new_remarks = "Some new remarks"
+        with self.assertNumQueries(14):
+            response = self.client.post(
+                reverse("update_report", kwargs={"date": TODAY}),
+                data={
+                    "cash_at_start": self.report.cash_at_start,
+                    "cash_at_end": cash_at_end,
+                    "remarks": new_remarks,
+                },
+                follow=True,
+            )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/list_reports.html")
+        self.report.refresh_from_db()
+        self.assertEqual(self.report.cash_at_end, cash_at_end)
+        self.assertEqual(self.report.remarks, new_remarks)
 
     def test_no_existing_report_404(self):
         with self.assertNumQueries(4):

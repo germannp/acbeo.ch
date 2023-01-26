@@ -13,6 +13,7 @@ class Report(models.Model):
     cash_at_end = models.SmallIntegerField(
         blank=True, null=True, validators=[MinValueValidator(0)]
     )
+    remarks = models.CharField(max_length=300, default="", blank=True)
 
     def __str__(self):
         return f"{self.training}"

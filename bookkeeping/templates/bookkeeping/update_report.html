@@ -97,6 +97,11 @@
                                 {% if form.cash_at_end.value %}value="{{ form.cash_at_end.value }}"{% endif %}>
                             <label>Kassenstand nach dem Training</label>
                         </div>
+                        <div class="form-floating mb-3">
+                            <textarea type="text" name="remarks" id="remarks" class="form-control" placeholder="text"
+                                style="height: 100px">{% if form.remarks.value %}{{ form.remarks.value }}{% endif %}</textarea>
+                            <label for="floatingInput">Bemerkungen</label>
+                        </div>
                         <div class="d-grid gap-2">
                             <a href="{% url 'create_expense' date=report.training.date.isoformat %}" class="btn btn-primary">Ausgabe erfassen</a>
                             <button class="btn btn-primary" type="submit">Speichern</button>

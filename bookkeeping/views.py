@@ -91,7 +91,7 @@ class ReportCreateView(OrgaRequiredMixin, generic.CreateView):
 
 class ReportUpdateView(OrgaRequiredMixin, generic.UpdateView):
     model = Report
-    fields = ("cash_at_start", "cash_at_end")
+    fields = ("cash_at_start", "cash_at_end", "remarks")
     template_name = "bookkeeping/update_report.html"
     success_url = reverse_lazy("reports")
 
