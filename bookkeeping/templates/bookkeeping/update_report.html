@@ -84,7 +84,9 @@
                                 </tr>
                                 {% for expense in report.expenses.all %}
                                 <tr>
-                                    <td>{{ expense.reason }}</td>
+                                    <td>{{ expense.reason }} 
+                                        <a href="{% url 'update_expense' date=report.training.date.isoformat expense=expense.pk %}" 
+                                            class="bi bi-pencil-square"></a></td>
                                     <td>- {{ expense.amount }}</td>
                                 </tr>
                                 {% endfor %}

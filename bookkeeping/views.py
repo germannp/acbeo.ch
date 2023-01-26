@@ -306,7 +306,34 @@ class ExpenseCreateView(OrgaRequiredMixin, generic.CreateView):
         form.instance.report = report
         messages.success(
             self.request,
-            f"Ausgabe für {form.instance.reason} über {form.instance.amount} gespeichert.",
+            f"Ausgabe für {form.instance.reason} über CHF {form.instance.amount} gespeichert.",
+        )
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy("update_report", kwargs={"date": self.kwargs["date"]})
+
+
+class ExpenseUpdateView(OrgaRequiredMixin, generic.UpdateView):
+    model = Expense
+    fields = ("reason", "amount")
+    template_name = "bookkeeping/update_expense.html"
+
+    def get_object(self):
+        return get_object_or_404(Expense, pk=self.kwargs["expense"])
+
+    def post(self, request, *args, **kwargs):
+        if "delete" in request.POST:
+            self.get_object().delete()
+            messages.success(request, "Ausgabe gelöscht.")
+            return HttpResponseRedirect(self.get_success_url())
+
+        return super().post(self, request, *args, **kwargs)
+
+    def form_valid(self, form):
+        messages.success(
+            self.request,
+            f"Ausgabe für {form.instance.reason} über CHF {form.instance.amount} gespeichert.",
         )
         return super().form_valid(form)
 

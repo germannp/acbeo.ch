@@ -331,7 +331,7 @@ class ReportUpdateViewTests(TestCase):
         self.assertTemplateUsed(response, "bookkeeping/update_report.html")
         self.assertContains(response, bill.payed)
 
-    def test_expenses_shown(self):
+    def test_expense_shown(self):
         expense = Expense.objects.create(report=self.report, reason="Gas", amount=13)
         with self.assertNumQueries(19):
             response = self.client.get(reverse("update_report", kwargs={"date": TODAY}))
@@ -339,6 +339,10 @@ class ReportUpdateViewTests(TestCase):
         self.assertTemplateUsed(response, "bookkeeping/update_report.html")
         self.assertContains(response, expense.reason)
         self.assertContains(response, expense.amount)
+        self.assertContains(
+            response,
+            reverse("update_expense", kwargs={"date": TODAY, "expense": expense.pk}),
+        )
 
     def test_only_positive_integers_allowed_for_cash(self):
         with self.assertNumQueries(19):
