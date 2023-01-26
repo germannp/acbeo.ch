@@ -21,7 +21,8 @@ class Report(models.Model):
     @property
     def details(self):
         """Compute details in one place, to keep database calls low"""
-        revenue = sum(bill.payed for bill in self.bills.all())
+        bills = self.bills.all()
+        revenue = sum(bill.payed for bill in bills)
         expenses = sum(expense.amount for expense in self.expenses.all())
         if self.cash_at_end:
             difference = (self.cash_at_end) - (self.cash_at_start + revenue - expenses)
@@ -31,6 +32,7 @@ class Report(models.Model):
             "revenue": revenue,
             "expenses": expenses,
             "difference": difference,
+            "num_bills": len(bills),
         }
 
 

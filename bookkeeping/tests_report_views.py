@@ -23,10 +23,10 @@ class ReportListViewTests(TestCase):
         )
         self.client.force_login(orga)
 
-        training = Training.objects.create(date=TODAY)
-        signup = Signup.objects.create(pilot=orga, training=training)
+        self.training = Training.objects.create(date=TODAY)
+        signup = Signup.objects.create(pilot=orga, training=self.training)
         self.report = Report.objects.create(
-            training=training, cash_at_start=1337, remarks="Some remarks."
+            training=self.training, cash_at_start=1337, remarks="Some remarks."
         )
         self.bill = Bill.objects.create(signup=signup, report=self.report, payed=420)
         self.expense = Expense.objects.create(
@@ -57,7 +57,7 @@ class ReportListViewTests(TestCase):
         self.assertNotContains(response, reverse("reports"))
 
     def test_pagination_by_year(self):
-        with self.assertNumQueries(8):
+        with self.assertNumQueries(12):
             response = self.client.get(reverse("reports"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/list_reports.html")
@@ -76,7 +76,7 @@ class ReportListViewTests(TestCase):
             training = Training.objects.create(date=date)
             Report(training=training, cash_at_start=1337).save()
 
-        with self.assertNumQueries(8):
+        with self.assertNumQueries(13):
             response = self.client.get(reverse("reports"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/list_reports.html")
@@ -87,7 +87,7 @@ class ReportListViewTests(TestCase):
             response, reverse("reports", kwargs={"year": TODAY.year - 2})
         )
 
-        with self.assertNumQueries(7):
+        with self.assertNumQueries(9):
             response = self.client.get(
                 reverse("reports", kwargs={"year": TODAY.year - 1})
             )
@@ -98,7 +98,7 @@ class ReportListViewTests(TestCase):
             response, reverse("reports", kwargs={"year": TODAY.year - 2})
         )
 
-        with self.assertNumQueries(7):
+        with self.assertNumQueries(9):
             response = self.client.get(
                 reverse("reports", kwargs={"year": TODAY.year - 2})
             )
@@ -123,21 +123,21 @@ class ReportListViewTests(TestCase):
             cash_at_end=self.report.cash_at_start - difference_between_reports,
         ).save()
 
-        with self.assertNumQueries(8):
+        with self.assertNumQueries(14):
             response = self.client.get(reverse("reports"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/list_reports.html")
         self.assertContains(response, difference_between_reports)
 
     def test_revenue_shown(self):
-        with self.assertNumQueries(8):
+        with self.assertNumQueries(12):
             response = self.client.get(reverse("reports"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/list_reports.html")
         self.assertContains(response, self.bill.payed)
 
     def test_expenses_shown(self):
-        with self.assertNumQueries(8):
+        with self.assertNumQueries(12):
             response = self.client.get(reverse("reports"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/list_reports.html")
@@ -152,14 +152,24 @@ class ReportListViewTests(TestCase):
             + difference_within_report
         )
         self.report.save()
-        with self.assertNumQueries(8):
+        with self.assertNumQueries(12):
             response = self.client.get(reverse("reports"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/list_reports.html")
         self.assertContains(response, difference_within_report)
 
+    def test_num_bills_shown(self):
+        with self.assertNumQueries(12):
+            response = self.client.get(reverse("reports"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/list_reports.html")
+        self.assertContains(
+            response,
+            f"{len(self.report.bills.all())} / {len(self.training.selected_signups)}",
+        )
+
     def test_remarks_shown(self):
-        with self.assertNumQueries(8):
+        with self.assertNumQueries(12):
             response = self.client.get(reverse("reports"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/list_reports.html")
@@ -179,7 +189,7 @@ class ReportListViewTests(TestCase):
 
         training = Training.objects.create(date=TODAY - timedelta(days=365))
         Report(training=training, cash_at_start=1337).save()
-        with self.assertNumQueries(8):
+        with self.assertNumQueries(10):
             response = self.client.get(reverse("reports"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/list_reports.html")
@@ -491,7 +501,7 @@ class ReportUpdateViewTests(TestCase):
     def test_update_report(self):
         cash_at_end = 2000
         new_remarks = "Some new remarks"
-        with self.assertNumQueries(14):
+        with self.assertNumQueries(20):
             response = self.client.post(
                 reverse("update_report", kwargs={"date": TODAY}),
                 data={

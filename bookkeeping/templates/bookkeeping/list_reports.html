@@ -25,6 +25,7 @@
                                 <th scope="col">Ausgaben</th>
                                 <th scope="col">Kasse Ende</th>
                                 <th scope="col">Differenz</th>
+                                <th scope="col">Bezahlt</th>
                                 <th scope="col" style="min-width: 300px">Bemerkungen</th>
                             </tr>
                         </thead>
@@ -42,6 +43,7 @@
                                 <td>{{ report.details.expenses }}</td>
                                 <td>{{ report.cash_at_end }}</td>
                                 <td>{{ report.details.difference }}</td>
+                                <td>{{ report.details.num_bills }} / {{ report.training.selected_signups | length }}</td>
                                 <td>{{ report.remarks }}</td>
                             </tr>
                             {% endfor %}
