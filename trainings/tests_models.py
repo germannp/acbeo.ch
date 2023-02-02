@@ -309,3 +309,14 @@ class SignupTests(TestCase):
 
         Bill(signup=self.signup, report=report, payed=420).save()
         self.assertTrue(self.signup.is_payed)
+
+    def test_is_active(self):
+        self.signup.status = Signup.Status.Waiting
+        self.assertFalse(self.signup.is_active)
+
+        self.signup.status = Signup.Status.Selected
+        self.assertTrue(self.signup.is_active)
+
+        report = Report.objects.create(training=self.training, cash_at_start=1337)
+        Bill(signup=self.signup, report=report, payed=10).save()
+        self.assertFalse(self.signup.is_active)

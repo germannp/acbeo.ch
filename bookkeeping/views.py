@@ -125,6 +125,13 @@ class ReportUpdateView(OrgaRequiredMixin, generic.UpdateView):
         context["runs_by_signup"] = runs_by_signup
         return context
 
+    def form_valid(self, form):
+        if form.instance.details["difference"] < 0:
+            messages.warning(self.request, "Achtung, zu wenig Geld in der Kasse.")
+        if form.instance.training.active_signups:
+            messages.warning(self.request, "Achtung, noch nicht alle haben bezahlt.")
+        return super().form_valid(form)
+
 
 class RunCreateView(OrgaRequiredMixin, generic.TemplateView):
     template_name = "bookkeeping/create_run.html"

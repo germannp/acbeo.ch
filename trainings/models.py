@@ -53,7 +53,7 @@ class Training(models.Model):
         return [
             signup
             for signup in self.signups.all().order_by("pilot")
-            if signup.is_selected and not signup.is_payed
+            if signup.is_active
         ]
 
     @property
@@ -143,6 +143,10 @@ class Signup(models.Model):
     @property
     def is_payed(self):
         return hasattr(self, "bill")
+
+    @property
+    def is_active(self):
+        return self.is_selected and not self.is_payed
 
     def select(self):
         if self.status != self.Status.Waiting:
