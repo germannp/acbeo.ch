@@ -77,7 +77,7 @@ class BillCreateViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/create_bill.html")
         self.assertContains(response, self.guest)
-        self.assertContains(response, TODAY.strftime("%a, %d. %b."))
+        self.assertContains(response, TODAY.strftime("%a, %d. %b.").replace(" 0", " "))
 
     def test_form_is_prefilled(self):
         with self.assertNumQueries(8):

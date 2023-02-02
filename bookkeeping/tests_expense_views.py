@@ -42,7 +42,7 @@ class ExpenseCreateViewTests(TestCase):
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/create_expense.html")
-        self.assertContains(response, TODAY.strftime("%A, %d. %B"))
+        self.assertContains(response, TODAY.strftime("%A, %d. %B").replace(" 0", " "))
 
     def test_amount_cannot_be_negative_and_is_prefilled(self):
         reason = "Gas"
@@ -120,7 +120,7 @@ class ExpenseUpdateViewTests(TestCase):
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/update_expense.html")
-        self.assertContains(response, TODAY.strftime("%A, %d. %B"))
+        self.assertContains(response, TODAY.strftime("%A, %d. %B").replace(" 0", " "))
         self.assertContains(response, self.expense.reason)
         self.assertContains(response, self.expense.amount)
 
