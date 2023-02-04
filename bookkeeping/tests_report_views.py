@@ -512,11 +512,42 @@ class ReportUpdateViewTests(TestCase):
         self.report.refresh_from_db()
         self.assertEqual(self.report.cash_at_end, cash_at_end)
         self.assertEqual(self.report.remarks, new_remarks)
+        self.assertNotContains(response, "Achtung, es haben noch nicht alle bezahlt.")
+        self.assertNotContains(response, "Bitte Kassenstand erfassen.")
         self.assertNotContains(response, "Achtung, zu wenig Geld in der Kasse.")
-        self.assertNotContains(response, "Achtung, noch nicht alle haben bezahlt.")
 
-    def test_not_enough_cash_and_not_everyone_payed_warnings(self):
-        with self.assertNumQueries(35):
+    def test_everyone_payed_warnings_not_enough_cash_warnings(self):
+        with self.assertNumQueries(33):
+            response = self.client.post(
+                reverse("update_report", kwargs={"date": TODAY}),
+                data={
+                    "cash_at_start": self.report.cash_at_start,
+                },
+                follow=True,
+            )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/list_reports.html")
+        self.assertContains(response, "Achtung, es haben noch nicht alle bezahlt.")
+        self.assertNotContains(response, "Bitte Kassenstand erfassen.")
+        self.assertNotContains(response, "Achtung, zu wenig Geld in der Kasse.")
+
+        Bill(signup=self.orga_signup, report=self.report, payed=10).save()
+        Bill(signup=self.guest_signup, report=self.report, payed=2).save()
+        with self.assertNumQueries(27):
+            response = self.client.post(
+                reverse("update_report", kwargs={"date": TODAY}),
+                data={
+                    "cash_at_start": self.report.cash_at_start,
+                },
+                follow=True,
+            )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/list_reports.html")
+        self.assertNotContains(response, "Achtung, es haben noch nicht alle bezahlt.")
+        self.assertContains(response, "Bitte Kassenstand erfassen.")
+        self.assertNotContains(response, "Achtung, zu wenig Geld in der Kasse.")
+
+        with self.assertNumQueries(29):
             response = self.client.post(
                 reverse("update_report", kwargs={"date": TODAY}),
                 data={
@@ -527,8 +558,9 @@ class ReportUpdateViewTests(TestCase):
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/list_reports.html")
+        self.assertNotContains(response, "Achtung, es haben noch nicht alle bezahlt.")
+        self.assertNotContains(response, "Bitte Kassenstand erfassen.")
         self.assertContains(response, "Achtung, zu wenig Geld in der Kasse.")
-        self.assertContains(response, "Achtung, noch nicht alle haben bezahlt.")
 
     def test_no_existing_report_404(self):
         with self.assertNumQueries(4):

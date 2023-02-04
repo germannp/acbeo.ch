@@ -125,10 +125,27 @@ class ReportUpdateView(OrgaRequiredMixin, generic.UpdateView):
         return context
 
     def form_valid(self, form):
-        if form.instance.difference < 0:
-            messages.warning(self.request, "Achtung, zu wenig Geld in der Kasse.")
         if form.instance.num_unpayed_signups:
-            messages.warning(self.request, "Achtung, noch nicht alle haben bezahlt.")
+            messages.warning(
+                self.request,
+                'Achtung, es haben noch nicht alle bezahlt. <a href="javascript:history.back()">Zurück</a>.',
+            )
+            return super().form_valid(form)
+
+        if not (difference := form.instance.difference):
+            messages.warning(
+                self.request,
+                'Bitte Kassenstand erfassen. <a href="javascript:history.back()">Zurück</a>.',
+            )
+            return super().form_valid(form)
+
+        if difference < 0:
+            messages.warning(
+                self.request,
+                'Achtung, zu wenig Geld in der Kasse. <a href="javascript:history.back()">Zurück</a>.',
+            )
+            return super().form_valid(form)
+
         return super().form_valid(form)
 
 
