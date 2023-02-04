@@ -19,20 +19,20 @@ class Report(models.Model):
         return f"{self.training}"
 
     @property
-    def details(self):
-        """Compute details in one place, to keep database calls low"""
+    def revenue(self):
         bills = self.bills.all()
-        revenue = sum(bill.payed for bill in bills)
-        expenses = sum(expense.amount for expense in self.expenses.all())
+        return sum(bill.payed for bill in bills)
+
+    @property
+    def total_expenses(self):
+        return sum(expense.amount for expense in self.expenses.all())
+
+    @property
+    def difference(self):
         if self.cash_at_end:
-            difference = (self.cash_at_end) - (self.cash_at_start + revenue - expenses)
-        else:
-            difference = None
-        return {
-            "revenue": revenue,
-            "expenses": expenses,
-            "difference": difference,
-        }
+            return self.cash_at_end - (
+                self.cash_at_start + self.revenue - self.total_expenses
+            )
 
     @property
     def num_unpayed_signups(self):
@@ -96,15 +96,23 @@ class Bill(models.Model):
         return f"{self.signup.pilot} for {self.report}"
 
     @property
-    def details(self):
-        """Compute details in one place, to keep database calls low"""
+    def num_flights(self):
         runs = self.signup.runs.all()
-        num_flights = len([run for run in runs if run.is_flight])
-        num_services = len([run for run in runs if run.is_service])
-        return {
-            "num_flights": num_flights,
-            "costs_flights": num_flights * self.PRICE_OF_FLIGHT,
-            "num_services": num_services,
-            "costs_services": -num_services * self.PRICE_OF_FLIGHT,
-            "to_pay": (num_flights - num_services) * self.PRICE_OF_FLIGHT,
-        }
+        return len([run for run in runs if run.is_flight])
+
+    @property
+    def costs_flights(self):
+        return self.num_flights * self.PRICE_OF_FLIGHT
+
+    @property
+    def num_services(self):
+        runs = self.signup.runs.all()
+        return len([run for run in runs if run.is_service])
+
+    @property
+    def revenue_services(self):
+        return self.num_services * self.PRICE_OF_FLIGHT
+
+    @property
+    def to_pay(self):
+        return self.costs_flights - self.revenue_services

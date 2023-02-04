@@ -125,7 +125,7 @@ class ReportUpdateView(OrgaRequiredMixin, generic.UpdateView):
         return context
 
     def form_valid(self, form):
-        if form.instance.details["difference"] < 0:
+        if form.instance.difference < 0:
             messages.warning(self.request, "Achtung, zu wenig Geld in der Kasse.")
         if form.instance.num_unpayed_signups:
             messages.warning(self.request, "Achtung, noch nicht alle haben bezahlt.")
@@ -355,18 +355,21 @@ class BillCreateView(OrgaRequiredMixin, generic.CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         signup = get_object_or_404(
-            Signup.objects.select_related("training"), pk=self.kwargs["signup"]
+            Signup.objects.select_related("training").prefetch_related("runs"),
+            pk=self.kwargs["signup"],
         )
         report = get_object_or_404(Report, training=signup.training)
         bill = Bill(signup=signup, report=report)
         context["bill"] = bill
-        context["details"] = bill.details
         return context
 
     def form_valid(self, form):
         """Fill in pilot and report"""
         signup = get_object_or_404(
-            Signup.objects.select_related("training"), pk=self.kwargs["signup"]
+            Signup.objects.select_related("training")
+            .prefetch_related("runs")
+            .select_related("bill"),
+            pk=self.kwargs["signup"],
         )
         if signup.is_payed:
             messages.warning(self.request, f"{signup.pilot} hat bereits bezahlt.")
@@ -375,9 +378,9 @@ class BillCreateView(OrgaRequiredMixin, generic.CreateView):
         form.instance.signup = signup
         report = get_object_or_404(Report, training=signup.training)
         form.instance.report = report
-        if form.instance.payed < form.instance.details["to_pay"]:
+        if form.instance.payed < form.instance.to_pay:
             form.add_error(
-                None, f"{signup.pilot} muss {form.instance.details['to_pay']} bezahlen."
+                None, f"{signup.pilot} muss {form.instance.to_pay} bezahlen."
             )
             return super().form_invalid(form)
 

@@ -87,11 +87,11 @@ class BillCreateViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/create_bill.html")
         bill = Bill(signup=self.guest_signup, report=self.report)
-        self.assertContains(response, bill.details["to_pay"])
+        self.assertContains(response, bill.to_pay)
 
     def test_must_pay_enough(self):
-        to_pay = Bill(signup=self.guest_signup, report=self.report).details["to_pay"]
-        with self.assertNumQueries(14):
+        to_pay = Bill(signup=self.guest_signup, report=self.report).to_pay
+        with self.assertNumQueries(12):
             response = self.client.post(
                 reverse("create_bill", kwargs={"signup": self.guest_signup.pk}),
                 data={"payed": to_pay - 1},
@@ -103,8 +103,8 @@ class BillCreateViewTests(TestCase):
         self.assertEqual(0, len(Bill.objects.all()))
 
     def test_create_bill(self):
-        to_pay = Bill(signup=self.guest_signup, report=self.report).details["to_pay"]
-        with self.assertNumQueries(31):
+        to_pay = Bill(signup=self.guest_signup, report=self.report).to_pay
+        with self.assertNumQueries(30):
             response = self.client.post(
                 reverse("create_bill", kwargs={"signup": self.guest_signup.pk}),
                 data={"payed": to_pay},
@@ -118,7 +118,7 @@ class BillCreateViewTests(TestCase):
         self.assertEqual(to_pay, created_bill.payed)
 
     def test_cannot_pay_twice(self):
-        with self.assertNumQueries(31):
+        with self.assertNumQueries(30):
             response = self.client.post(
                 reverse("create_bill", kwargs={"signup": self.guest_signup.pk}),
                 data={"payed": 420},
@@ -151,7 +151,7 @@ class BillCreateViewTests(TestCase):
         signup = Signup.objects.create(
             pilot=self.guest, training=training, signed_up_on=now
         )
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(6):
             response = self.client.get(
                 reverse("create_bill", kwargs={"signup": signup.pk})
             )

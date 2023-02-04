@@ -29,30 +29,30 @@ class ReportTests(TestCase):
             training=training, cash_at_start=1337, cash_at_end=2337
         )
 
-    def test_details(self):
-        self.assertEqual(self.report.details["difference"], 1000)
-        self.assertEqual(self.report.details["revenue"], 0)
-        self.assertEqual(self.report.details["expenses"], 0)
+    def test_bookkeeping(self):
+        self.assertEqual(self.report.revenue, 0)
+        self.assertEqual(self.report.total_expenses, 0)
+        self.assertEqual(self.report.difference, 1000)
 
         Bill(signup=self.orga_signup, report=self.report, payed=700).save()
-        self.assertEqual(self.report.details["difference"], 300)
-        self.assertEqual(self.report.details["revenue"], 700)
-        self.assertEqual(self.report.details["expenses"], 0)
+        self.assertEqual(self.report.revenue, 700)
+        self.assertEqual(self.report.total_expenses, 0)
+        self.assertEqual(self.report.difference, 300)
 
         Bill(signup=self.pilot_signup, report=self.report, payed=300).save()
-        self.assertEqual(self.report.details["difference"], 0)
-        self.assertEqual(self.report.details["revenue"], 1000)
-        self.assertEqual(self.report.details["expenses"], 0)
+        self.assertEqual(self.report.revenue, 1000)
+        self.assertEqual(self.report.total_expenses, 0)
+        self.assertEqual(self.report.difference, 0)
 
         Expense(report=self.report, reason="Gas", amount=100).save()
-        self.assertEqual(self.report.details["difference"], 100)
-        self.assertEqual(self.report.details["revenue"], 1000)
-        self.assertEqual(self.report.details["expenses"], 100)
+        self.assertEqual(self.report.revenue, 1000)
+        self.assertEqual(self.report.total_expenses, 100)
+        self.assertEqual(self.report.difference, 100)
 
         Expense(report=self.report, reason="Parking", amount=200).save()
-        self.assertEqual(self.report.details["difference"], 300)
-        self.assertEqual(self.report.details["revenue"], 1000)
-        self.assertEqual(self.report.details["expenses"], 300)
+        self.assertEqual(self.report.revenue, 1000)
+        self.assertEqual(self.report.total_expenses, 300)
+        self.assertEqual(self.report.difference, 300)
 
 
 class RunTests(SimpleTestCase):
@@ -130,7 +130,7 @@ class BillTests(TestCase):
         self.training = Training.objects.create(date=TODAY)
         self.report = Report.objects.create(training=self.training, cash_at_start=1337)
 
-    def test_details(self):
+    def test_bookkeeping(self):
         for num_flights, num_buses, num_boats, num_breaks in product(
             range(1, 9), range(1, 3), range(1, 3), range(3)
         ):
@@ -176,10 +176,10 @@ class BillTests(TestCase):
                     ).save()
 
                 bill = Bill(signup=signup, report=self.report)
-                self.assertEqual(bill.details["num_flights"], num_flights)
-                self.assertEqual(bill.details["num_services"], num_buses + num_boats)
+                self.assertEqual(bill.num_flights, num_flights)
+                self.assertEqual(bill.num_services, num_buses + num_boats)
                 self.assertEqual(
-                    bill.details["to_pay"],
+                    bill.to_pay,
                     (num_flights - (num_buses + num_boats)) * Bill.PRICE_OF_FLIGHT,
                 )
 
