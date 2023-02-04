@@ -310,6 +310,29 @@ class SignupTests(TestCase):
         Bill(signup=self.signup, report=report, payed=420).save()
         self.assertTrue(self.signup.is_payed)
 
+    def test_must_be_payed(self):
+        self.assertFalse(self.signup.must_be_payed)
+
+        report = Report.objects.create(training=self.training, cash_at_start=1337)
+        for kind, must_be_payed in [
+            (Run.Kind.Flight, True),
+            (Run.Kind.Bus, True),
+            (Run.Kind.Boat, True),
+            (Run.Kind.Break, False),
+        ]:
+            with self.subTest(kind=kind, must_be_payed=must_be_payed):
+                Run.objects.all().delete()
+                Run(
+                    signup=self.signup,
+                    report=report,
+                    kind=kind,
+                    created_on=timezone.now(),
+                ).save()
+                self.assertEqual(self.signup.must_be_payed, must_be_payed)
+
+        Bill(signup=self.signup, report=report, payed=420).save()
+        self.assertFalse(self.signup.must_be_payed)
+
     def test_is_active(self):
         self.signup.status = Signup.Status.Waiting
         self.assertFalse(self.signup.is_active)

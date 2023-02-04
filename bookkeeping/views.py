@@ -31,6 +31,7 @@ class ReportListView(OrgaRequiredMixin, generic.ListView):
         reports = (
             Report.objects.filter(training__date__gte=since, training__date__lt=until)
             .select_related("training")
+            .prefetch_related("training__signups")
             .prefetch_related("bills")
             .prefetch_related("expenses")
         )
@@ -97,9 +98,7 @@ class ReportUpdateView(OrgaRequiredMixin, generic.UpdateView):
 
     def get_object(self):
         training = get_object_or_404(Training, date=self.kwargs["date"])
-        return get_object_or_404(
-            Report.objects.prefetch_related("expenses"), training=training
-        )
+        return get_object_or_404(Report, training=training)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -128,7 +127,7 @@ class ReportUpdateView(OrgaRequiredMixin, generic.UpdateView):
     def form_valid(self, form):
         if form.instance.details["difference"] < 0:
             messages.warning(self.request, "Achtung, zu wenig Geld in der Kasse.")
-        if form.instance.training.active_signups:
+        if form.instance.num_unpayed_signups:
             messages.warning(self.request, "Achtung, noch nicht alle haben bezahlt.")
         return super().form_valid(form)
 

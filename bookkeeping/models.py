@@ -32,8 +32,13 @@ class Report(models.Model):
             "revenue": revenue,
             "expenses": expenses,
             "difference": difference,
-            "num_bills": len(bills),
         }
+
+    @property
+    def num_unpayed_signups(self):
+        return len(
+            [signup for signup in self.training.active_signups if signup.must_be_payed]
+        )
 
 
 class Run(models.Model):

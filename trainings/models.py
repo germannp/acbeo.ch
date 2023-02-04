@@ -145,6 +145,10 @@ class Signup(models.Model):
         return hasattr(self, "bill")
 
     @property
+    def must_be_payed(self):
+        return not self.is_cancelable and not self.is_payed
+
+    @property
     def is_active(self):
         return self.is_selected and not self.is_payed
 
