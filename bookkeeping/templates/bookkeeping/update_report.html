@@ -35,7 +35,7 @@
                                     {% if signup.is_payed %}
                                         <i class="bi bi-check-lg"></i>
                                     {% else %}
-                                        <a href="{% url 'create_bill' signup=signup.pk %}" class="bi bi-cart3"></a>
+                                        <a href="{% url 'create_bill' date=report.training.date.isoformat signup=signup.pk %}" class="bi bi-cart3"></a>
                                     {% endif %}
                                 </td>
                                 {% for run in runs %}

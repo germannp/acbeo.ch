@@ -405,7 +405,4 @@ class BillCreateView(OrgaRequiredMixin, generic.CreateView):
         return super().form_valid(form)
 
     def get_success_url(self):
-        signup = get_object_or_404(
-            Signup.objects.select_related("training"), pk=self.kwargs["signup"]
-        )
-        return reverse_lazy("update_report", kwargs={"date": signup.training.date})
+        return reverse_lazy("update_report", kwargs={"date": self.kwargs["date"]})

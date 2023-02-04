@@ -64,7 +64,10 @@ class BillCreateViewTests(TestCase):
         self.client.force_login(self.guest)
         with self.assertNumQueries(2):
             response = self.client.get(
-                reverse("create_bill", kwargs={"signup": self.guest_signup.pk})
+                reverse(
+                    "create_bill",
+                    kwargs={"date": TODAY, "signup": self.guest_signup.pk},
+                )
             )
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
         self.assertTemplateUsed(response, "403.html")
@@ -72,7 +75,10 @@ class BillCreateViewTests(TestCase):
     def test_pilot_and_date_shown(self):
         with self.assertNumQueries(8):
             response = self.client.get(
-                reverse("create_bill", kwargs={"signup": self.guest_signup.pk})
+                reverse(
+                    "create_bill",
+                    kwargs={"date": TODAY, "signup": self.guest_signup.pk},
+                )
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/create_bill.html")
@@ -82,7 +88,10 @@ class BillCreateViewTests(TestCase):
     def test_form_is_prefilled(self):
         with self.assertNumQueries(8):
             response = self.client.get(
-                reverse("create_bill", kwargs={"signup": self.guest_signup.pk})
+                reverse(
+                    "create_bill",
+                    kwargs={"date": TODAY, "signup": self.guest_signup.pk},
+                )
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/create_bill.html")
@@ -93,7 +102,10 @@ class BillCreateViewTests(TestCase):
         to_pay = Bill(signup=self.guest_signup, report=self.report).to_pay
         with self.assertNumQueries(12):
             response = self.client.post(
-                reverse("create_bill", kwargs={"signup": self.guest_signup.pk}),
+                reverse(
+                    "create_bill",
+                    kwargs={"date": TODAY, "signup": self.guest_signup.pk},
+                ),
                 data={"payed": to_pay - 1},
                 follow=True,
             )
@@ -104,9 +116,12 @@ class BillCreateViewTests(TestCase):
 
     def test_create_bill(self):
         to_pay = Bill(signup=self.guest_signup, report=self.report).to_pay
-        with self.assertNumQueries(30):
+        with self.assertNumQueries(29):
             response = self.client.post(
-                reverse("create_bill", kwargs={"signup": self.guest_signup.pk}),
+                reverse(
+                    "create_bill",
+                    kwargs={"date": TODAY, "signup": self.guest_signup.pk},
+                ),
                 data={"payed": to_pay},
                 follow=True,
             )
@@ -118,9 +133,12 @@ class BillCreateViewTests(TestCase):
         self.assertEqual(to_pay, created_bill.payed)
 
     def test_cannot_pay_twice(self):
-        with self.assertNumQueries(30):
+        with self.assertNumQueries(29):
             response = self.client.post(
-                reverse("create_bill", kwargs={"signup": self.guest_signup.pk}),
+                reverse(
+                    "create_bill",
+                    kwargs={"date": TODAY, "signup": self.guest_signup.pk},
+                ),
                 data={"payed": 420},
                 follow=True,
             )
@@ -128,9 +146,12 @@ class BillCreateViewTests(TestCase):
         self.assertTemplateUsed(response, "bookkeeping/update_report.html")
         self.assertEqual(1, len(Bill.objects.all()))
 
-        with self.assertNumQueries(26):
+        with self.assertNumQueries(25):
             response = self.client.post(
-                reverse("create_bill", kwargs={"signup": self.guest_signup.pk}),
+                reverse(
+                    "create_bill",
+                    kwargs={"date": TODAY, "signup": self.guest_signup.pk},
+                ),
                 data={"payed": 420},
                 follow=True,
             )
@@ -141,7 +162,9 @@ class BillCreateViewTests(TestCase):
 
     def test_signup_not_found_404(self):
         with self.assertNumQueries(4):
-            response = self.client.get(reverse("create_bill", kwargs={"signup": 666}))
+            response = self.client.get(
+                reverse("create_bill", kwargs={"date": TODAY, "signup": 666})
+            )
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.assertTemplateUsed(response, "404.html")
 
@@ -153,7 +176,7 @@ class BillCreateViewTests(TestCase):
         )
         with self.assertNumQueries(6):
             response = self.client.get(
-                reverse("create_bill", kwargs={"signup": signup.pk})
+                reverse("create_bill", kwargs={"date": TODAY, "signup": signup.pk})
             )
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.assertTemplateUsed(response, "404.html")
