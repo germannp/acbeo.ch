@@ -14,9 +14,9 @@
                 <form method="post">
                     {% csrf_token %}
                     <div class="form-floating mb-3">
-                        <textarea type="text" name="reason" id="reason" class="form-control" 
+                        <textarea type="text" name="reason" id="reason" class="form-control"
                             placeholder="text">{% if form.reason.value %}{{ form.reason.value }}{% endif %}</textarea>
-                        <label for="floatingInput">Grund</label>
+                        <label for="reason">Grund</label>
                     </div>
                     <div class="row mb-3">
                         <label class="col-6 col-form-label">Betrag</label>

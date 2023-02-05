@@ -115,4 +115,19 @@ class Bill(models.Model):
 
     @property
     def to_pay(self):
-        return self.costs_flights - self.revenue_services
+        purchases = self.signup.purchases.all()
+        costs_purchases = sum(purchase.price for purchase in purchases)
+        return self.costs_flights - self.revenue_services + costs_purchases
+
+
+class Purchase(models.Model):
+    class PRICES(models.IntegerChoices):
+        # Must be of the form "DESCRIPTION, Fr. PRICE"
+        REARMING_KIT = 0, "Patrone, Fr. 36"
+        LIFEJACKET = 1, "Schwimmweste, Fr. 80"
+
+    signup = models.ForeignKey(
+        Signup, on_delete=models.CASCADE, related_name="purchases"
+    )
+    description = models.CharField(max_length=50)
+    price = models.SmallIntegerField(validators=[MinValueValidator(0)])

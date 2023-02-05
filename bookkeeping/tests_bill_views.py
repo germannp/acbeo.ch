@@ -7,7 +7,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import Bill, Report, Run
+from .models import Bill, Purchase, Report, Run
 from trainings.models import Signup, Training
 
 locale.setlocale(locale.LC_TIME, "de_CH")
@@ -73,7 +73,7 @@ class BillCreateViewTests(TestCase):
         self.assertTemplateUsed(response, "403.html")
 
     def test_pilot_and_date_shown(self):
-        with self.assertNumQueries(8):
+        with self.assertNumQueries(9):
             response = self.client.get(
                 reverse(
                     "create_bill",
@@ -86,7 +86,7 @@ class BillCreateViewTests(TestCase):
         self.assertContains(response, TODAY.strftime("%a, %d. %b.").replace(" 0", " "))
 
     def test_form_is_prefilled(self):
-        with self.assertNumQueries(8):
+        with self.assertNumQueries(9):
             response = self.client.get(
                 reverse(
                     "create_bill",
@@ -98,9 +98,25 @@ class BillCreateViewTests(TestCase):
         bill = Bill(signup=self.guest_signup, report=self.report)
         self.assertContains(response, bill.to_pay)
 
+    def test_purchase_shown(self):
+        description = "Description"
+        price = 42
+        Purchase(signup=self.guest_signup, description=description, price=price).save()
+        with self.assertNumQueries(9):
+            response = self.client.get(
+                reverse(
+                    "create_bill",
+                    kwargs={"date": TODAY, "signup": self.guest_signup.pk},
+                )
+            )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/create_bill.html")
+        self.assertContains(response, description)
+        self.assertContains(response, price)
+
     def test_must_pay_enough(self):
         to_pay = Bill(signup=self.guest_signup, report=self.report).to_pay
-        with self.assertNumQueries(12):
+        with self.assertNumQueries(14):
             response = self.client.post(
                 reverse(
                     "create_bill",
@@ -116,7 +132,7 @@ class BillCreateViewTests(TestCase):
 
     def test_create_bill(self):
         to_pay = Bill(signup=self.guest_signup, report=self.report).to_pay
-        with self.assertNumQueries(29):
+        with self.assertNumQueries(30):
             response = self.client.post(
                 reverse(
                     "create_bill",
@@ -133,20 +149,8 @@ class BillCreateViewTests(TestCase):
         self.assertEqual(to_pay, created_bill.payed)
 
     def test_cannot_pay_twice(self):
-        with self.assertNumQueries(29):
-            response = self.client.post(
-                reverse(
-                    "create_bill",
-                    kwargs={"date": TODAY, "signup": self.guest_signup.pk},
-                ),
-                data={"payed": 420},
-                follow=True,
-            )
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_report.html")
-        self.assertEqual(1, len(Bill.objects.all()))
-
-        with self.assertNumQueries(25):
+        Bill(signup=self.guest_signup, report=self.report, payed=42).save()
+        with self.assertNumQueries(28):
             response = self.client.post(
                 reverse(
                     "create_bill",
@@ -174,7 +178,7 @@ class BillCreateViewTests(TestCase):
         signup = Signup.objects.create(
             pilot=self.guest, training=training, signed_up_on=now
         )
-        with self.assertNumQueries(6):
+        with self.assertNumQueries(7):
             response = self.client.get(
                 reverse("create_bill", kwargs={"date": TODAY, "signup": signup.pk})
             )

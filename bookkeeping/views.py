@@ -372,7 +372,9 @@ class BillCreateView(OrgaRequiredMixin, generic.CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         signup = get_object_or_404(
-            Signup.objects.select_related("training").prefetch_related("runs"),
+            Signup.objects.select_related("training")
+            .prefetch_related("runs")
+            .prefetch_related("purchases"),
             pk=self.kwargs["signup"],
         )
         report = get_object_or_404(Report, training=signup.training)
@@ -385,6 +387,7 @@ class BillCreateView(OrgaRequiredMixin, generic.CreateView):
         signup = get_object_or_404(
             Signup.objects.select_related("training")
             .prefetch_related("runs")
+            .prefetch_related("purchases")
             .select_related("bill"),
             pk=self.kwargs["signup"],
         )
@@ -406,3 +409,34 @@ class BillCreateView(OrgaRequiredMixin, generic.CreateView):
 
     def get_success_url(self):
         return reverse_lazy("update_report", kwargs={"date": self.kwargs["date"]})
+
+
+class PurchaseCreateView(OrgaRequiredMixin, generic.FormView):
+    form_class = forms.PurchaseCrateForm
+    template_name = "bookkeeping/create_purchase.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        signup = get_object_or_404(Signup, pk=self.kwargs["signup"])
+        context["signup"] = signup
+        return context
+
+    def form_valid(self, form):
+        """Fill in signup and create purchase"""
+        signup = get_object_or_404(
+            Signup.objects.select_related("bill"),
+            pk=self.kwargs["signup"],
+        )
+        if signup.is_payed:
+            messages.warning(self.request, f"{signup.pilot} hat bereits bezahlt.")
+            return HttpResponseRedirect(reverse_lazy("create_report"))
+
+        form.instance.signup = signup
+        form.create_purchase()
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy(
+            "create_bill",
+            kwargs={"date": self.kwargs["date"], "signup": self.kwargs["signup"]},
+        )

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Bill, Expense, Report, Run
+from .models import Bill, Expense, Purchase, Report, Run
 
 
 class ReportAdmin(admin.ModelAdmin):
@@ -33,3 +33,11 @@ class BillAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Bill, BillAdmin)
+
+
+class PurchaseAdmin(admin.ModelAdmin):
+    list_display = ("signup", "description", "price")
+    ordering = ("-signup",)
+
+
+admin.site.register(Purchase, PurchaseAdmin)

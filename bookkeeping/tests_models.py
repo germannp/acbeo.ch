@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
 
-from .models import Bill, Expense, Report, Run
+from .models import Bill, Expense, Purchase, Report, Run
 from trainings.models import Signup, Training
 
 
@@ -131,14 +131,15 @@ class BillTests(TestCase):
         self.report = Report.objects.create(training=self.training, cash_at_start=1337)
 
     def test_bookkeeping(self):
-        for num_flights, num_buses, num_boats, num_breaks in product(
-            range(1, 9), range(1, 3), range(1, 3), range(3)
+        for num_flights, num_buses, num_boats, num_breaks, price_of_purchase in product(
+            range(1, 9), range(1, 3), range(1, 3), range(3), (0, 42)
         ):
             with self.subTest(
                 num_flights=num_flights,
                 num_buses=num_buses,
                 num_boats=num_boats,
                 num_breaks=num_breaks,
+                price_of_purchase=price_of_purchase,
             ):
                 signup = Signup.objects.create(pilot=self.pilot, training=self.training)
                 now = timezone.now()
@@ -175,14 +176,23 @@ class BillTests(TestCase):
                         created_on=now,
                     ).save()
 
+                if price_of_purchase:
+                    Purchase(
+                        signup=signup,
+                        description="Description",
+                        price=price_of_purchase,
+                    ).save()
+
                 bill = Bill(signup=signup, report=self.report)
                 self.assertEqual(bill.num_flights, num_flights)
                 self.assertEqual(bill.num_services, num_buses + num_boats)
                 self.assertEqual(
                     bill.to_pay,
-                    (num_flights - (num_buses + num_boats)) * Bill.PRICE_OF_FLIGHT,
+                    (num_flights - (num_buses + num_boats)) * Bill.PRICE_OF_FLIGHT
+                    + price_of_purchase,
                 )
 
                 # Tear down sub test.
                 Run.objects.all().delete()
+                Purchase.objects.all().delete()
                 signup.delete()

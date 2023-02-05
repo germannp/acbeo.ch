@@ -29,9 +29,20 @@
                             <tr>
                                 <td>Dienste</td>
                                 <td>{{ bill.num_services }}</td>
-                                <td>{{ bill.costs_services }}</td>
+                                <td>-{{ bill.revenue_services }}</td>
                             </tr>
                         </tbody>
+                        {% if bill.signup.purchases.all %}
+                        <tbody class="table-group-divider">
+                            {% for purchase in bill.signup.purchases.all %}
+                            <tr>
+                                <td>{{ purchase.description }}</td>
+                                <td></td>
+                                <td>{{ purchase.price }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        {% endif %}
                         <tfoot class="table-group-divider">
                             <td>Zu bezahlen</td>
                             <td></td>
@@ -43,12 +54,17 @@
                     <form method="post">
                         {% csrf_token %}
                         <div class="form-floating mb-3">
-                            <input type="number" min="{{ bill.to_pay }}" name="payed" class="form-control" placeholder="text"
-                            value="{% if form.payed.value %}{{ form.payed.value }}{% else %}{{ bill.to_pay }}{% endif %}">
+                            <input type="number" min="{{ bill.to_pay }}" name="payed" class="form-control"
+                                placeholder="text"
+                                value="{% if form.payed.value %}{{ form.payed.value }}{% else %}{{ bill.to_pay }}{% endif %}">
                             <label>Bezahlt</label>
                         </div>
-                        <button class="btn btn-primary" type="submit">Bezahlen</button>
-                        <a href="javascript:history.back()" class="btn btn-outline-dark">Abbrechen</a>
+                        <div class="d-grid gap-2 d-sm-block">
+                            <a href="{% url 'create_purchase' date=bill.signup.training.date.isoformat signup=bill.signup.pk %}"
+                                class="btn btn-primary">Einkauf erfassen</a>
+                            <button class="btn btn-primary" type="submit">Bezahlen</button>
+                            <a href="{{ view.get_success_url }}" class="btn btn-outline-dark">Abbrechen</a>
+                        </div>
                     </form>
                 </main>
             </div>

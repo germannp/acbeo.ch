@@ -77,7 +77,7 @@ class ExpenseCreateViewTests(TestCase):
         self.assertEqual(reason, created_expense.reason)
         self.assertEqual(amount, created_expense.amount)
 
-    def test_no_existing_report_404(self):
+    def test_report_not_found_404(self):
         with self.assertNumQueries(4):
             response = self.client.get(
                 reverse("create_expense", kwargs={"date": YESTERDAY})

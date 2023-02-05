@@ -28,4 +28,9 @@ urlpatterns = [
         views.ExpenseUpdateView.as_view(),
         name="update_expense",
     ),
+    path(
+        "<date:date>/einkauf-erfassen/<int:signup>/",
+        views.PurchaseCreateView.as_view(),
+        name="create_purchase",
+    ),
 ]

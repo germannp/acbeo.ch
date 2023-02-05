@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}Einkauf erfassen{% endblock title %}
+
+{% block headline %}Einkauf erfassen{% endblock headline %}
+
+{% block content %}
+
+<div class="col-xl-4 col-lg-5">
+    <div class="card my-4">
+        <h5 class="card-header">Für {{ signup.pilot }} am {{ signup.training.date | date:"D., j. M." }}</h5>
+        <div class="card-body">
+            <main class="form">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        {% for item in form.item %}
+                        <div class="form-check">
+                            {{ item.tag }}
+                            <label class="form-check-label" for="{{ item.id_for_label }}">
+                                {{ item.choice_label }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <button class="btn btn-primary" type="submit">Speichern</button>
+                    <a href="{{ view.get_success_url }}" class="btn btn-outline-dark">Abbrechen</a>
+                </form>
+            </main>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}

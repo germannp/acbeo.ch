@@ -1,8 +1,8 @@
-from django.forms import modelformset_factory
-from django.core.exceptions import ValidationError
 from django import forms
+from django.core.exceptions import ValidationError
+from django.forms import modelformset_factory
 
-from .models import Run
+from .models import Run, Purchase
 
 
 class BaseRunFormSet(forms.BaseModelFormSet):
@@ -25,3 +25,20 @@ class BaseRunFormSet(forms.BaseModelFormSet):
 RunFormset = modelformset_factory(
     Run, fields=("kind",), formset=BaseRunFormSet, extra=0
 )
+
+
+class PurchaseCrateForm(forms.ModelForm):
+    item = forms.ChoiceField(
+        choices=Purchase.PRICES.choices,
+        initial=Purchase.PRICES.REARMING_KIT,
+        widget=forms.widgets.RadioSelect(attrs={"class": "form-check-input"}),
+    )
+
+    class Meta:
+        model = Purchase  # Allow view to fill in signup
+        fields = ("item",)
+
+    def create_purchase(self):
+        _, item = Purchase.PRICES.choices[int(self.cleaned_data["item"])]
+        self.instance.description, self.instance.price = item.split(", Fr. ")
+        self.instance.save()

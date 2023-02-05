@@ -562,7 +562,7 @@ class ReportUpdateViewTests(TestCase):
         self.assertNotContains(response, "Bitte Kassenstand erfassen.")
         self.assertContains(response, "Achtung, zu wenig Geld in der Kasse.")
 
-    def test_no_existing_report_404(self):
+    def test_report_not_found_404(self):
         with self.assertNumQueries(4):
             response = self.client.get(
                 reverse("update_report", kwargs={"date": YESTERDAY})
