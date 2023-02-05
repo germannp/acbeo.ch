@@ -96,3 +96,83 @@ class PurchaseCreateViewTests(TestCase):
             )
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.assertTemplateUsed(response, "404.html")
+
+
+class PurchaseDeleteViewTests(TestCase):
+    def setUp(self):
+        self.orga = get_user_model().objects.create(
+            email="orga@example.com", role=get_user_model().Role.Orga
+        )
+        self.client.force_login(self.orga)
+
+        training = Training.objects.create(date=TODAY)
+        now = timezone.now()
+        self.signup = Signup.objects.create(
+            pilot=self.orga, training=training, signed_up_on=now
+        )
+        self.purchase = Purchase.objects.create(
+            signup=self.signup, description="Description", price=42
+        )
+
+        self.report = Report.objects.create(training=training, cash_at_start=1337)
+
+    def test_orga_required_to_see(self):
+        guest = get_user_model().objects.create(email="guest@example.com")
+        self.client.force_login(guest)
+        with self.assertNumQueries(2):
+            response = self.client.get(
+                reverse(
+                    "delete_purchase", kwargs={"date": TODAY, "pk": self.purchase.pk}
+                )
+            )
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
+        self.assertTemplateUsed(response, "403.html")
+
+    def test_pilot_and_desciption_shown(self):
+        with self.assertNumQueries(6):
+            response = self.client.get(
+                reverse(
+                    "delete_purchase", kwargs={"date": TODAY, "pk": self.purchase.pk}
+                )
+            )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/purchase_confirm_delete.html")
+        self.assertContains(response, self.orga)
+        self.assertContains(response, self.purchase.description)
+        self.assertContains(
+            response,
+            reverse("create_bill", kwargs={"date": TODAY, "signup": self.signup.pk}),
+        )
+
+    def test_delete_purchase(self):
+        with self.assertNumQueries(15):
+            response = self.client.post(
+                reverse(
+                    "delete_purchase", kwargs={"date": TODAY, "pk": self.purchase.pk}
+                ),
+                follow=True,
+            )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/create_bill.html")
+        self.assertEqual(0, len(Purchase.objects.all()))
+
+    def test_cannot_delete_purchase_for_payed_signup(self):
+        Bill(signup=self.signup, report=self.report, payed=42).save()
+        with self.assertNumQueries(25):
+            response = self.client.post(
+                reverse(
+                    "delete_purchase", kwargs={"date": TODAY, "pk": self.purchase.pk}
+                ),
+                follow=True,
+            )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/update_report.html")
+        self.assertContains(response, f"{self.orga} hat bereits bezahlt.")
+
+    def test_purchase_not_found_404(self):
+        with self.assertNumQueries(4):
+            response = self.client.get(
+                reverse("delete_purchase", kwargs={"date": TODAY, "pk": 666})
+            )
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
+        self.assertTemplateUsed(response, "404.html")

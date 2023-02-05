@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.views import generic
 
 from . import forms
-from .models import Bill, Expense, Report, Run
+from .models import Bill, Expense, Purchase, Report, Run
 from trainings.views import OrgaRequiredMixin
 from trainings.models import Signup, Training
 
@@ -439,4 +439,24 @@ class PurchaseCreateView(OrgaRequiredMixin, generic.FormView):
         return reverse_lazy(
             "create_bill",
             kwargs={"date": self.kwargs["date"], "signup": self.kwargs["signup"]},
+        )
+
+
+class PurchaseDeleteView(OrgaRequiredMixin, generic.DeleteView):
+    model = Purchase
+
+    def form_valid(self, form):
+        if self.object.signup.is_payed:
+            messages.warning(
+                self.request, f"{self.object.signup.pilot} hat bereits bezahlt."
+            )
+            return HttpResponseRedirect(reverse_lazy("create_report"))
+
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        purchase = self.object
+        return reverse_lazy(
+            "create_bill",
+            kwargs={"date": self.kwargs["date"], "signup": purchase.signup.pk},
         )

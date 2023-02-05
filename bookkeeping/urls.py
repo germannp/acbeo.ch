@@ -33,4 +33,9 @@ urlpatterns = [
         views.PurchaseCreateView.as_view(),
         name="create_purchase",
     ),
+    path(
+        "<date:date>/einkauf-entfernen/<int:pk>/",
+        views.PurchaseDeleteView.as_view(),
+        name="delete_purchase",
+    ),
 ]

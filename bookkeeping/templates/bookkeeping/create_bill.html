@@ -36,7 +36,9 @@
                         <tbody class="table-group-divider">
                             {% for purchase in bill.signup.purchases.all %}
                             <tr>
-                                <td>{{ purchase.description }}</td>
+                                <td>{{ purchase.description }} <a
+                                        href="{% url 'delete_purchase' date=bill.signup.training.date.isoformat pk=purchase.pk %}"
+                                        class="ba bi-trash text-danger"></a></td>
                                 <td></td>
                                 <td>{{ purchase.price }}</td>
                             </tr>

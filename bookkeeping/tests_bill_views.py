@@ -99,9 +99,9 @@ class BillCreateViewTests(TestCase):
         self.assertContains(response, bill.to_pay)
 
     def test_purchase_shown(self):
-        description = "Description"
-        price = 42
-        Purchase(signup=self.guest_signup, description=description, price=price).save()
+        purchase = Purchase.objects.create(
+            signup=self.guest_signup, description="Description", price=42
+        )
         with self.assertNumQueries(9):
             response = self.client.get(
                 reverse(
@@ -111,8 +111,12 @@ class BillCreateViewTests(TestCase):
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/create_bill.html")
-        self.assertContains(response, description)
-        self.assertContains(response, price)
+        self.assertContains(response, purchase.description)
+        self.assertContains(response, purchase.price)
+        self.assertContains(
+            response,
+            reverse("delete_purchase", kwargs={"date": TODAY, "pk": purchase.pk}),
+        )
 
     def test_must_pay_enough(self):
         to_pay = Bill(signup=self.guest_signup, report=self.report).to_pay
