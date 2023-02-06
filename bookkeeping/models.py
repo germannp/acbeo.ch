@@ -122,12 +122,16 @@ class Bill(models.Model):
 
 class Purchase(models.Model):
     class PRICES(models.IntegerChoices):
-        # Must be of the form "DESCRIPTION, Fr. PRICE"
         REARMING_KIT = 0, "Patrone, Fr. 36"
         LIFEJACKET = 1, "Schwimmweste, Fr. 80"
 
     signup = models.ForeignKey(
-        Signup, on_delete=models.CASCADE, related_name="purchases"
+        "trainings.Signup", on_delete=models.CASCADE, related_name="purchases"
     )
     description = models.CharField(max_length=50)
     price = models.SmallIntegerField(validators=[MinValueValidator(0)])
+
+    @classmethod
+    def save_item(cls, signup, choice):
+        description, price = cls.PRICES.choices[choice][1].split(", Fr. ")
+        cls(signup=signup, description=description, price=price).save()

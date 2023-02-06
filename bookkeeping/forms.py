@@ -39,6 +39,4 @@ class PurchaseCrateForm(forms.ModelForm):
         fields = ("item",)
 
     def create_purchase(self):
-        _, item = Purchase.PRICES.choices[int(self.cleaned_data["item"])]
-        self.instance.description, self.instance.price = item.split(", Fr. ")
-        self.instance.save()
+        Purchase.save_item(self.instance.signup, int(self.cleaned_data["item"]))
