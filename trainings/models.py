@@ -1,10 +1,12 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.utils.timezone import make_aware
 from django.utils.translation import gettext_lazy as _
+
+from bookkeeping.models import Purchase
 
 
 class Training(models.Model):
@@ -141,16 +143,50 @@ class Signup(models.Model):
         return True
 
     @property
-    def is_payed(self):
-        return hasattr(self, "bill")
+    def is_active(self):
+        return self.is_selected and not self.is_payed
 
     @property
     def must_be_payed(self):
         return not self.is_cancelable and not self.is_payed
 
     @property
-    def is_active(self):
-        return self.is_selected and not self.is_payed
+    def needs_day_pass(self):
+        if self.pilot.is_member:
+            return False
+
+        num_flights = len([run for run in self.runs.all() if run.is_flight])
+        if num_flights < 3:
+            return False
+
+        day_passes_of_season = (
+            Purchase.objects.filter(
+                signup__pilot=self.pilot,
+                signup__training__date__year=self.training.date.year,
+                description=Purchase.DAY_PASS_DESCRIPTION,
+            )
+            .select_related("signup")
+            .prefetch_related("signup__training")
+        )
+        if 4 <= len(day_passes_of_season):
+            return False
+
+        day_passes_of_last_month = [
+            day_pass
+            for day_pass in day_passes_of_season
+            if (self.training.date - timedelta(days=31)) < day_pass.signup.training.date
+        ]
+        if 2 <= len(day_passes_of_last_month):
+            return False
+
+        if self in [day_pass.signup for day_pass in day_passes_of_last_month]:
+            return False
+
+        return True
+
+    @property
+    def is_payed(self):
+        return hasattr(self, "bill")
 
     def select(self):
         if self.status != self.Status.Waiting:

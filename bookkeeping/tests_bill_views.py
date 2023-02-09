@@ -118,6 +118,26 @@ class BillCreateViewTests(TestCase):
             reverse("delete_purchase", kwargs={"date": TODAY, "pk": purchase.pk}),
         )
 
+    def test_creates_day_pass(self):
+        Run(
+            signup=self.guest_signup,
+            report=self.report,
+            kind=Run.Kind.Flight,
+            created_on=timezone.now() + timedelta(hours=7),
+        ).save()
+        self.assertTrue(self.guest_signup.needs_day_pass)
+        with self.assertNumQueries(12):
+            response = self.client.get(
+                reverse(
+                    "create_bill",
+                    kwargs={"date": TODAY, "signup": self.guest_signup.pk},
+                )
+            )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/create_bill.html")
+        self.assertContains(response, Purchase.DAY_PASS_DESCRIPTION)
+        self.assertEqual(1, len(Purchase.objects.all()))
+
     def test_must_pay_enough(self):
         to_pay = Bill(signup=self.guest_signup, report=self.report).to_pay
         with self.assertNumQueries(14):
@@ -182,7 +202,7 @@ class BillCreateViewTests(TestCase):
         signup = Signup.objects.create(
             pilot=self.guest, training=training, signed_up_on=now
         )
-        with self.assertNumQueries(7):
+        with self.assertNumQueries(6):
             response = self.client.get(
                 reverse("create_bill", kwargs={"date": TODAY, "signup": signup.pk})
             )

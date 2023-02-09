@@ -29,8 +29,8 @@ RunFormset = modelformset_factory(
 
 class PurchaseCrateForm(forms.ModelForm):
     item = forms.ChoiceField(
-        choices=Purchase.PRICES.choices,
-        initial=Purchase.PRICES.REARMING_KIT,
+        choices=Purchase.ITEMS.choices,
+        initial=Purchase.ITEMS.REARMING_KIT,
         widget=forms.widgets.RadioSelect(attrs={"class": "form-check-input"}),
     )
 

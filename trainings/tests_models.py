@@ -6,7 +6,7 @@ from django.test import TestCase
 from django.utils import timezone
 
 from .models import Training, Signup
-from bookkeeping.models import Bill, Report, Run
+from bookkeeping.models import Bill, Purchase, Report, Run
 
 
 TODAY = date.today()
@@ -173,14 +173,14 @@ class SignupTests(TestCase):
         )
         self.time_selected = self.signup.signed_up_on
 
-    def test_member_required_for_priority(self):
-        self.assertTrue(self.signup.has_priority)
-
-        guest = get_user_model().objects.create(
+        self.guest = get_user_model().objects.create(
             email="guest@example.com", role=get_user_model().Role.Guest
         )
-        signup = Signup(pilot=guest, training=self.training)
-        self.assertFalse(signup.has_priority)
+        self.guest_signup = Signup.objects.create(pilot=self.guest, training=self.training)
+
+    def test_member_required_for_priority(self):
+        self.assertTrue(self.signup.has_priority)
+        self.assertFalse(self.guest_signup.has_priority)
 
     @mock.patch("trainings.models.datetime")
     def test_resignup_sets_to_waiting_list(self, mocked_datetime):
@@ -303,12 +303,16 @@ class SignupTests(TestCase):
                 ).save()
                 self.assertEqual(self.signup.is_cancelable, is_cancelable)
 
-    def test_is_payed(self):
-        report = Report.objects.create(training=self.training, cash_at_start=1337)
-        self.assertFalse(self.signup.is_payed)
+    def test_is_active(self):
+        self.signup.status = Signup.Status.Waiting
+        self.assertFalse(self.signup.is_active)
 
-        Bill(signup=self.signup, report=report, payed=420).save()
-        self.assertTrue(self.signup.is_payed)
+        self.signup.status = Signup.Status.Selected
+        self.assertTrue(self.signup.is_active)
+
+        report = Report.objects.create(training=self.training, cash_at_start=1337)
+        Bill(signup=self.signup, report=report, payed=10).save()
+        self.assertFalse(self.signup.is_active)
 
     def test_must_be_payed(self):
         self.assertFalse(self.signup.must_be_payed)
@@ -333,13 +337,74 @@ class SignupTests(TestCase):
         Bill(signup=self.signup, report=report, payed=420).save()
         self.assertFalse(self.signup.must_be_payed)
 
-    def test_is_active(self):
-        self.signup.status = Signup.Status.Waiting
-        self.assertFalse(self.signup.is_active)
+    def test_needs_day_pass(self):
+        # Guests only need a day pass after the third flight
+        training = Training.objects.create(date=date(2000, 9, 15))
+        signup = Signup.objects.create(pilot=self.guest, training=training)
+        report = Report.objects.create(training=training, cash_at_start=1337)
+        now = timezone.now()
+        for _ in range(3):
+            self.assertFalse(signup.needs_day_pass)
+            Run(
+                signup=signup,
+                report=report,
+                kind=Run.Kind.Flight,
+                created_on=now,
+            ).save()
+            now += timedelta(minutes=5)
+        self.assertTrue(signup.needs_day_pass)
 
-        self.signup.status = Signup.Status.Selected
-        self.assertTrue(self.signup.is_active)
+        Run(
+            signup=signup,
+            report=report,
+            kind=Run.Kind.Boat,
+            created_on=now,
+        ).save()
+        self.assertTrue(signup.needs_day_pass)
 
+        # Guests only need one day pass
+        Purchase.save_day_pass(signup)
+        self.assertFalse(signup.needs_day_pass)
+        Purchase.objects.all().delete()
+
+        # Guests only need two day passes in a month
+        training = Training.objects.create(date=date(2000, 9, 14))
+        prev_signup = Signup.objects.create(pilot=self.guest, training=training)
+        Purchase.save_day_pass(prev_signup)
+        self.assertTrue(signup.needs_day_pass)
+
+        training = Training.objects.create(date=date(2000, 8, 5))
+        prev_signup = Signup.objects.create(pilot=self.guest, training=training)
+        Purchase.save_day_pass(prev_signup)
+        self.assertTrue(signup.needs_day_pass)
+
+        training = Training.objects.create(date=date(2000, 9, 5))
+        prev_signup = Signup.objects.create(pilot=self.guest, training=training)
+        Purchase.save_day_pass(prev_signup)
+        self.assertFalse(signup.needs_day_pass)
+
+        # Guets only need four day passes per year
+        prev_signup.purchases.all().delete()
+        self.assertTrue(signup.needs_day_pass)
+
+        training = Training.objects.create(date=date(2000, 1, 1))
+        prev_signup = Signup.objects.create(pilot=self.guest, training=training)
+        Purchase.save_day_pass(prev_signup)
+        self.assertTrue(signup.needs_day_pass)
+
+        training = Training.objects.create(date=date(1999, 9, 15))
+        prev_signup = Signup.objects.create(pilot=self.guest, training=training)
+        Purchase.save_day_pass(prev_signup)
+        self.assertTrue(signup.needs_day_pass)
+
+        training = Training.objects.create(date=date(2000, 2, 1))
+        prev_signup = Signup.objects.create(pilot=self.guest, training=training)
+        Purchase.save_day_pass(prev_signup)
+        self.assertFalse(signup.needs_day_pass)
+
+    def test_is_payed(self):
         report = Report.objects.create(training=self.training, cash_at_start=1337)
-        Bill(signup=self.signup, report=report, payed=10).save()
-        self.assertFalse(self.signup.is_active)
+        self.assertFalse(self.signup.is_payed)
+
+        Bill(signup=self.signup, report=report, payed=420).save()
+        self.assertTrue(self.signup.is_payed)

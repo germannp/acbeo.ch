@@ -2,12 +2,10 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 
-from trainings.models import Signup, Training
-
 
 class Report(models.Model):
     training = models.OneToOneField(
-        Training, on_delete=models.CASCADE, primary_key=True
+        "trainings.Training", on_delete=models.CASCADE, primary_key=True
     )
     cash_at_start = models.SmallIntegerField(validators=[MinValueValidator(0)])
     cash_at_end = models.SmallIntegerField(
@@ -44,7 +42,9 @@ class Report(models.Model):
 class Run(models.Model):
     Kind = models.IntegerChoices("Kind", "Flight Bus Boat Break")
 
-    signup = models.ForeignKey(Signup, on_delete=models.CASCADE, related_name="runs")
+    signup = models.ForeignKey(
+        "trainings.Signup", on_delete=models.CASCADE, related_name="runs"
+    )
     report = models.ForeignKey(Report, on_delete=models.CASCADE, related_name="runs")
     kind = models.SmallIntegerField(choices=Kind.choices)
     created_on = models.DateTimeField()
@@ -85,7 +85,9 @@ class Expense(models.Model):
 class Bill(models.Model):
     PRICE_OF_FLIGHT = 9
 
-    signup = models.OneToOneField(Signup, on_delete=models.CASCADE, related_name="bill")
+    signup = models.OneToOneField(
+        "trainings.Signup", on_delete=models.CASCADE, related_name="bill"
+    )
     report = models.ForeignKey(Report, on_delete=models.CASCADE, related_name="bills")
     payed = models.SmallIntegerField(validators=[MinValueValidator(0)])
 
@@ -121,9 +123,12 @@ class Bill(models.Model):
 
 
 class Purchase(models.Model):
-    class PRICES(models.IntegerChoices):
+    class ITEMS(models.IntegerChoices):
         REARMING_KIT = 0, "Patrone, Fr. 36"
         LIFEJACKET = 1, "Schwimmweste, Fr. 80"
+
+    DAY_PASS_DESCRIPTION = "Tagesmitgliedschaft"
+    DAY_PASS_PRICE = 30
 
     signup = models.ForeignKey(
         "trainings.Signup", on_delete=models.CASCADE, related_name="purchases"
@@ -133,5 +138,15 @@ class Purchase(models.Model):
 
     @classmethod
     def save_item(cls, signup, choice):
-        description, price = cls.PRICES.choices[choice][1].split(", Fr. ")
+        assert not signup.is_payed, "Cannot save item for payed signup."
+        description, price = cls.ITEMS.choices[choice][1].split(", Fr. ")
         cls(signup=signup, description=description, price=price).save()
+
+    @classmethod
+    def save_day_pass(cls, signup):
+        assert not signup.is_payed, "Cannot save day pass for payed signup."
+        cls(
+            signup=signup,
+            description=cls.DAY_PASS_DESCRIPTION,
+            price=cls.DAY_PASS_PRICE,
+        ).save()

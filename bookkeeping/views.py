@@ -1,5 +1,6 @@
 from datetime import date, timedelta
 
+from django.db.models import prefetch_related_objects
 from django.contrib import messages
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
@@ -372,12 +373,13 @@ class BillCreateView(OrgaRequiredMixin, generic.CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         signup = get_object_or_404(
-            Signup.objects.select_related("training")
-            .prefetch_related("runs")
-            .prefetch_related("purchases"),
+            Signup.objects.select_related("training").prefetch_related("runs"),
             pk=self.kwargs["signup"],
         )
         report = get_object_or_404(Report, training=signup.training)
+        if signup.needs_day_pass and self.request.GET.get("day_pass") != "False":
+            Purchase.save_day_pass(signup)
+        prefetch_related_objects([signup], "purchases")
         bill = Bill(signup=signup, report=report)
         context["bill"] = bill
         return context
@@ -456,7 +458,10 @@ class PurchaseDeleteView(OrgaRequiredMixin, generic.DeleteView):
 
     def get_success_url(self):
         purchase = self.object
-        return reverse_lazy(
+        success_url = reverse_lazy(
             "create_bill",
             kwargs={"date": self.kwargs["date"], "signup": purchase.signup.pk},
         )
+        if purchase.description == Purchase.DAY_PASS_DESCRIPTION:
+            success_url += "?day_pass=False"
+        return success_url
