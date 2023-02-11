@@ -134,7 +134,7 @@ class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateVi
     def get_initial(self):
         """Set default date based on url pattern"""
         if "date" in self.kwargs:
-            return {"date": self.kwargs["date"]}
+            return {"date": self.kwargs["date"].isoformat()}
 
         today = date.today()
         if today.weekday() >= 5:  # Saturdays and Sundays

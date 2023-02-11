@@ -183,7 +183,7 @@ class SignupCreateViewTests(TestCase):
                     response = self.client.get(reverse("signup"))
                 self.assertEqual(response.status_code, HTTPStatus.OK)
                 self.assertTemplateUsed(response, "trainings/signup.html")
-                self.assertContains(response, default_date.isoformat())
+                self.assertContains(response, f'value="{default_date.isoformat()}"')
 
     @mock.patch("trainings.forms.date", wraps=date)
     @mock.patch("trainings.views.date", wraps=date)
@@ -290,7 +290,7 @@ class SignupCreateViewTests(TestCase):
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "trainings/signup.html")
-        self.assertContains(response, TOMORROW.isoformat())
+        self.assertContains(response, f'value="{TOMORROW.isoformat()}"')
         self.assertEqual(1, len(Signup.objects.all()))
 
 
