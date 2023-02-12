@@ -312,8 +312,7 @@ class RunUpdateView(OrgaRequiredMixin, generic.TemplateView):
 
 
 class ExpenseCreateView(OrgaRequiredMixin, generic.CreateView):
-    model = Expense
-    fields = ("reason", "amount")
+    form_class = forms.ExpenseCreateForm
     template_name = "bookkeeping/create_expense.html"
 
     def get_context_data(self, **kwargs):

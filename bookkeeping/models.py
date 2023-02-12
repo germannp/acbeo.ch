@@ -75,10 +75,16 @@ class Run(models.Model):
 
 
 class Expense(models.Model):
+    class REASONS(models.IntegerChoices):
+        GAS = 0, "Tanken"
+        PARKING = 1, "Parkkarte"
+        STREET = 2, "Kleber Axalpstrasse"
+        OTHER = 3, "Anderes (bitte angeben)"
+
     report = models.ForeignKey(
         Report, on_delete=models.CASCADE, related_name="expenses"
     )
-    reason = models.CharField(max_length=50)
+    reason = models.CharField(max_length=50, blank=True)
     amount = models.SmallIntegerField(validators=[MinValueValidator(0)])
 
 

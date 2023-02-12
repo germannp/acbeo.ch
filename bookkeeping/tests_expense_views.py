@@ -35,7 +35,7 @@ class ExpenseCreateViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
         self.assertTemplateUsed(response, "403.html")
 
-    def test_date_shown(self):
+    def test_date_shown_and_reasons_listed(self):
         with self.assertNumQueries(5):
             response = self.client.get(
                 reverse("create_expense", kwargs={"date": TODAY})
@@ -43,23 +43,29 @@ class ExpenseCreateViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/create_expense.html")
         self.assertContains(response, TODAY.strftime("%A, %d. %B").replace(" 0", " "))
+        for reason in Expense.REASONS:
+            self.assertContains(response, reason.label)
 
     def test_amount_cannot_be_negative_and_is_prefilled(self):
-        reason = "Gas"
+        other_reason = "Other reason"
         amount = -42
         with self.assertNumQueries(5):
             response = self.client.post(
                 reverse("create_expense", kwargs={"date": TODAY}),
-                data={"reason": reason, "amount": amount},
+                data={
+                    "reason": Expense.REASONS.OTHER,
+                    "other_reason": other_reason,
+                    "amount": amount,
+                },
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/create_expense.html")
-        self.assertContains(response, reason)
+        self.assertContains(response, other_reason)
         self.assertContains(response, amount)
 
     def test_create_expense(self):
-        reason = "Gas"
+        reason = Expense.REASONS.GAS
         amount = 42
         with self.assertNumQueries(16):
             response = self.client.post(
@@ -70,11 +76,35 @@ class ExpenseCreateViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/update_report.html")
         self.assertContains(
-            response, f"Ausgabe für {reason} über CHF {amount} gespeichert."
+            response,
+            f"Ausgabe für {Expense.REASONS.GAS.label} über CHF {amount} gespeichert.",
         )
         self.assertEqual(1, len(Expense.objects.all()))
         created_expense = Expense.objects.first()
-        self.assertEqual(reason, created_expense.reason)
+        self.assertEqual(Expense.REASONS.GAS.label, created_expense.reason)
+        self.assertEqual(amount, created_expense.amount)
+
+    def test_create_expense_for_other_reason(self):
+        other_reason = "Other reason"
+        amount = 42
+        with self.assertNumQueries(16):
+            response = self.client.post(
+                reverse("create_expense", kwargs={"date": TODAY}),
+                data={
+                    "reason": Expense.REASONS.OTHER,
+                    "other_reason": other_reason,
+                    "amount": amount,
+                },
+                follow=True,
+            )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/update_report.html")
+        self.assertContains(
+            response, f"Ausgabe für {other_reason} über CHF {amount} gespeichert."
+        )
+        self.assertEqual(1, len(Expense.objects.all()))
+        created_expense = Expense.objects.first()
+        self.assertEqual(other_reason, created_expense.reason)
         self.assertEqual(amount, created_expense.amount)
 
     def test_report_not_found_404(self):

@@ -43,7 +43,7 @@ class PurchaseCreateViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
         self.assertTemplateUsed(response, "403.html")
 
-    def test_pilot_and_date_shown(self):
+    def test_pilot_and_date_shown_and_items_listed(self):
         with self.assertNumQueries(6):
             response = self.client.get(
                 reverse(
@@ -54,6 +54,8 @@ class PurchaseCreateViewTests(TestCase):
         self.assertTemplateUsed(response, "bookkeeping/create_purchase.html")
         self.assertContains(response, self.orga)
         self.assertContains(response, TODAY.strftime("%a, %d. %b.").replace(" 0", " "))
+        for item in Purchase.ITEMS:
+            self.assertContains(response, item.label)
 
     def test_create_purchase(self):
         with self.assertNumQueries(13):
