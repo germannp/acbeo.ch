@@ -144,11 +144,11 @@ class Signup(models.Model):
 
     @property
     def is_active(self):
-        return self.is_selected and not self.is_payed
+        return self.is_selected and not self.is_paid
 
     @property
-    def must_be_payed(self):
-        return not self.is_cancelable and not self.is_payed
+    def must_be_paid(self):
+        return not self.is_cancelable and not self.is_paid
 
     @property
     def needs_day_pass(self):
@@ -185,7 +185,7 @@ class Signup(models.Model):
         return True
 
     @property
-    def is_payed(self):
+    def is_paid(self):
         return hasattr(self, "bill")
 
     def select(self):

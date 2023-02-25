@@ -31,20 +31,33 @@
                                 <td>{{ bill.num_services }}</td>
                                 <td>-{{ bill.revenue_services }}</td>
                             </tr>
+                            {% if 0 < bill.num_prepaid_flights %}
+                            <tr>
+                                <td>Mit Abo bezahlt</td>
+                                <td>{{ bill.num_prepaid_flights }}</td>
+                                <td>-{{ bill.costs_prepaid_flights }}</td>
+                            </tr>
+                            {% elif bill.num_prepaid_flights < 0 %}
+                            <tr>
+                                <td>Flüge gutgeschrieben</td>
+                                <td>{{ bill.num_prepaid_flights | stringformat:"+d"|slice:"1:" }}</td>
+                                <td>{{ bill.costs_prepaid_flights | stringformat:"+d"|slice:"1:" }}</td>
+                            </tr>
+                            {% endif %}
                         </tbody>
                         {% if bill.signup.purchases.all %}
                         <tbody class="table-group-divider">
                             {% for purchase in bill.signup.purchases.all %}
                             <tr>
                                 <td>{{ purchase.description }} <a
-                                        href="{% url 'delete_purchase' date=bill.signup.training.date.isoformat pk=purchase.pk %}"
-                                        class="ba bi-trash text-danger"></a></td>
-                                <td></td>
-                                <td>{{ purchase.price }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                        {% endif %}
+                                    href="{% url 'delete_purchase' date=bill.signup.training.date.isoformat pk=purchase.pk %}"
+                                    class="ba bi-trash text-danger"></a></td>
+                                    <td></td>
+                                    <td>{{ purchase.price }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            {% endif %}
                         <tfoot class="table-group-divider">
                             <td>Zu bezahlen</td>
                             <td></td>
@@ -55,10 +68,11 @@
                 <main class="form">
                     <form method="post">
                         {% csrf_token %}
+                        <input type="hidden" name="prepaid_flights" value="{{ bill.num_prepaid_flights }}">
                         <div class="form-floating mb-3">
-                            <input type="number" min="{{ bill.to_pay }}" name="payed" class="form-control"
+                            <input type="number" min="{{ bill.to_pay }}" name="paid" class="form-control"
                                 placeholder="text"
-                                value="{% if form.payed.value %}{{ form.payed.value }}{% else %}{{ bill.to_pay }}{% endif %}">
+                                value="{% if form.paid.value %}{{ form.paid.value }}{% else %}{{ bill.to_pay }}{% endif %}">
                             <label>Bezahlt</label>
                         </div>
                         <div class="d-grid gap-2 d-sm-block">

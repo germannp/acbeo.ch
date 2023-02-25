@@ -54,13 +54,15 @@ class ExpenseCreateForm(forms.ModelForm):
 class PurchaseCrateForm(forms.ModelForm):
     item = forms.ChoiceField(
         choices=Purchase.ITEMS.choices,
-        initial=Purchase.ITEMS.REARMING_KIT,
+        initial=Purchase.ITEMS.PREPAID_FLIGHTS,
         widget=forms.widgets.RadioSelect(attrs={"class": "form-check-input"}),
     )
 
     class Meta:
-        model = Purchase  # Allow view to fill in signup
+        model = Purchase  # Allow view to fill in signup and report
         fields = ("item",)
 
     def create_purchase(self):
-        Purchase.save_item(self.instance.signup, int(self.cleaned_data["item"]))
+        Purchase.save_item(
+            self.instance.signup, self.instance.report, int(self.cleaned_data["item"])
+        )

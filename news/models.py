@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils.timezone import now
 
@@ -59,6 +60,9 @@ class Pilot(AbstractBaseUser):
     phone = models.CharField(max_length=20, validators=[validate_phone])
     date_joined = models.DateTimeField(auto_now_add=True)
     role = models.IntegerField(choices=Role.choices, default=Role.Guest)
+    prepaid_flights = models.SmallIntegerField(
+        validators=[MinValueValidator(0)], default=0
+    )
     is_active = models.BooleanField(default=True)
 
     objects = PilotManager()

@@ -88,9 +88,11 @@ class RunCreateViewTests(TestCase):
         self.assertTrue("Guest" in response_before_guest_2)
         self.assertTrue("Orga" in response_after_guest_2)
 
-    def test_pilot_who_payed_is_hidden(self):
-        Bill(signup=self.guest_2_signup, report=self.report, payed=420).save()
-        self.assertTrue(self.guest_2_signup.is_payed)
+    def test_pilot_who_paid_is_hidden(self):
+        Bill(
+            signup=self.guest_2_signup, report=self.report, prepaid_flights=0, paid=420
+        ).save()
+        self.assertTrue(self.guest_2_signup.is_paid)
 
         with self.assertNumQueries(19):
             response = self.client.get(reverse("create_run"))
@@ -98,9 +100,11 @@ class RunCreateViewTests(TestCase):
         self.assertTemplateUsed(response, "bookkeeping/create_run.html")
         self.assertNotContains(response, self.guest_2)
 
-    def test_cannot_create_run_for_pilot_who_payed(self):
-        Bill(signup=self.guest_2_signup, report=self.report, payed=420).save()
-        self.assertTrue(self.guest_2_signup.is_payed)
+    def test_cannot_create_run_for_pilot_who_paid(self):
+        Bill(
+            signup=self.guest_2_signup, report=self.report, prepaid_flights=0, paid=420
+        ).save()
+        self.assertTrue(self.guest_2_signup.is_paid)
 
         with self.assertNumQueries(28):
             response = self.client.post(
@@ -316,9 +320,11 @@ class RunUpdateViewTests(TestCase):
         self.assertTrue("Guest" in response_before_guest_2)
         self.assertTrue("Orga" in response_after_guest_2)
 
-    def test_payed_run_cannot_be_updated(self):
-        Bill(signup=self.guest_signup, report=self.report, payed=420).save()
-        self.assertTrue(self.guest_signup.is_payed)
+    def test_paid_run_cannot_be_updated(self):
+        Bill(
+            signup=self.guest_signup, report=self.report, prepaid_flights=0, paid=420
+        ).save()
+        self.assertTrue(self.guest_signup.is_paid)
 
         with self.assertNumQueries(23):
             response = self.client.post(
@@ -410,9 +416,11 @@ class RunUpdateViewTests(TestCase):
         )
         self.assertEqual(3, len(Run.objects.all()))
 
-    def test_payed_run_cannot_be_deleted(self):
-        Bill(signup=self.guest_signup, report=self.report, payed=420).save()
-        self.assertTrue(self.guest_signup.is_payed)
+    def test_paid_run_cannot_be_deleted(self):
+        Bill(
+            signup=self.guest_signup, report=self.report, prepaid_flights=0, paid=420
+        ).save()
+        self.assertTrue(self.guest_signup.is_paid)
         self.assertEqual(3, len(Run.objects.all()))
 
         with self.assertNumQueries(39):

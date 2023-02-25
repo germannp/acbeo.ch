@@ -28,7 +28,7 @@ admin.site.register(Run, RunAdmin)
 
 
 class BillAdmin(admin.ModelAdmin):
-    list_display = ("report", "signup", "payed")
+    list_display = ("report", "signup", "paid")
     ordering = ("-report", "signup__pilot")
 
 

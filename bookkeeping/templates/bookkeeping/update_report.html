@@ -11,7 +11,7 @@
     <div class="col left">
         <div class="card mb-4">
             <h5 class="card-header">Runs
-                {% if request.user.is_orga and report.training.date == today %}
+                {% if report.training.date == today %}
                 <a href="{% url 'create_run' %}" class="bi bi-plus-square"></a>
                 {% endif %}
             </h5>
@@ -32,7 +32,7 @@
                             <tr>
                                 <td>{{ forloop.counter }}</td>
                                 <td class="text-nowrap">{{ signup.pilot }}
-                                    {% if signup.is_payed %}
+                                    {% if signup.is_paid %}
                                         <i class="bi bi-check-lg"></i>
                                     {% else %}
                                         <a href="{% url 'create_bill' date=report.training.date.isoformat signup=signup.pk %}" class="bi bi-cart3"></a>
@@ -49,7 +49,7 @@
                             </tr>
                             {% endfor %}
                         </tbody>
-                        {% if request.user.is_orga and report.training.date == today %}
+                        {% if report.training.date == today %}
                         <tfoot class="table-group-divider">
                             <td></td>
                             <td></td>
@@ -73,7 +73,7 @@
                         {% csrf_token %}
                         <div class="form-floating mb-3">
                             <input type="number" min="0" name="cash_at_start" class="form-control" placeholder="text"
-                                {% if form.cash_at_start.value %}value="{{ form.cash_at_start.value }}"{% endif %}>
+                                value="{{ form.cash_at_start.value }}">
                             <label>Kassenstand vor dem Training</label>
                         </div>
                         <table class="table table-sm table-hover">

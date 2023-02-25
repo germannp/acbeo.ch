@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.dispatch import receiver
 
 
 class Report(models.Model):
@@ -19,7 +20,7 @@ class Report(models.Model):
     @property
     def revenue(self):
         bills = self.bills.all()
-        return sum(bill.payed for bill in bills)
+        return sum(bill.paid for bill in bills)
 
     @property
     def total_expenses(self):
@@ -33,10 +34,24 @@ class Report(models.Model):
             )
 
     @property
-    def num_unpayed_signups(self):
+    def num_unpaid_signups(self):
         return len(
-            [signup for signup in self.training.active_signups if signup.must_be_payed]
+            [signup for signup in self.training.active_signups if signup.must_be_paid]
         )
+
+
+class Expense(models.Model):
+    class REASONS(models.IntegerChoices):
+        GAS = 0, "Tanken"
+        PARKING = 1, "Parkkarte"
+        STREET = 2, "Kleber Axalpstrasse"
+        OTHER = 3, "Anderes (bitte angeben)"
+
+    report = models.ForeignKey(
+        Report, on_delete=models.CASCADE, related_name="expenses"
+    )
+    reason = models.CharField(max_length=50, blank=True)
+    amount = models.SmallIntegerField(validators=[MinValueValidator(0)])
 
 
 class Run(models.Model):
@@ -69,23 +84,9 @@ class Run(models.Model):
         return self.kind in (self.Kind.Bus, self.Kind.Boat)
 
     def save(self, *args, **kwargs):
-        if self.signup.is_payed:
+        if self.signup.is_paid:
             raise ValidationError(f"{self.signup.pilot} hat bereits bezahlt.")
         super().save(*args, **kwargs)
-
-
-class Expense(models.Model):
-    class REASONS(models.IntegerChoices):
-        GAS = 0, "Tanken"
-        PARKING = 1, "Parkkarte"
-        STREET = 2, "Kleber Axalpstrasse"
-        OTHER = 3, "Anderes (bitte angeben)"
-
-    report = models.ForeignKey(
-        Report, on_delete=models.CASCADE, related_name="expenses"
-    )
-    reason = models.CharField(max_length=50, blank=True)
-    amount = models.SmallIntegerField(validators=[MinValueValidator(0)])
 
 
 class Bill(models.Model):
@@ -95,13 +96,16 @@ class Bill(models.Model):
         "trainings.Signup", on_delete=models.CASCADE, related_name="bill"
     )
     report = models.ForeignKey(Report, on_delete=models.CASCADE, related_name="bills")
-    payed = models.SmallIntegerField(validators=[MinValueValidator(0)])
+    # Rather than handing money out, we add extra services to pilot.prepaid_flights,
+    # thus bill.prepaid_flights can be negative.
+    prepaid_flights = models.SmallIntegerField()
+    paid = models.SmallIntegerField(validators=[MinValueValidator(0)])
 
     class Meta:
         unique_together = (("signup", "report"),)
 
     def __str__(self):
-        return f"{self.signup.pilot} for {self.report}"
+        return f"Bill for {self.signup.pilot} on {self.signup.training}"
 
     @property
     def num_flights(self):
@@ -122,16 +126,54 @@ class Bill(models.Model):
         return self.num_services * self.PRICE_OF_FLIGHT
 
     @property
+    def num_prepaid_flights(self):
+        return min(
+            self.num_flights - self.num_services, self.signup.pilot.prepaid_flights
+        )
+
+    @property
+    def costs_prepaid_flights(self):
+        return self.num_prepaid_flights * self.PRICE_OF_FLIGHT
+
+    @property
+    def num_flights_to_pay(self):
+        return self.num_flights - self.num_services - self.num_prepaid_flights
+
+    @property
+    def costs_flights_to_pay(self):
+        assert 0 <= self.num_flights_to_pay, f"Negative flights to pay in ({self})"
+        return self.num_flights_to_pay * self.PRICE_OF_FLIGHT
+
+    @property
     def to_pay(self):
         purchases = self.signup.purchases.all()
         costs_purchases = sum(purchase.price for purchase in purchases)
-        return self.costs_flights - self.revenue_services + costs_purchases
+        return self.costs_flights_to_pay + costs_purchases
+
+
+@receiver(models.signals.pre_save, sender=Bill)
+def pay_with_prepaid_flights(sender, instance, **kwargs):
+    if not instance.prepaid_flights:
+        return
+
+    instance.signup.pilot.prepaid_flights -= instance.prepaid_flights
+    instance.signup.pilot.save()
+
+
+@receiver(models.signals.pre_delete, sender=Bill)
+def return_prepaid_flights(sender, instance, **kwargs):
+    if not instance.prepaid_flights:
+        return
+
+    instance.signup.pilot.prepaid_flights += instance.prepaid_flights
+    instance.signup.pilot.save()
 
 
 class Purchase(models.Model):
     class ITEMS(models.IntegerChoices):
-        REARMING_KIT = 0, "Patrone, Fr. 36"
-        LIFEJACKET = 1, "Schwimmweste, Fr. 80"
+        PREPAID_FLIGHTS = 0, "Abo (10 Flüge), Fr. 72"
+        REARMING_KIT = 1, "Patrone, Fr. 36"
+        LIFEJACKET = 2, "Schwimmweste, Fr. 80"
 
     DAY_PASS_DESCRIPTION = "Tagesmitgliedschaft"
     DAY_PASS_PRICE = 30
@@ -139,20 +181,34 @@ class Purchase(models.Model):
     signup = models.ForeignKey(
         "trainings.Signup", on_delete=models.CASCADE, related_name="purchases"
     )
+    report = models.ForeignKey(
+        Report, on_delete=models.CASCADE, related_name="purchases"
+    )
     description = models.CharField(max_length=50)
     price = models.SmallIntegerField(validators=[MinValueValidator(0)])
 
     @classmethod
-    def save_item(cls, signup, choice):
-        assert not signup.is_payed, "Cannot save item for payed signup."
+    def save_item(cls, signup, report, choice):
+        assert not signup.is_paid, "Cannot save item for paid signup."
+        if choice == cls.ITEMS.PREPAID_FLIGHTS:
+            signup.pilot.prepaid_flights += 10
+            signup.pilot.save()
         description, price = cls.ITEMS.choices[choice][1].split(", Fr. ")
-        cls(signup=signup, description=description, price=price).save()
+        cls(signup=signup, report=report, description=description, price=price).save()
 
     @classmethod
-    def save_day_pass(cls, signup):
-        assert not signup.is_payed, "Cannot save day pass for payed signup."
+    def save_day_pass(cls, signup, report):
+        assert not signup.is_paid, "Cannot save day pass for paid signup."
         cls(
             signup=signup,
+            report=report,
             description=cls.DAY_PASS_DESCRIPTION,
             price=cls.DAY_PASS_PRICE,
         ).save()
+
+
+@receiver(models.signals.pre_delete, sender=Purchase)
+def delete_prepaid_flights(sender, instance, **kwargs):
+    if instance.description in sender.ITEMS.PREPAID_FLIGHTS.label:
+        instance.signup.pilot.prepaid_flights -= 10
+        instance.signup.pilot.save()

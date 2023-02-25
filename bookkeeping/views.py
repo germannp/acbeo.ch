@@ -126,7 +126,7 @@ class ReportUpdateView(OrgaRequiredMixin, generic.UpdateView):
         return context
 
     def form_valid(self, form):
-        if form.instance.num_unpayed_signups:
+        if form.instance.num_unpaid_signups:
             messages.warning(
                 self.request,
                 'Achtung, es haben noch nicht alle bezahlt. <a href="javascript:history.back()">Zurück</a>.',
@@ -261,7 +261,7 @@ class RunUpdateView(OrgaRequiredMixin, generic.TemplateView):
         num_run = self.kwargs["run"] - 1
         runs = report.runs.filter(created_on=times_of_runs[num_run])
         for form, run in zip(formset, runs):
-            if run.signup.is_payed and run.kind != form.instance.kind:
+            if run.signup.is_paid and run.kind != form.instance.kind:
                 messages.warning(
                     self.request, f"{run.signup.pilot} hat bereits bezahlt."
                 )
@@ -283,7 +283,7 @@ class RunUpdateView(OrgaRequiredMixin, generic.TemplateView):
         runs = Run.objects.filter(created_on=times_of_runs[num_run])
 
         for run in runs:
-            if not run.signup.is_payed:
+            if not run.signup.is_paid:
                 continue
             messages.warning(
                 self.request,
@@ -366,7 +366,7 @@ class ExpenseUpdateView(OrgaRequiredMixin, generic.UpdateView):
 
 class BillCreateView(OrgaRequiredMixin, generic.CreateView):
     model = Bill
-    fields = ("payed",)
+    fields = ("prepaid_flights", "paid")
     template_name = "bookkeeping/create_bill.html"
 
     def get_context_data(self, **kwargs):
@@ -377,7 +377,7 @@ class BillCreateView(OrgaRequiredMixin, generic.CreateView):
         )
         report = get_object_or_404(Report, training=signup.training)
         if signup.needs_day_pass and self.request.GET.get("day_pass") != "False":
-            Purchase.save_day_pass(signup)
+            Purchase.save_day_pass(signup, report)
         prefetch_related_objects([signup], "purchases")
         bill = Bill(signup=signup, report=report)
         context["bill"] = bill
@@ -392,14 +392,14 @@ class BillCreateView(OrgaRequiredMixin, generic.CreateView):
             .select_related("bill"),
             pk=self.kwargs["signup"],
         )
-        if signup.is_payed:
+        if signup.is_paid:
             messages.warning(self.request, f"{signup.pilot} hat bereits bezahlt.")
             return HttpResponseRedirect(self.get_success_url())
 
         form.instance.signup = signup
         report = get_object_or_404(Report, training=signup.training)
         form.instance.report = report
-        if form.instance.payed < form.instance.to_pay:
+        if form.instance.paid < form.instance.to_pay:
             form.add_error(
                 None, f"{signup.pilot} muss {form.instance.to_pay} bezahlen."
             )
@@ -419,20 +419,23 @@ class PurchaseCreateView(OrgaRequiredMixin, generic.FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         signup = get_object_or_404(Signup, pk=self.kwargs["signup"])
+        get_object_or_404(Report, training=signup.training)
         context["signup"] = signup
         return context
 
     def form_valid(self, form):
-        """Fill in signup and create purchase"""
+        """Fill in signup and & report, and create purchase"""
         signup = get_object_or_404(
             Signup.objects.select_related("bill"),
             pk=self.kwargs["signup"],
         )
-        if signup.is_payed:
+        if signup.is_paid:
             messages.warning(self.request, f"{signup.pilot} hat bereits bezahlt.")
             return HttpResponseRedirect(reverse_lazy("create_report"))
 
         form.instance.signup = signup
+        report = get_object_or_404(Report, training=signup.training)
+        form.instance.report = report
         form.create_purchase()
         return super().form_valid(form)
 
@@ -447,7 +450,7 @@ class PurchaseDeleteView(OrgaRequiredMixin, generic.DeleteView):
     model = Purchase
 
     def form_valid(self, form):
-        if self.object.signup.is_payed:
+        if self.object.signup.is_paid:
             messages.warning(
                 self.request, f"{self.object.signup.pilot} hat bereits bezahlt."
             )

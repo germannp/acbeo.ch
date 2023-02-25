@@ -311,20 +311,20 @@ class SignupTests(TestCase):
         self.assertTrue(self.signup.is_active)
 
         report = Report.objects.create(training=self.training, cash_at_start=1337)
-        Bill(signup=self.signup, report=report, payed=10).save()
+        Bill(signup=self.signup, report=report, prepaid_flights=0, paid=10).save()
         self.assertFalse(self.signup.is_active)
 
-    def test_must_be_payed(self):
-        self.assertFalse(self.signup.must_be_payed)
+    def test_must_be_paid(self):
+        self.assertFalse(self.signup.must_be_paid)
 
         report = Report.objects.create(training=self.training, cash_at_start=1337)
-        for kind, must_be_payed in [
+        for kind, must_be_paid in [
             (Run.Kind.Flight, True),
             (Run.Kind.Bus, True),
             (Run.Kind.Boat, True),
             (Run.Kind.Break, False),
         ]:
-            with self.subTest(kind=kind, must_be_payed=must_be_payed):
+            with self.subTest(kind=kind, must_be_paid=must_be_paid):
                 Run.objects.all().delete()
                 Run(
                     signup=self.signup,
@@ -332,10 +332,10 @@ class SignupTests(TestCase):
                     kind=kind,
                     created_on=timezone.now(),
                 ).save()
-                self.assertEqual(self.signup.must_be_payed, must_be_payed)
+                self.assertEqual(self.signup.must_be_paid, must_be_paid)
 
-        Bill(signup=self.signup, report=report, payed=420).save()
-        self.assertFalse(self.signup.must_be_payed)
+        Bill(signup=self.signup, report=report, prepaid_flights=0, paid=420).save()
+        self.assertFalse(self.signup.must_be_paid)
 
     def test_needs_day_pass(self):
         # Guests only need a day pass after the third flight
@@ -363,24 +363,24 @@ class SignupTests(TestCase):
         self.assertTrue(signup.needs_day_pass)
 
         # Guests only need one day pass
-        Purchase.save_day_pass(signup)
+        Purchase.save_day_pass(signup, report)
         self.assertFalse(signup.needs_day_pass)
         Purchase.objects.all().delete()
 
         # Guests only need two day passes in a month
         training = Training.objects.create(date=date(2000, 9, 14))
         prev_signup = Signup.objects.create(pilot=self.guest, training=training)
-        Purchase.save_day_pass(prev_signup)
+        Purchase.save_day_pass(prev_signup, report)
         self.assertTrue(signup.needs_day_pass)
 
         training = Training.objects.create(date=date(2000, 8, 5))
         prev_signup = Signup.objects.create(pilot=self.guest, training=training)
-        Purchase.save_day_pass(prev_signup)
+        Purchase.save_day_pass(prev_signup, report)
         self.assertTrue(signup.needs_day_pass)
 
         training = Training.objects.create(date=date(2000, 9, 5))
         prev_signup = Signup.objects.create(pilot=self.guest, training=training)
-        Purchase.save_day_pass(prev_signup)
+        Purchase.save_day_pass(prev_signup, report)
         self.assertFalse(signup.needs_day_pass)
 
         # Guets only need four day passes per year
@@ -389,22 +389,22 @@ class SignupTests(TestCase):
 
         training = Training.objects.create(date=date(2000, 1, 1))
         prev_signup = Signup.objects.create(pilot=self.guest, training=training)
-        Purchase.save_day_pass(prev_signup)
+        Purchase.save_day_pass(prev_signup, report)
         self.assertTrue(signup.needs_day_pass)
 
         training = Training.objects.create(date=date(1999, 9, 15))
         prev_signup = Signup.objects.create(pilot=self.guest, training=training)
-        Purchase.save_day_pass(prev_signup)
+        Purchase.save_day_pass(prev_signup, report)
         self.assertTrue(signup.needs_day_pass)
 
         training = Training.objects.create(date=date(2000, 2, 1))
         prev_signup = Signup.objects.create(pilot=self.guest, training=training)
-        Purchase.save_day_pass(prev_signup)
+        Purchase.save_day_pass(prev_signup, report)
         self.assertFalse(signup.needs_day_pass)
 
-    def test_is_payed(self):
+    def test_is_paid(self):
         report = Report.objects.create(training=self.training, cash_at_start=1337)
-        self.assertFalse(self.signup.is_payed)
+        self.assertFalse(self.signup.is_paid)
 
-        Bill(signup=self.signup, report=report, payed=420).save()
-        self.assertTrue(self.signup.is_payed)
+        Bill(signup=self.signup, report=report, prepaid_flights=0, paid=420).save()
+        self.assertTrue(self.signup.is_paid)
