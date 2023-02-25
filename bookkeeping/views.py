@@ -413,7 +413,7 @@ class BillCreateView(OrgaRequiredMixin, generic.CreateView):
 
 
 class PurchaseCreateView(OrgaRequiredMixin, generic.FormView):
-    form_class = forms.PurchaseCrateForm
+    form_class = forms.PurchaseCreateForm
     template_name = "bookkeeping/create_purchase.html"
 
     def get_context_data(self, **kwargs):

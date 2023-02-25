@@ -51,7 +51,7 @@ class ExpenseCreateForm(forms.ModelForm):
         self.instance.reason = other_reason
 
 
-class PurchaseCrateForm(forms.ModelForm):
+class PurchaseCreateForm(forms.ModelForm):
     item = forms.ChoiceField(
         choices=Purchase.ITEMS.choices,
         initial=Purchase.ITEMS.PREPAID_FLIGHTS,
