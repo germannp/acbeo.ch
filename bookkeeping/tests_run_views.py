@@ -90,7 +90,11 @@ class RunCreateViewTests(TestCase):
 
     def test_pilot_who_paid_is_hidden(self):
         Bill(
-            signup=self.guest_2_signup, report=self.report, prepaid_flights=0, paid=420
+            signup=self.guest_2_signup,
+            report=self.report,
+            prepaid_flights=0,
+            paid=420,
+            method=Bill.METHODS.CASH,
         ).save()
         self.assertTrue(self.guest_2_signup.is_paid)
 
@@ -102,7 +106,11 @@ class RunCreateViewTests(TestCase):
 
     def test_cannot_create_run_for_pilot_who_paid(self):
         Bill(
-            signup=self.guest_2_signup, report=self.report, prepaid_flights=0, paid=420
+            signup=self.guest_2_signup,
+            report=self.report,
+            prepaid_flights=0,
+            paid=420,
+            method=Bill.METHODS.CASH,
         ).save()
         self.assertTrue(self.guest_2_signup.is_paid)
 
@@ -322,7 +330,11 @@ class RunUpdateViewTests(TestCase):
 
     def test_paid_run_cannot_be_updated(self):
         Bill(
-            signup=self.guest_signup, report=self.report, prepaid_flights=0, paid=420
+            signup=self.guest_signup,
+            report=self.report,
+            prepaid_flights=0,
+            paid=420,
+            method=Bill.METHODS.CASH,
         ).save()
         self.assertTrue(self.guest_signup.is_paid)
 
@@ -418,7 +430,11 @@ class RunUpdateViewTests(TestCase):
 
     def test_paid_run_cannot_be_deleted(self):
         Bill(
-            signup=self.guest_signup, report=self.report, prepaid_flights=0, paid=420
+            signup=self.guest_signup,
+            report=self.report,
+            prepaid_flights=0,
+            paid=420,
+            method=Bill.METHODS.CASH,
         ).save()
         self.assertTrue(self.guest_signup.is_paid)
         self.assertEqual(3, len(Run.objects.all()))

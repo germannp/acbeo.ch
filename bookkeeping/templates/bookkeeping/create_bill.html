@@ -69,11 +69,22 @@
                     <form method="post">
                         {% csrf_token %}
                         <input type="hidden" name="prepaid_flights" value="{{ bill.num_prepaid_flights }}">
+                        <div class="mb-3">
+                            <label>Zahlungsart</label>
+                            {% for method in form.method %}
+                            <div class="form-check">
+                                {{ method.tag }}
+                                <label class="form-check-label" for="{{ method.id_for_label }}">
+                                    {{ method.choice_label }}
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
                         <div class="form-floating mb-3">
                             <input type="number" min="{{ bill.to_pay }}" name="paid" class="form-control"
                                 placeholder="text"
                                 value="{% if form.paid.value %}{{ form.paid.value }}{% else %}{{ bill.to_pay }}{% endif %}">
-                            <label>Bezahlt</label>
+                            <label>Betrag</label>
                         </div>
                         <div class="d-grid gap-2 d-sm-block">
                             <a href="{% url 'create_purchase' date=bill.signup.training.date.isoformat signup=bill.signup.pk %}"

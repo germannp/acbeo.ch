@@ -18,9 +18,14 @@ class Report(models.Model):
         return f"{self.training}"
 
     @property
-    def revenue(self):
+    def cash_revenue(self):
         bills = self.bills.all()
-        return sum(bill.paid for bill in bills)
+        return sum(bill.paid for bill in bills if bill.was_paid_in_cash)
+
+    @property
+    def other_revenue(self):
+        bills = self.bills.all()
+        return sum(bill.paid for bill in bills if not bill.was_paid_in_cash)
 
     @property
     def total_expenses(self):
@@ -30,7 +35,7 @@ class Report(models.Model):
     def difference(self):
         if self.cash_at_end:
             return self.cash_at_end - (
-                self.cash_at_start + self.revenue - self.total_expenses
+                self.cash_at_start + self.cash_revenue - self.total_expenses
             )
 
     @property
@@ -92,6 +97,10 @@ class Run(models.Model):
 class Bill(models.Model):
     PRICE_OF_FLIGHT = 9
 
+    class METHODS(models.IntegerChoices):
+        CASH = 0, "Bar"
+        TWINT = 1, "TWINT"
+
     signup = models.OneToOneField(
         "trainings.Signup", on_delete=models.CASCADE, related_name="bill"
     )
@@ -100,6 +109,7 @@ class Bill(models.Model):
     # thus bill.prepaid_flights can be negative.
     prepaid_flights = models.SmallIntegerField()
     paid = models.SmallIntegerField(validators=[MinValueValidator(0)])
+    method = models.SmallIntegerField(choices=METHODS.choices)
 
     class Meta:
         unique_together = (("signup", "report"),)
@@ -149,6 +159,10 @@ class Bill(models.Model):
         purchases = self.signup.purchases.all()
         costs_purchases = sum(purchase.price for purchase in purchases)
         return self.costs_flights_to_pay + costs_purchases
+
+    @property
+    def was_paid_in_cash(self):
+        return self.method == self.METHODS.CASH
 
 
 @receiver(models.signals.pre_save, sender=Bill)

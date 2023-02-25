@@ -78,7 +78,13 @@ class PurchaseCreateViewTests(TestCase):
         )
 
     def test_cannot_create_purchase_for_paid_signup(self):
-        Bill(signup=self.signup, report=self.report, prepaid_flights=0, paid=42).save()
+        Bill(
+            signup=self.signup,
+            report=self.report,
+            prepaid_flights=0,
+            paid=42,
+            method=Bill.METHODS.CASH,
+        ).save()
         with self.assertNumQueries(23):
             response = self.client.post(
                 reverse(
@@ -195,7 +201,13 @@ class PurchaseDeleteViewTests(TestCase):
         self.assertEqual(1, len(Purchase.objects.all()))
 
     def test_cannot_delete_purchase_for_paid_signup(self):
-        Bill(signup=self.signup, report=self.report, prepaid_flights=0, paid=42).save()
+        Bill(
+            signup=self.signup,
+            report=self.report,
+            prepaid_flights=0,
+            paid=42,
+            method=Bill.METHODS.CASH,
+        ).save()
         with self.assertNumQueries(25):
             response = self.client.post(
                 reverse(

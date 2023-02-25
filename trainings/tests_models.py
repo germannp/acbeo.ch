@@ -176,7 +176,9 @@ class SignupTests(TestCase):
         self.guest = get_user_model().objects.create(
             email="guest@example.com", role=get_user_model().Role.Guest
         )
-        self.guest_signup = Signup.objects.create(pilot=self.guest, training=self.training)
+        self.guest_signup = Signup.objects.create(
+            pilot=self.guest, training=self.training
+        )
 
     def test_member_required_for_priority(self):
         self.assertTrue(self.signup.has_priority)
@@ -311,7 +313,13 @@ class SignupTests(TestCase):
         self.assertTrue(self.signup.is_active)
 
         report = Report.objects.create(training=self.training, cash_at_start=1337)
-        Bill(signup=self.signup, report=report, prepaid_flights=0, paid=10).save()
+        Bill(
+            signup=self.signup,
+            report=report,
+            prepaid_flights=0,
+            paid=10,
+            method=Bill.METHODS.CASH,
+        ).save()
         self.assertFalse(self.signup.is_active)
 
     def test_must_be_paid(self):
@@ -334,7 +342,13 @@ class SignupTests(TestCase):
                 ).save()
                 self.assertEqual(self.signup.must_be_paid, must_be_paid)
 
-        Bill(signup=self.signup, report=report, prepaid_flights=0, paid=420).save()
+        Bill(
+            signup=self.signup,
+            report=report,
+            prepaid_flights=0,
+            paid=420,
+            method=Bill.METHODS.CASH,
+        ).save()
         self.assertFalse(self.signup.must_be_paid)
 
     def test_needs_day_pass(self):
@@ -406,5 +420,11 @@ class SignupTests(TestCase):
         report = Report.objects.create(training=self.training, cash_at_start=1337)
         self.assertFalse(self.signup.is_paid)
 
-        Bill(signup=self.signup, report=report, prepaid_flights=0, paid=420).save()
+        Bill(
+            signup=self.signup,
+            report=report,
+            prepaid_flights=0,
+            paid=420,
+            method=Bill.METHODS.CASH,
+        ).save()
         self.assertTrue(self.signup.is_paid)

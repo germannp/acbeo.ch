@@ -365,8 +365,7 @@ class ExpenseUpdateView(OrgaRequiredMixin, generic.UpdateView):
 
 
 class BillCreateView(OrgaRequiredMixin, generic.CreateView):
-    model = Bill
-    fields = ("prepaid_flights", "paid")
+    form_class = forms.BillCreateForm
     template_name = "bookkeeping/create_bill.html"
 
     def get_context_data(self, **kwargs):

@@ -200,7 +200,11 @@ class BillCreateViewTests(TestCase):
                     "create_bill",
                     kwargs={"date": TODAY, "signup": self.guest_signup.pk},
                 ),
-                data={"paid": to_pay - 1, "prepaid_flights": 0},
+                data={
+                    "prepaid_flights": 0,
+                    "paid": to_pay - 1,
+                    "method": Bill.METHODS.CASH,
+                },
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
@@ -210,13 +214,18 @@ class BillCreateViewTests(TestCase):
 
     def test_create_bill(self):
         to_pay = Bill(signup=self.guest_signup, report=self.report).to_pay
+        method = Bill.METHODS.TWINT
         with self.assertNumQueries(30):
             response = self.client.post(
                 reverse(
                     "create_bill",
                     kwargs={"date": TODAY, "signup": self.guest_signup.pk},
                 ),
-                data={"paid": to_pay, "prepaid_flights": 0},
+                data={
+                    "prepaid_flights": 0,
+                    "paid": to_pay,
+                    "method": method,
+                },
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
@@ -225,10 +234,15 @@ class BillCreateViewTests(TestCase):
         self.assertEqual(1, len(Bill.objects.all()))
         created_bill = Bill.objects.first()
         self.assertEqual(to_pay, created_bill.paid)
+        self.assertEqual(method, created_bill.method)
 
     def test_cannot_pay_twice(self):
         Bill(
-            signup=self.guest_signup, report=self.report, prepaid_flights=0, paid=42
+            signup=self.guest_signup,
+            report=self.report,
+            prepaid_flights=0,
+            paid=42,
+            method=Bill.METHODS.CASH,
         ).save()
         with self.assertNumQueries(28):
             response = self.client.post(
@@ -236,7 +250,7 @@ class BillCreateViewTests(TestCase):
                     "create_bill",
                     kwargs={"date": TODAY, "signup": self.guest_signup.pk},
                 ),
-                data={"paid": 420, "prepaid_flights": 0},
+                data={"prepaid_flights": 0, "paid": 420, "method": Bill.METHODS.CASH},
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
