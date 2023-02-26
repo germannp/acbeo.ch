@@ -33,7 +33,7 @@
                                 <td>{{ forloop.counter }}</td>
                                 <td class="text-nowrap">{{ signup.pilot }}
                                     {% if signup.is_paid %}
-                                        <i class="bi bi-check-lg"></i>
+                                        <a href="{% url 'update_bill' date=report.training.date.isoformat pk=signup.bill.pk %}" class="bi bi-pencil-square"></a>
                                     {% else %}
                                         <a href="{% url 'create_bill' date=report.training.date.isoformat signup=signup.pk %}" class="bi bi-cart3"></a>
                                     {% endif %}
@@ -85,7 +85,7 @@
                                 {% for expense in report.expenses.all %}
                                 <tr>
                                     <td>{{ expense.reason }} 
-                                        <a href="{% url 'update_expense' date=report.training.date.isoformat expense=expense.pk %}" 
+                                        <a href="{% url 'update_expense' date=report.training.date.isoformat pk=expense.pk %}" 
                                             class="bi bi-pencil-square"></a></td>
                                     <td>- {{ expense.amount }}</td>
                                 </tr>

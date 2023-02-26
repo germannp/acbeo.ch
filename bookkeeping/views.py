@@ -342,9 +342,6 @@ class ExpenseUpdateView(OrgaRequiredMixin, generic.UpdateView):
     fields = ("reason", "amount")
     template_name = "bookkeeping/update_expense.html"
 
-    def get_object(self):
-        return get_object_or_404(Expense, pk=self.kwargs["expense"])
-
     def post(self, request, *args, **kwargs):
         if "delete" in request.POST:
             self.get_object().delete()
@@ -365,7 +362,7 @@ class ExpenseUpdateView(OrgaRequiredMixin, generic.UpdateView):
 
 
 class BillCreateView(OrgaRequiredMixin, generic.CreateView):
-    form_class = forms.BillCreateForm
+    form_class = forms.BillForm
     template_name = "bookkeeping/create_bill.html"
 
     def get_context_data(self, **kwargs):
@@ -405,6 +402,40 @@ class BillCreateView(OrgaRequiredMixin, generic.CreateView):
             return super().form_invalid(form)
 
         messages.success(self.request, f"Bezahlung von {signup.pilot} gespeichert.")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy("update_report", kwargs={"date": self.kwargs["date"]})
+
+
+class BillUpdateView(OrgaRequiredMixin, generic.UpdateView):
+    form_class = forms.BillForm
+    template_name = "bookkeeping/update_bill.html"
+
+    def get_object(self):
+        return get_object_or_404(
+            Bill.objects.select_related("signup")
+            .prefetch_related("signup__runs")
+            .prefetch_related("signup__purchases"),
+            pk=self.kwargs["pk"],
+        )
+
+    def post(self, request, *args, **kwargs):
+        if "delete" in request.POST:
+            self.get_object().delete()
+            messages.success(request, "Abrechnung gelöscht.")
+            return HttpResponseRedirect(self.get_success_url())
+
+        return super().post(self, request, *args, **kwargs)
+
+    def form_valid(self, form):
+        if form.instance.paid < form.instance.to_pay:
+            form.add_error(
+                None, f"{form.instance.signup.pilot} muss {form.instance.to_pay} bezahlen."
+            )
+            return super().form_invalid(form)
+
+        messages.success(self.request, f"Bezahlung von {form.instance.signup.pilot} gespeichert.")
         return super().form_valid(form)
 
     def get_success_url(self):

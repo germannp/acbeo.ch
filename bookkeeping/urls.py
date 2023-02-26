@@ -19,12 +19,17 @@ urlpatterns = [
         name="create_bill",
     ),
     path(
+        "<date:date>/bezahlung-bearbeiten/<int:pk>/",
+        views.BillUpdateView.as_view(),
+        name="update_bill",
+    ),
+    path(
         "<date:date>/ausgabe-erfassen/",
         views.ExpenseCreateView.as_view(),
         name="create_expense",
     ),
     path(
-        "<date:date>/ausgabe-bearbeiten/<int:expense>/",
+        "<date:date>/ausgabe-bearbeiten/<int:pk>/",
         views.ExpenseUpdateView.as_view(),
         name="update_expense",
     ),

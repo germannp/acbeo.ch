@@ -134,9 +134,7 @@ class ExpenseUpdateViewTests(TestCase):
         self.client.force_login(guest)
         with self.assertNumQueries(2):
             response = self.client.get(
-                reverse(
-                    "update_expense", kwargs={"date": TODAY, "expense": self.expense.pk}
-                )
+                reverse("update_expense", kwargs={"date": TODAY, "pk": self.expense.pk})
             )
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
         self.assertTemplateUsed(response, "403.html")
@@ -144,9 +142,7 @@ class ExpenseUpdateViewTests(TestCase):
     def test_date_shown_and_form_is_prefilled(self):
         with self.assertNumQueries(4):
             response = self.client.get(
-                reverse(
-                    "update_expense", kwargs={"date": TODAY, "expense": self.expense.pk}
-                )
+                reverse("update_expense", kwargs={"date": TODAY, "pk": self.expense.pk})
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/update_expense.html")
@@ -160,7 +156,7 @@ class ExpenseUpdateViewTests(TestCase):
         with self.assertNumQueries(4):
             response = self.client.post(
                 reverse(
-                    "update_expense", kwargs={"date": TODAY, "expense": self.expense.pk}
+                    "update_expense", kwargs={"date": TODAY, "pk": self.expense.pk}
                 ),
                 data={"reason": new_reason, "amount": new_amount},
                 follow=True,
@@ -179,7 +175,7 @@ class ExpenseUpdateViewTests(TestCase):
         with self.assertNumQueries(15):
             response = self.client.post(
                 reverse(
-                    "update_expense", kwargs={"date": TODAY, "expense": self.expense.pk}
+                    "update_expense", kwargs={"date": TODAY, "pk": self.expense.pk}
                 ),
                 data={"reason": new_reason, "amount": new_amount},
                 follow=True,
@@ -198,7 +194,7 @@ class ExpenseUpdateViewTests(TestCase):
         with self.assertNumQueries(15):
             response = self.client.post(
                 reverse(
-                    "update_expense", kwargs={"date": TODAY, "expense": self.expense.pk}
+                    "update_expense", kwargs={"date": TODAY, "pk": self.expense.pk}
                 ),
                 data={"reason": "Petrol", "amount": 24, "delete": ""},
                 follow=True,
@@ -212,8 +208,7 @@ class ExpenseUpdateViewTests(TestCase):
         with self.assertNumQueries(4):
             response = self.client.get(
                 reverse(
-                    "update_expense",
-                    kwargs={"date": YESTERDAY, "expense": self.expense.pk},
+                    "update_expense", kwargs={"date": YESTERDAY, "pk": self.expense.pk}
                 )
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)

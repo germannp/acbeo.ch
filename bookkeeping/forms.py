@@ -50,7 +50,7 @@ RunFormset = modelformset_factory(
 )
 
 
-class BillCreateForm(forms.ModelForm):
+class BillForm(forms.ModelForm):
     method = forms.ChoiceField(
         choices=Bill.METHODS.choices,
         initial=Bill.METHODS.CASH,

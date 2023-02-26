@@ -349,13 +349,13 @@ class ReportUpdateViewTests(TestCase):
         self.assertContains(response, self.report.remarks)
 
     def test_links_to_pay_shown(self):
-        Bill(
+        bill = Bill.objects.create(
             signup=self.orga_signup,
             report=self.report,
             prepaid_flights=0,
             paid=420,
             method=Bill.METHODS.CASH,
-        ).save()
+        )
         with self.assertNumQueries(20):
             response = self.client.get(reverse("update_report", kwargs={"date": TODAY}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
@@ -366,11 +366,9 @@ class ReportUpdateViewTests(TestCase):
                 "create_bill", kwargs={"date": TODAY, "signup": self.guest_signup.pk}
             ),
         )
-        self.assertNotContains(
+        self.assertContains(
             response,
-            reverse(
-                "create_bill", kwargs={"date": TODAY, "signup": self.orga_signup.pk}
-            ),
+            reverse("update_bill", kwargs={"date": TODAY, "pk": bill.pk}),
         )
 
     def test_revenue_shown(self):
@@ -397,7 +395,7 @@ class ReportUpdateViewTests(TestCase):
         self.assertContains(response, expense.amount)
         self.assertContains(
             response,
-            reverse("update_expense", kwargs={"date": TODAY, "expense": expense.pk}),
+            reverse("update_expense", kwargs={"date": TODAY, "pk": expense.pk}),
         )
 
     def test_only_positive_integers_allowed_for_cash(self):
