@@ -2,6 +2,7 @@ from datetime import date, timedelta
 
 from django.db.models import prefetch_related_objects
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
@@ -14,45 +15,49 @@ from trainings.views import OrgaRequiredMixin
 from trainings.models import Signup, Training
 
 
-class ReportListView(OrgaRequiredMixin, generic.ListView):
-    # I was not able to get this to work as a YearArchiveView, see
-    # https://stackoverflow.com/questions/74500864.
-    template_name = "bookkeeping/list_reports.html"
+class YearArchiveView(generic.ListView):
+    """
+    Django's generic.YearArchiveView doesn't work with dates in related objects, see
+    https://stackoverflow.com/questions/74500864.
+    """
+
+    filters = {}
 
     def get_queryset(self):
+        """Get objects of the given year, default to most recent year"""
         if not (year := self.kwargs.get("year")):
-            years = Report.objects.dates("training__date", "year")
+            years = self.model.objects.filter(**self.filters).dates(
+                self.date_field, "year"
+            )
             if not years:
-                raise Http404("Noch keine Berichte vorhanden.")
+                raise Http404(f"Noch keine {self.name} vorhanden.")
 
             year = max([date.year for date in years])
             self.kwargs["year"] = year
+
         since = date(year=year, month=1, day=1)
         until = date(year=year + 1, month=1, day=1)
-        reports = (
-            Report.objects.filter(training__date__gte=since, training__date__lt=until)
-            .select_related("training")
-            .prefetch_related("training__signups")
-            .prefetch_related("bills")
-            .prefetch_related("expenses")
+        assert self.date_field.endswith("__date")
+        queryset = (
+            self.model.objects.filter(**self.filters)
+            .filter(
+                **{self.date_field + "__gte": since, self.date_field + "__lt": until}
+            )
+            .select_related(self.date_field[:-6])
         )
-        if not reports:
-            raise Http404(f"Keine Berichte im Jahr {year}.")
+        if not queryset:
+            raise Http404(f"Keine {self.name} im Jahr {year}.")
 
-        for previous_report, report in zip(reports, reports[1:]):
-            if previous_report.cash_at_end is None:
-                report.difference_between_reports = "❓"
-            else:
-                report.difference_between_reports = (
-                    report.cash_at_start - previous_report.cash_at_end
-                )
-        return reports
+        return queryset
 
     def get_context_data(self, **kwargs):
+        """Add previous and next year if there is objects in them"""
         context = super().get_context_data(**kwargs)
         year = self.kwargs["year"]
         context["year"] = year
-        years = [date.year for date in Report.objects.dates("training__date", "year")]
+        years = [
+            date.year for date in self.model.objects.dates(self.date_field, "year")
+        ]
         context["previous_year"] = next(
             (
                 previous_year
@@ -65,6 +70,29 @@ class ReportListView(OrgaRequiredMixin, generic.ListView):
             (next_year for next_year in years if year < next_year), None
         )
         return context
+
+
+class ReportListView(OrgaRequiredMixin, YearArchiveView):
+    model = Report
+    name = "Berichte"
+    date_field = "training__date"
+    template_name = "bookkeeping/list_reports.html"
+
+    def get_queryset(self):
+        """Prefetch & compute cash difference between consecutive reports"""
+        queryset = super().get_queryset()
+        prefetch_related_objects(queryset, "training__signups")
+        prefetch_related_objects(queryset, "bills")
+        prefetch_related_objects(queryset, "expenses")
+
+        for previous_report, report in zip(queryset, queryset[1:]):
+            if previous_report.cash_at_end is None:
+                report.difference_between_reports = "❓"
+            else:
+                report.difference_between_reports = (
+                    report.cash_at_start - previous_report.cash_at_end
+                )
+        return queryset
 
 
 class ReportCreateView(OrgaRequiredMixin, generic.CreateView):
@@ -361,6 +389,28 @@ class ExpenseUpdateView(OrgaRequiredMixin, generic.UpdateView):
         return reverse_lazy("update_report", kwargs={"date": self.kwargs["date"]})
 
 
+class BillListView(LoginRequiredMixin, YearArchiveView):
+    model = Bill
+    name = "Rechnungen"
+    date_field = "signup__training__date"
+    template_name = "bookkeeping/list_bills.html"
+
+    @property
+    def filters(self):
+        return {"signup__pilot": self.request.user}
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        prefetch_related_objects(queryset, "signup__runs")
+        prefetch_related_objects(queryset, "signup__purchases")
+
+        for bill in queryset:
+            bill.purchases = ", ".join(
+                [purchase.description for purchase in bill.signup.purchases.all()]
+            )
+        return queryset
+
+
 class BillCreateView(OrgaRequiredMixin, generic.CreateView):
     form_class = forms.BillForm
     template_name = "bookkeeping/create_bill.html"
@@ -431,11 +481,14 @@ class BillUpdateView(OrgaRequiredMixin, generic.UpdateView):
     def form_valid(self, form):
         if form.instance.paid < form.instance.to_pay:
             form.add_error(
-                None, f"{form.instance.signup.pilot} muss {form.instance.to_pay} bezahlen."
+                None,
+                f"{form.instance.signup.pilot} muss {form.instance.to_pay} bezahlen.",
             )
             return super().form_invalid(form)
 
-        messages.success(self.request, f"Bezahlung von {form.instance.signup.pilot} gespeichert.")
+        messages.success(
+            self.request, f"Bezahlung von {form.instance.signup.pilot} gespeichert."
+        )
         return super().form_valid(form)
 
     def get_success_url(self):

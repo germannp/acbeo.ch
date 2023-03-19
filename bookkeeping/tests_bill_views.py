@@ -17,6 +17,147 @@ YESTERDAY = TODAY - timedelta(days=1)
 TOMORROW = TODAY + timedelta(days=1)
 
 
+class BillListViewTests(TestCase):
+    def setUp(self):
+        self.guest = get_user_model().objects.create(
+            email="guest@example.com", prepaid_flights=1337
+        )
+        self.client.force_login(self.guest)
+
+        training = Training.objects.create(date=TODAY)
+        signup = Signup.objects.create(pilot=self.guest, training=training)
+        report = Report.objects.create(training=training, cash_at_start=666)
+        self.purchase = Purchase.save_day_pass(signup, report)
+        self.bill = Bill.objects.create(
+            signup=signup,
+            report=report,
+            prepaid_flights=1312,
+            paid=420,
+            method=Bill.METHODS.CASH,
+        )
+
+        other_guest = get_user_model().objects.create(email="other_guest@example.com")
+        other_signup = Signup.objects.create(pilot=other_guest, training=training)
+        self.other_bill = Bill.objects.create(
+            signup=other_signup,
+            report=report,
+            prepaid_flights=0,
+            paid=666,
+            method=Bill.METHODS.CASH,
+        )
+
+    def test_login_required(self):
+        with self.assertNumQueries(3):
+            response = self.client.get(reverse("home"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "base.html")
+        self.assertContains(response, reverse("bills"))
+
+        self.client.logout()
+        with self.assertNumQueries(1):
+            response = self.client.get(reverse("home"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "base.html")
+        self.assertNotContains(response, reverse("bills"))
+
+        with self.assertNumQueries(0):
+            response = self.client.get(reverse("bills"), follow=True)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "news/login.html")
+
+    def test_pagination_by_year(self):
+        with self.assertNumQueries(7):
+            response = self.client.get(reverse("bills"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/list_bills.html")
+        self.assertNotContains(
+            response, reverse("bills", kwargs={"year": TODAY.year + 1})
+        )
+        self.assertNotContains(
+            response, reverse("bills", kwargs={"year": TODAY.year - 1})
+        )
+
+        for date in [
+            YESTERDAY,
+            TODAY - timedelta(days=365),
+            TODAY - 2 * timedelta(days=365),
+        ]:
+            training = Training.objects.create(date=date)
+            signup = Signup.objects.create(pilot=self.guest, training=training)
+            report = Report.objects.create(training=training, cash_at_start=1337)
+            Bill(
+                signup=signup,
+                report=report,
+                prepaid_flights=0,
+                paid=420,
+                method=Bill.METHODS.CASH,
+            ).save()
+
+        with self.assertNumQueries(7):
+            response = self.client.get(reverse("bills"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/list_bills.html")
+        self.assertContains(response, reverse("bills", kwargs={"year": TODAY.year - 1}))
+        self.assertNotContains(
+            response, reverse("bills", kwargs={"year": TODAY.year - 2})
+        )
+
+        with self.assertNumQueries(6):
+            response = self.client.get(
+                reverse("bills", kwargs={"year": TODAY.year - 1})
+            )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/list_bills.html")
+        self.assertContains(response, reverse("bills", kwargs={"year": TODAY.year}))
+        self.assertContains(response, reverse("bills", kwargs={"year": TODAY.year - 2}))
+
+        with self.assertNumQueries(6):
+            response = self.client.get(
+                reverse("bills", kwargs={"year": TODAY.year - 2})
+            )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/list_bills.html")
+        self.assertNotContains(response, reverse("bills", kwargs={"year": TODAY.year}))
+        self.assertContains(response, reverse("bills", kwargs={"year": TODAY.year - 1}))
+        self.assertNotContains(
+            response, reverse("bills", kwargs={"year": TODAY.year - 3})
+        )
+
+    def test_only_logged_in_pilots_bills_shown(self):
+        with self.assertNumQueries(7):
+            response = self.client.get(reverse("bills"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/list_bills.html")
+        self.assertContains(response, self.bill.paid)
+        self.assertNotContains(response, self.other_bill.paid)
+
+    def test_purchase_shown(self):
+        with self.assertNumQueries(7):
+            response = self.client.get(reverse("bills"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/list_bills.html")
+        self.assertContains(response, self.purchase.description)
+
+    def test_prepaid_flights_shown(self):
+        with self.assertNumQueries(7):
+            response = self.client.get(reverse("bills"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/list_bills.html")
+        self.assertContains(response, self.guest.prepaid_flights)
+
+    def test_no_bills_in_year_404(self):
+        with self.assertNumQueries(3):
+            response = self.client.get(reverse("bills", kwargs={"year": 1984}))
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
+        self.assertTemplateUsed(response, "404.html")
+
+        self.bill.delete()
+        with self.assertNumQueries(3):
+            response = self.client.get(reverse("bills"))
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
+        self.assertTemplateUsed(response, "404.html")
+
+
 class BillCreateViewTests(TestCase):
     def setUp(self):
         orga = get_user_model().objects.create(

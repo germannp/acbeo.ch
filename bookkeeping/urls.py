@@ -43,4 +43,8 @@ urlpatterns = [
         views.PurchaseDeleteView.as_view(),
         name="delete_purchase",
     ),
+    path("meine-rechnungen/", views.BillListView.as_view(), name="bills"),
+    path(
+        "meine-rechnungen/<int:year>/", views.BillListView.as_view(), name="bills"
+    ),
 ]

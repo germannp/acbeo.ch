@@ -208,17 +208,19 @@ class Purchase(models.Model):
             signup.pilot.prepaid_flights += 10
             signup.pilot.save()
         description, price = cls.ITEMS.choices[choice][1].split(", Fr. ")
-        cls(signup=signup, report=report, description=description, price=price).save()
+        return cls.objects.create(
+            signup=signup, report=report, description=description, price=price
+        )
 
     @classmethod
     def save_day_pass(cls, signup, report):
         assert not signup.is_paid, "Cannot save day pass for paid signup."
-        cls(
+        return cls.objects.create(
             signup=signup,
             report=report,
             description=cls.DAY_PASS_DESCRIPTION,
             price=cls.DAY_PASS_PRICE,
-        ).save()
+        )
 
 
 @receiver(models.signals.post_delete, sender=Purchase)

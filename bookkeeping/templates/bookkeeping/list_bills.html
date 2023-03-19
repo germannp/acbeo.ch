@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Meine Rechnungen{% endblock title %}
+
+{% block headline %}Meine Rechnungen{% endblock headline %}
+
+{% block content %}
+
+<div class="row mt-2">
+
+    <div class="col-md-12 left">
+    
+        <div class="card mb-4">
+            <h5 class="card-header">Jahr {{ year }}</h5>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Datum</th>
+                                <th scope="col">Flüge</th>
+                                <th scope="col">Dienste</th>
+                                <th scope="col">Mit Abo bezahlt</th>
+                                <th scope="col">Einkäufe</th>
+                                <th scope="col">Bezahlt</th>
+                            </tr>
+                        </thead>
+                        <tbody class="table-group-divider">
+                            {% for bill in bill_list %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td class="text-nowrap">{{ bill.signup.training.date | date:"D., j. M." }}</td>
+                                <td>{{ bill.num_flights }}</td>
+                                <td>{{ bill.num_services }}</td>
+                                <td>{{ bill.prepaid_flights }}</td>
+                                <td>{{ bill.purchases }}</td>
+                                <td>{{ bill.paid }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if request.user.prepaid_flights %}
+                Du hast noch {{ request.user.prepaid_flights }} Flüge mit Abos bezahlt.
+                {% else %}
+                Du hast im Moment keine Flüge mit Abos bezahlt.
+                {% endif %}
+            </div>
+        </div>
+
+        {% if previous_year or next_year %}
+        <ul class="pagination justify-content-center">
+            <div class="btn-group">
+                {% if previous_year %}
+                <a href="{% url 'bills' year=previous_year %}" type="button" class="btn btn-primary"><i
+                        class="bi bi-chevron-double-left"></i></a>
+                {% endif %}
+                {% if next_year %}
+                <a href="{% url 'bills' %}" type="button" class="btn btn-primary">Aktuelles Jahr</a>
+                <a href="{% url 'bills' year=next_year %}" type="button" class="btn btn-primary"><i
+                        class="bi bi-chevron-double-right"></i></a>
+                {% endif %}
+            </div>
+        </ul>
+        {% endif %}
+
+    </div>
+</div>
+
+{% endblock content %}

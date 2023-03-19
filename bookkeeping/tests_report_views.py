@@ -67,7 +67,7 @@ class ReportListViewTests(TestCase):
             response = self.client.get(reverse("home"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "base.html")
-        self.assertNotContains(response, reverse("reports"))
+        self.assertNotContains(response, reverse("reports") + '"')
 
     def test_pagination_by_year(self):
         with self.assertNumQueries(17):
