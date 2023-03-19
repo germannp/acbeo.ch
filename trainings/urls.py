@@ -36,7 +36,7 @@ urlpatterns = [
         views.EmergencyMailView.as_view(),
         name="emergency_mail",
     ),
-    path("meine-trainings/", views.SignupListView.as_view(), name="my_signups"),
+    path("meine-trainings/", views.SignupListView.as_view(), name="signups"),
     path("einschreiben/", views.SignupCreateView.as_view(), name="signup"),
     path("<date:date>/einschreiben/", views.SignupCreateView.as_view(), name="signup"),
     path(

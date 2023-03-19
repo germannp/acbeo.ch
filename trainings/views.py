@@ -102,29 +102,25 @@ class EmergencyMailView(OrgaRequiredMixin, SuccessMessageMixin, generic.UpdateVi
 
 
 class SignupListView(LoginRequiredMixin, generic.ListView):
-    context_object_name = "future_and_past_signups"
-    template_name = "trainings/list_my_signups.html"
+    template_name = "trainings/list_signups.html"
 
     def get_queryset(self):
         today = date.today()
-        future_signups = (
-            Signup.objects.filter(pilot=self.request.user)
-            .filter(training__date__gte=today)
+        queryset = (
+            Signup.objects.filter(pilot=self.request.user, training__date__gte=today)
             .select_related("training")
             .prefetch_related("training__signups__pilot")
         )
-        for signup in future_signups:
+        for signup in queryset:
             signup.training.select_signups()
         # After selecting signups, they have to be refreshed from the DB
-        signups = (
-            Signup.objects.filter(pilot=self.request.user)
+        queryset = (
+            Signup.objects.filter(pilot=self.request.user, training__date__gte=today)
             .order_by("training__date")
             .select_related("training")
             .prefetch_related("training__signups")
         )
-        future_signups = [signup for signup in signups if signup.training.date >= today]
-        past_signups = [signup for signup in signups if signup.training.date < today][::-1]
-        return {"future": future_signups, "past": past_signups}
+        return queryset
 
 
 class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateView):
@@ -207,7 +203,7 @@ class SignupUpdateView(LoginRequiredMixin, generic.UpdateView):
         return signup
 
     def get_success_url(self):
-        if (success_url := self.request.GET.get("next")) == reverse_lazy("my_signups"):
+        if (success_url := self.request.GET.get("next")) == reverse_lazy("signups"):
             return success_url
 
         success_url = reverse_lazy("trainings")
