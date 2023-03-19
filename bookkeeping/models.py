@@ -165,7 +165,7 @@ class Bill(models.Model):
         return self.method == self.METHODS.CASH
 
 
-@receiver(models.signals.pre_save, sender=Bill)
+@receiver(models.signals.post_save, sender=Bill)
 def pay_with_prepaid_flights(sender, instance, **kwargs):
     if not instance.prepaid_flights:
         return
@@ -174,7 +174,7 @@ def pay_with_prepaid_flights(sender, instance, **kwargs):
     instance.signup.pilot.save()
 
 
-@receiver(models.signals.pre_delete, sender=Bill)
+@receiver(models.signals.post_delete, sender=Bill)
 def return_prepaid_flights(sender, instance, **kwargs):
     if not instance.prepaid_flights:
         return
@@ -221,7 +221,7 @@ class Purchase(models.Model):
         ).save()
 
 
-@receiver(models.signals.pre_delete, sender=Purchase)
+@receiver(models.signals.post_delete, sender=Purchase)
 def delete_prepaid_flights(sender, instance, **kwargs):
     if instance.description in sender.ITEMS.PREPAID_FLIGHTS.label:
         instance.signup.pilot.prepaid_flights -= 10
