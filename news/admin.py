@@ -31,6 +31,7 @@ class PilotAdmin(BaseUserAdmin):
         "last_name",
         "phone",
         "date_joined",
+        "prepaid_flights",
         "role",
         "is_active",
     )
@@ -50,6 +51,7 @@ class PilotAdmin(BaseUserAdmin):
                     "last_name",
                     "email",
                     "phone",
+                    "prepaid_flights",
                     "role",
                     "is_active",
                     "password1",
@@ -69,6 +71,7 @@ class PilotAdmin(BaseUserAdmin):
                     "last_name",
                     "email",
                     "phone",
+                    "prepaid_flights",
                     "role",
                     "is_active",
                     "password",
