@@ -36,8 +36,8 @@ class BillListViewTests(TestCase):
             method=Bill.METHODS.CASH,
         )
 
-        other_guest = get_user_model().objects.create(email="other_guest@example.com")
-        other_signup = Signup.objects.create(pilot=other_guest, training=training)
+        self.guest_2 = get_user_model().objects.create(email="guest_2@example.com")
+        other_signup = Signup.objects.create(pilot=self.guest_2, training=training)
         self.other_bill = Bill.objects.create(
             signup=other_signup,
             report=report,
@@ -77,13 +77,14 @@ class BillListViewTests(TestCase):
             response, reverse("bills", kwargs={"year": TODAY.year - 1})
         )
 
-        for date in [
-            YESTERDAY,
-            TODAY - timedelta(days=365),
-            TODAY - 2 * timedelta(days=365),
+        for date, pilot in [
+            (YESTERDAY, self.guest),
+            (TODAY - timedelta(days=365), self.guest),
+            (TODAY - 2 * timedelta(days=365), self.guest_2),
+            (TODAY - 3 * timedelta(days=365), self.guest),
         ]:
             training = Training.objects.create(date=date)
-            signup = Signup.objects.create(pilot=self.guest, training=training)
+            signup = Signup.objects.create(pilot=pilot, training=training)
             report = Report.objects.create(training=training, cash_at_start=1337)
             Bill(
                 signup=signup,
@@ -101,6 +102,9 @@ class BillListViewTests(TestCase):
         self.assertNotContains(
             response, reverse("bills", kwargs={"year": TODAY.year - 2})
         )
+        self.assertNotContains(
+            response, reverse("bills", kwargs={"year": TODAY.year - 3})
+        )
 
         with self.assertNumQueries(6):
             response = self.client.get(
@@ -109,18 +113,21 @@ class BillListViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/list_bills.html")
         self.assertContains(response, reverse("bills", kwargs={"year": TODAY.year}))
-        self.assertContains(response, reverse("bills", kwargs={"year": TODAY.year - 2}))
+        self.assertNotContains(
+            response, reverse("bills", kwargs={"year": TODAY.year - 2})
+        )
+        self.assertContains(response, reverse("bills", kwargs={"year": TODAY.year - 3}))
 
         with self.assertNumQueries(6):
             response = self.client.get(
-                reverse("bills", kwargs={"year": TODAY.year - 2})
+                reverse("bills", kwargs={"year": TODAY.year - 3})
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/list_bills.html")
         self.assertNotContains(response, reverse("bills", kwargs={"year": TODAY.year}))
         self.assertContains(response, reverse("bills", kwargs={"year": TODAY.year - 1}))
         self.assertNotContains(
-            response, reverse("bills", kwargs={"year": TODAY.year - 3})
+            response, reverse("bills", kwargs={"year": TODAY.year - 4})
         )
 
     def test_only_logged_in_pilots_bills_shown(self):

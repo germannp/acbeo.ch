@@ -51,12 +51,15 @@ class YearArchiveView(generic.ListView):
         return queryset
 
     def get_context_data(self, **kwargs):
-        """Add previous and next year if there is objects in them"""
+        """Add previous and next year if there are objects in them"""
         context = super().get_context_data(**kwargs)
         year = self.kwargs["year"]
         context["year"] = year
         years = [
-            date.year for date in self.model.objects.dates(self.date_field, "year")
+            date.year
+            for date in self.model.objects.filter(**self.filters).dates(
+                self.date_field, "year"
+            )
         ]
         context["previous_year"] = next(
             (

@@ -84,7 +84,7 @@ class ReportListViewTests(TestCase):
         for date in [
             YESTERDAY,
             TODAY - timedelta(days=365),
-            TODAY - 2 * timedelta(days=365),
+            TODAY - 3 * timedelta(days=365),
         ]:
             training = Training.objects.create(date=date)
             Report(training=training, cash_at_start=1337).save()
@@ -99,6 +99,9 @@ class ReportListViewTests(TestCase):
         self.assertNotContains(
             response, reverse("reports", kwargs={"year": TODAY.year - 2})
         )
+        self.assertNotContains(
+            response, reverse("reports", kwargs={"year": TODAY.year - 3})
+        )
 
         with self.assertNumQueries(10):
             response = self.client.get(
@@ -107,13 +110,16 @@ class ReportListViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/list_reports.html")
         self.assertContains(response, reverse("reports", kwargs={"year": TODAY.year}))
-        self.assertContains(
+        self.assertNotContains(
             response, reverse("reports", kwargs={"year": TODAY.year - 2})
+        )
+        self.assertContains(
+            response, reverse("reports", kwargs={"year": TODAY.year - 3})
         )
 
         with self.assertNumQueries(10):
             response = self.client.get(
-                reverse("reports", kwargs={"year": TODAY.year - 2})
+                reverse("reports", kwargs={"year": TODAY.year - 3})
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/list_reports.html")
@@ -124,7 +130,7 @@ class ReportListViewTests(TestCase):
             response, reverse("reports", kwargs={"year": TODAY.year - 1})
         )
         self.assertNotContains(
-            response, reverse("reports", kwargs={"year": TODAY.year - 3})
+            response, reverse("reports", kwargs={"year": TODAY.year - 4})
         )
 
     def test_difference_between_reports(self):
