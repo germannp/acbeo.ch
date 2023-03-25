@@ -166,7 +166,10 @@ class Bill(models.Model):
 
 
 @receiver(models.signals.post_save, sender=Bill)
-def pay_with_prepaid_flights(sender, instance, **kwargs):
+def pay_with_prepaid_flights(sender, instance, created, **kwargs):
+    if not created:
+        return
+
     if not instance.prepaid_flights:
         return
 
@@ -204,9 +207,6 @@ class Purchase(models.Model):
     @classmethod
     def save_item(cls, signup, report, choice):
         assert not signup.is_paid, "Cannot save item for paid signup."
-        if choice == cls.ITEMS.PREPAID_FLIGHTS:
-            signup.pilot.prepaid_flights += 10
-            signup.pilot.save()
         description, price = cls.ITEMS.choices[choice][1].split(", Fr. ")
         return cls.objects.create(
             signup=signup, report=report, description=description, price=price
@@ -221,6 +221,13 @@ class Purchase(models.Model):
             description=cls.DAY_PASS_DESCRIPTION,
             price=cls.DAY_PASS_PRICE,
         )
+
+
+@receiver(models.signals.post_save, sender=Purchase)
+def add_prepaid_flights(sender, instance, **kwargs):
+    if instance.description in sender.ITEMS.PREPAID_FLIGHTS.label:
+        instance.signup.pilot.prepaid_flights += 10
+        instance.signup.pilot.save()
 
 
 @receiver(models.signals.post_delete, sender=Purchase)

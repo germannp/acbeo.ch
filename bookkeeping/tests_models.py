@@ -158,7 +158,7 @@ class RunTests(SimpleTestCase):
 class BillTests(TestCase):
     def setUp(self):
         self.pilot = get_user_model().objects.create(
-            first_name="Pilot", email="pilot@example.com"
+            first_name="Pilot", email="pilot@example.com", prepaid_flights=10
         )
         self.training = Training.objects.create(date=TODAY)
         self.report = Report.objects.create(training=self.training, cash_at_start=1337)
@@ -253,6 +253,21 @@ class BillTests(TestCase):
 
                 # Tear down sub test.
                 signup.delete()
+
+    def test_update_does_not_affect_prepaid_flights(self):
+        signup = Signup.objects.create(pilot=self.pilot, training=self.training)
+        bill = Bill.objects.create(
+            signup=signup,
+            report=self.report,
+            prepaid_flights=2,
+            paid=0,
+            method=Bill.METHODS.CASH,
+        )
+        self.assertEqual(8, self.pilot.prepaid_flights)
+
+        bill.method = Bill.METHODS.TWINT
+        bill.save()
+        self.assertEqual(8, self.pilot.prepaid_flights)
 
 
 class PurchaseTests(TestCase):
