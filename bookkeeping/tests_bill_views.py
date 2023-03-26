@@ -69,7 +69,7 @@ class BillListViewTests(TestCase):
         with self.assertNumQueries(7):
             response = self.client.get(reverse("bills"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/list_bills.html")
+        self.assertTemplateUsed(response, "bookkeeping/bill_list.html")
         self.assertNotContains(
             response, reverse("bills", kwargs={"year": TODAY.year + 1})
         )
@@ -97,7 +97,7 @@ class BillListViewTests(TestCase):
         with self.assertNumQueries(7):
             response = self.client.get(reverse("bills"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/list_bills.html")
+        self.assertTemplateUsed(response, "bookkeeping/bill_list.html")
         self.assertContains(response, reverse("bills", kwargs={"year": TODAY.year - 1}))
         self.assertNotContains(
             response, reverse("bills", kwargs={"year": TODAY.year - 2})
@@ -111,7 +111,7 @@ class BillListViewTests(TestCase):
                 reverse("bills", kwargs={"year": TODAY.year - 1})
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/list_bills.html")
+        self.assertTemplateUsed(response, "bookkeeping/bill_list.html")
         self.assertContains(response, reverse("bills", kwargs={"year": TODAY.year}))
         self.assertNotContains(
             response, reverse("bills", kwargs={"year": TODAY.year - 2})
@@ -123,7 +123,7 @@ class BillListViewTests(TestCase):
                 reverse("bills", kwargs={"year": TODAY.year - 3})
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/list_bills.html")
+        self.assertTemplateUsed(response, "bookkeeping/bill_list.html")
         self.assertNotContains(response, reverse("bills", kwargs={"year": TODAY.year}))
         self.assertContains(response, reverse("bills", kwargs={"year": TODAY.year - 1}))
         self.assertNotContains(
@@ -134,7 +134,7 @@ class BillListViewTests(TestCase):
         with self.assertNumQueries(7):
             response = self.client.get(reverse("bills"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/list_bills.html")
+        self.assertTemplateUsed(response, "bookkeeping/bill_list.html")
         self.assertContains(response, self.bill.paid)
         self.assertNotContains(response, self.other_bill.paid)
 
@@ -142,14 +142,14 @@ class BillListViewTests(TestCase):
         with self.assertNumQueries(7):
             response = self.client.get(reverse("bills"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/list_bills.html")
+        self.assertTemplateUsed(response, "bookkeeping/bill_list.html")
         self.assertContains(response, self.purchase.description)
 
     def test_prepaid_flights_shown(self):
         with self.assertNumQueries(7):
             response = self.client.get(reverse("bills"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/list_bills.html")
+        self.assertTemplateUsed(response, "bookkeeping/bill_list.html")
         self.assertContains(response, self.guest.prepaid_flights)
 
     def test_no_bills_in_year_404(self):
@@ -229,7 +229,7 @@ class BillCreateViewTests(TestCase):
                 )
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/create_bill.html")
+        self.assertTemplateUsed(response, "bookkeeping/bill_create.html")
         self.assertContains(response, self.guest)
         self.assertContains(response, TODAY.strftime("%a, %d. %b.").replace(" 0", " "))
 
@@ -242,7 +242,7 @@ class BillCreateViewTests(TestCase):
                 )
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/create_bill.html")
+        self.assertTemplateUsed(response, "bookkeeping/bill_create.html")
         bill = Bill(signup=self.guest_signup, report=self.report)
         self.assertContains(response, f'value="{bill.num_prepaid_flights}"')
         self.assertContains(response, f'value="{bill.to_pay}"')
@@ -259,7 +259,7 @@ class BillCreateViewTests(TestCase):
                 )
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/create_bill.html")
+        self.assertTemplateUsed(response, "bookkeeping/bill_create.html")
         bill = Bill(signup=self.guest_signup, report=self.report)
         self.assertContains(response, f'value="{bill.num_prepaid_flights}"')
         self.assertContains(response, f'value="{bill.to_pay}"')
@@ -276,7 +276,7 @@ class BillCreateViewTests(TestCase):
                 )
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/create_bill.html")
+        self.assertTemplateUsed(response, "bookkeeping/bill_create.html")
         bill = Bill(signup=self.guest_signup, report=self.report)
         self.assertContains(response, f'value="{bill.num_prepaid_flights}"')
         self.assertContains(response, f'value="{bill.to_pay}"')
@@ -297,7 +297,7 @@ class BillCreateViewTests(TestCase):
                 )
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/create_bill.html")
+        self.assertTemplateUsed(response, "bookkeeping/bill_create.html")
         self.assertContains(response, purchase.description)
         self.assertContains(response, purchase.price)
         self.assertContains(
@@ -328,7 +328,7 @@ class BillCreateViewTests(TestCase):
                 )
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/create_bill.html")
+        self.assertTemplateUsed(response, "bookkeeping/bill_create.html")
         self.assertContains(response, Purchase.DAY_PASS_DESCRIPTION)
         self.assertEqual(1, len(Purchase.objects.all()))
 
@@ -341,7 +341,7 @@ class BillCreateViewTests(TestCase):
                 )
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/create_bill.html")
+        self.assertTemplateUsed(response, "bookkeeping/bill_create.html")
         bill = Bill(signup=self.guest_signup, report=self.report)
         self.assertContains(response, f'value="{bill.num_prepaid_flights}"')
         self.assertContains(response, f'value="{bill.to_pay}"')
@@ -363,7 +363,7 @@ class BillCreateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/create_bill.html")
+        self.assertTemplateUsed(response, "bookkeeping/bill_create.html")
         self.assertContains(response, f"{self.guest} muss {to_pay} bezahlen.")
         self.assertEqual(0, len(Bill.objects.all()))
 
@@ -384,7 +384,7 @@ class BillCreateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_report.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertContains(response, f"Bezahlung von {self.guest} gespeichert.")
         self.assertEqual(1, len(Bill.objects.all()))
         created_bill = Bill.objects.first()
@@ -409,7 +409,7 @@ class BillCreateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_report.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertContains(response, f"{self.guest} hat bereits bezahlt.")
         self.assertEqual(1, len(Bill.objects.all()))
 
@@ -489,7 +489,7 @@ class BillUpdateViewTests(TestCase):
                 reverse("update_bill", kwargs={"date": TODAY, "pk": self.bill.pk})
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_bill.html")
+        self.assertTemplateUsed(response, "bookkeeping/bill_update.html")
         self.assertContains(response, self.orga)
         self.assertContains(response, TODAY.strftime("%a, %d. %b.").replace(" 0", " "))
 
@@ -499,7 +499,7 @@ class BillUpdateViewTests(TestCase):
                 reverse("update_bill", kwargs={"date": TODAY, "pk": self.bill.pk})
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_bill.html")
+        self.assertTemplateUsed(response, "bookkeeping/bill_update.html")
         self.assertContains(response, f'value="{self.bill.num_prepaid_flights}"')
         self.assertNotContains(response, "Mit Abo bezahlt")
         self.assertNotContains(response, "Flüge gutgeschrieben")
@@ -511,7 +511,7 @@ class BillUpdateViewTests(TestCase):
                 reverse("update_bill", kwargs={"date": TODAY, "pk": self.bill.pk})
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_bill.html")
+        self.assertTemplateUsed(response, "bookkeeping/bill_update.html")
         self.assertContains(response, f'value="{self.bill.num_prepaid_flights}"')
         self.assertContains(response, f'value="{self.bill.to_pay}"')
         self.assertContains(response, "Mit Abo bezahlt")
@@ -524,7 +524,7 @@ class BillUpdateViewTests(TestCase):
                 reverse("update_bill", kwargs={"date": TODAY, "pk": self.bill.pk})
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_bill.html")
+        self.assertTemplateUsed(response, "bookkeeping/bill_update.html")
         self.assertContains(response, f'value="{self.bill.num_prepaid_flights}"')
         self.assertContains(response, f'value="{self.bill.to_pay}"')
         self.assertContains(response, "Flüge gutgeschrieben")
@@ -535,7 +535,7 @@ class BillUpdateViewTests(TestCase):
                 reverse("update_bill", kwargs={"date": TODAY, "pk": self.bill.pk})
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_bill.html")
+        self.assertTemplateUsed(response, "bookkeeping/bill_update.html")
         self.assertContains(response, self.purchase.description)
         self.assertContains(response, self.purchase.price)
         self.assertNotContains(
@@ -555,7 +555,7 @@ class BillUpdateViewTests(TestCase):
                 reverse("update_bill", kwargs={"date": TODAY, "pk": self.bill.pk})
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_bill.html")
+        self.assertTemplateUsed(response, "bookkeeping/bill_update.html")
         self.assertContains(response, f'value="{self.bill.num_prepaid_flights}"')
         self.assertContains(response, f'value="{self.bill.paid}"')
         self.assertNotContains(response, "Mit Abo bezahlt")
@@ -573,7 +573,7 @@ class BillUpdateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_bill.html")
+        self.assertTemplateUsed(response, "bookkeeping/bill_update.html")
         self.assertContains(response, f"{self.orga} muss {to_pay} bezahlen.")
         self.assertEqual(1, len(Bill.objects.all()))
 
@@ -591,7 +591,7 @@ class BillUpdateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_report.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertContains(response, f"Bezahlung von {self.orga} gespeichert.")
         self.assertEqual(1, len(Bill.objects.all()))
         created_bill = Bill.objects.first()
@@ -606,7 +606,7 @@ class BillUpdateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_report.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertContains(response, f"Abrechnung gelöscht.")
         self.assertEqual(3, len(Run.objects.all()))
         self.assertEqual(1, len(Purchase.objects.all()))

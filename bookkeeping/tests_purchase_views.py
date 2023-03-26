@@ -51,7 +51,7 @@ class PurchaseCreateViewTests(TestCase):
                 )
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/create_purchase.html")
+        self.assertTemplateUsed(response, "bookkeeping/purchase_create.html")
         self.assertContains(response, self.orga)
         self.assertContains(response, TODAY.strftime("%a, %d. %b.").replace(" 0", " "))
         for item in Purchase.ITEMS:
@@ -67,7 +67,7 @@ class PurchaseCreateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/create_bill.html")
+        self.assertTemplateUsed(response, "bookkeeping/bill_create.html")
         self.assertEqual(1, len(Purchase.objects.all()))
         created_purchase = Purchase.objects.first()
         self.assertTrue(
@@ -94,7 +94,7 @@ class PurchaseCreateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_report.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertContains(response, f"{self.orga} hat bereits bezahlt.")
 
     def test_signup_not_found_404(self):
@@ -171,7 +171,7 @@ class PurchaseDeleteViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/create_bill.html")
+        self.assertTemplateUsed(response, "bookkeeping/bill_create.html")
         self.assertEqual(0, len(Purchase.objects.all()))
 
     def test_delete_day_pass(self):
@@ -197,7 +197,7 @@ class PurchaseDeleteViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/create_bill.html")
+        self.assertTemplateUsed(response, "bookkeeping/bill_create.html")
         self.assertEqual(1, len(Purchase.objects.all()))
 
     def test_cannot_delete_purchase_for_paid_signup(self):
@@ -216,7 +216,7 @@ class PurchaseDeleteViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_report.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertContains(response, f"{self.orga} hat bereits bezahlt.")
 
     def test_purchase_not_found_404(self):

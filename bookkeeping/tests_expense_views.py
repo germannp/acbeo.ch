@@ -41,7 +41,7 @@ class ExpenseCreateViewTests(TestCase):
                 reverse("create_expense", kwargs={"date": TODAY})
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/create_expense.html")
+        self.assertTemplateUsed(response, "bookkeeping/expense_create.html")
         self.assertContains(response, TODAY.strftime("%A, %d. %B").replace(" 0", " "))
         for reason in Expense.REASONS:
             self.assertContains(response, reason.label)
@@ -60,7 +60,7 @@ class ExpenseCreateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/create_expense.html")
+        self.assertTemplateUsed(response, "bookkeeping/expense_create.html")
         self.assertContains(response, other_reason)
         self.assertContains(response, amount)
 
@@ -74,7 +74,7 @@ class ExpenseCreateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_report.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertContains(
             response,
             f"Ausgabe für {Expense.REASONS.GAS.label} über CHF {amount} gespeichert.",
@@ -98,7 +98,7 @@ class ExpenseCreateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_report.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertContains(
             response, f"Ausgabe für {other_reason} über CHF {amount} gespeichert."
         )
@@ -145,7 +145,7 @@ class ExpenseUpdateViewTests(TestCase):
                 reverse("update_expense", kwargs={"date": TODAY, "pk": self.expense.pk})
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_expense.html")
+        self.assertTemplateUsed(response, "bookkeeping/expense_update.html")
         self.assertContains(response, TODAY.strftime("%A, %d. %B").replace(" 0", " "))
         self.assertContains(response, self.expense.reason)
         self.assertContains(response, self.expense.amount)
@@ -162,7 +162,7 @@ class ExpenseUpdateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_expense.html")
+        self.assertTemplateUsed(response, "bookkeeping/expense_update.html")
         self.assertContains(response, new_reason)
         self.assertContains(response, new_amount)
         self.expense.refresh_from_db()
@@ -181,7 +181,7 @@ class ExpenseUpdateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_report.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertContains(
             response, f"Ausgabe für {new_reason} über CHF {new_amount} gespeichert."
         )
@@ -200,7 +200,7 @@ class ExpenseUpdateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_report.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertContains(response, f"Ausgabe gelöscht.")
         self.assertEqual(0, len(Expense.objects.all()))
 
@@ -212,4 +212,4 @@ class ExpenseUpdateViewTests(TestCase):
                 )
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_expense.html")
+        self.assertTemplateUsed(response, "bookkeeping/expense_update.html")

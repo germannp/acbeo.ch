@@ -73,7 +73,7 @@ class ReportListViewTests(TestCase):
         with self.assertNumQueries(17):
             response = self.client.get(reverse("reports"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/list_reports.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_list.html")
         self.assertNotContains(
             response, reverse("reports", kwargs={"year": TODAY.year + 1})
         )
@@ -92,7 +92,7 @@ class ReportListViewTests(TestCase):
         with self.assertNumQueries(17):
             response = self.client.get(reverse("reports"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/list_reports.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_list.html")
         self.assertContains(
             response, reverse("reports", kwargs={"year": TODAY.year - 1})
         )
@@ -108,7 +108,7 @@ class ReportListViewTests(TestCase):
                 reverse("reports", kwargs={"year": TODAY.year - 1})
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/list_reports.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_list.html")
         self.assertContains(response, reverse("reports", kwargs={"year": TODAY.year}))
         self.assertNotContains(
             response, reverse("reports", kwargs={"year": TODAY.year - 2})
@@ -122,7 +122,7 @@ class ReportListViewTests(TestCase):
                 reverse("reports", kwargs={"year": TODAY.year - 3})
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/list_reports.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_list.html")
         self.assertNotContains(
             response, reverse("reports", kwargs={"year": TODAY.year})
         )
@@ -145,14 +145,14 @@ class ReportListViewTests(TestCase):
         with self.assertNumQueries(19):
             response = self.client.get(reverse("reports"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/list_reports.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_list.html")
         self.assertContains(response, difference_between_reports)
 
     def test_revenue_shown(self):
         with self.assertNumQueries(17):
             response = self.client.get(reverse("reports"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/list_reports.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_list.html")
         self.assertContains(response, self.cash_bill.paid)
         self.assertContains(response, self.twint_bill.paid)
 
@@ -160,7 +160,7 @@ class ReportListViewTests(TestCase):
         with self.assertNumQueries(17):
             response = self.client.get(reverse("reports"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/list_reports.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_list.html")
         self.assertContains(response, self.expense.amount)
 
     def test_difference_within_report_shown(self):
@@ -175,14 +175,14 @@ class ReportListViewTests(TestCase):
         with self.assertNumQueries(17):
             response = self.client.get(reverse("reports"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/list_reports.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_list.html")
         self.assertContains(response, difference_within_report)
 
     def test_num_unpaid_signups_shown(self):
         with self.assertNumQueries(17):
             response = self.client.get(reverse("reports"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/list_reports.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_list.html")
         self.assertContains(
             response,
             f"{self.report.num_unpaid_signups} / {len(self.training.selected_signups)}",
@@ -192,7 +192,7 @@ class ReportListViewTests(TestCase):
         with self.assertNumQueries(17):
             response = self.client.get(reverse("reports"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/list_reports.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_list.html")
         self.assertContains(response, self.report.remarks)
 
     def test_no_reports_in_year_404(self):
@@ -212,7 +212,7 @@ class ReportListViewTests(TestCase):
         with self.assertNumQueries(11):
             response = self.client.get(reverse("reports"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/list_reports.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_list.html")
         self.assertNotContains(response, TODAY.year)
 
 
@@ -291,7 +291,7 @@ class BalanceViewTests(TestCase):
         with self.assertNumQueries(20):
             response = self.client.get(reverse("balance"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/balance_reports.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_balance.html")
         self.assertNotContains(
             response, reverse("balance", kwargs={"year": TODAY.year + 1})
         )
@@ -310,7 +310,7 @@ class BalanceViewTests(TestCase):
         with self.assertNumQueries(22):
             response = self.client.get(reverse("balance"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/balance_reports.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_balance.html")
         self.assertContains(response, reverse("reports", kwargs={"year": TODAY.year}))
         self.assertContains(
             response, reverse("balance", kwargs={"year": TODAY.year - 1})
@@ -327,7 +327,7 @@ class BalanceViewTests(TestCase):
                 reverse("balance", kwargs={"year": TODAY.year - 1})
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/balance_reports.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_balance.html")
         self.assertContains(
             response, reverse("reports", kwargs={"year": TODAY.year - 1})
         )
@@ -344,7 +344,7 @@ class BalanceViewTests(TestCase):
                 reverse("balance", kwargs={"year": TODAY.year - 3})
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/balance_reports.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_balance.html")
         self.assertContains(
             response, reverse("reports", kwargs={"year": TODAY.year - 3})
         )
@@ -362,7 +362,7 @@ class BalanceViewTests(TestCase):
         with self.assertNumQueries(20):
             response = self.client.get(reverse("balance"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/balance_reports.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_balance.html")
         self.assertContains(response, self.report.cash_at_start)
 
         self.report.cash_at_end = 2 * self.report.cash_at_start
@@ -370,7 +370,7 @@ class BalanceViewTests(TestCase):
         with self.assertNumQueries(20):
             response = self.client.get(reverse("balance"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/balance_reports.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_balance.html")
         self.assertNotContains(response, self.report.cash_at_start)
         self.assertContains(response, self.report.cash_at_end)
 
@@ -378,7 +378,7 @@ class BalanceViewTests(TestCase):
         with self.assertNumQueries(20):
             response = self.client.get(reverse("balance"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/balance_reports.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_balance.html")
 
         self.assertContains(response, Bill.METHODS.CASH.label)
         self.assertContains(response, self.day_pass.price)
@@ -393,7 +393,7 @@ class BalanceViewTests(TestCase):
         with self.assertNumQueries(20):
             response = self.client.get(reverse("balance"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/balance_reports.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_balance.html")
 
         self.assertContains(response, self.first_gas.amount + self.second_gas.amount)
         self.assertContains(response, self.other_expense.amount)
@@ -425,7 +425,7 @@ class BalanceViewTests(TestCase):
         with self.assertNumQueries(12):
             response = self.client.get(reverse("balance"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/balance_reports.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_balance.html")
         self.assertNotContains(response, TODAY.year)
 
 
@@ -454,7 +454,7 @@ class ReportCreateViewTests(TestCase):
         with self.assertNumQueries(5):
             response = self.client.get(reverse("create_report"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/create_report.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_create.html")
 
     def test_only_in_menu_if_training_exists(self):
         with self.assertNumQueries(4):
@@ -477,7 +477,7 @@ class ReportCreateViewTests(TestCase):
                 reverse("create_report"), data={"cash_at_start": -666}, follow=True
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/create_report.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_create.html")
         self.assertEqual(0, len(Report.objects.all()))
 
     def test_create_report(self):
@@ -487,7 +487,7 @@ class ReportCreateViewTests(TestCase):
                 reverse("create_report"), data={"cash_at_start": 1337}, follow=True
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_report.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertEqual(1, len(Report.objects.all()))
         created_report = Report.objects.first()
         self.assertEqual(1337, created_report.cash_at_start)
@@ -498,14 +498,14 @@ class ReportCreateViewTests(TestCase):
         with self.assertNumQueries(15):
             response = self.client.get(reverse("create_report"), follow=True)
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_report.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_update.html")
 
         with self.assertNumQueries(15):
             response = self.client.post(
                 reverse("create_report"), data={"cash_at_start": 666}, follow=True
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_report.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertEqual(1, len(Report.objects.all()))
         report.refresh_from_db()
         self.assertEqual(1337, report.cash_at_start)
@@ -563,7 +563,7 @@ class ReportUpdateViewTests(TestCase):
         with self.assertNumQueries(20):
             response = self.client.get(reverse("update_report", kwargs={"date": TODAY}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_report.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertContains(response, self.report.cash_at_start)
         self.assertContains(response, self.report.remarks)
 
@@ -578,7 +578,7 @@ class ReportUpdateViewTests(TestCase):
         with self.assertNumQueries(20):
             response = self.client.get(reverse("update_report", kwargs={"date": TODAY}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_report.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertContains(
             response,
             reverse(
@@ -601,7 +601,7 @@ class ReportUpdateViewTests(TestCase):
         with self.assertNumQueries(20):
             response = self.client.get(reverse("update_report", kwargs={"date": TODAY}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_report.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertContains(response, bill.paid)
 
     def test_expense_shown(self):
@@ -609,7 +609,7 @@ class ReportUpdateViewTests(TestCase):
         with self.assertNumQueries(20):
             response = self.client.get(reverse("update_report", kwargs={"date": TODAY}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_report.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertContains(response, expense.reason)
         self.assertContains(response, expense.amount)
         self.assertContains(
@@ -625,7 +625,7 @@ class ReportUpdateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_report.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_update.html")
 
         self.report.refresh_from_db()
         self.assertEqual(1337, self.report.cash_at_start)
@@ -635,7 +635,7 @@ class ReportUpdateViewTests(TestCase):
         with self.assertNumQueries(20):
             response = self.client.get(reverse("update_report", kwargs={"date": TODAY}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_report.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertContains(response, reverse("create_run"))
         self.assertContains(response, "bi bi-plus-square")
 
@@ -646,7 +646,7 @@ class ReportUpdateViewTests(TestCase):
                 reverse("update_report", kwargs={"date": YESTERDAY})
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_report.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertNotContains(response, reverse("create_run"))
         self.assertNotContains(response, "bi bi-plus-square")
 
@@ -654,7 +654,7 @@ class ReportUpdateViewTests(TestCase):
         with self.assertNumQueries(20):
             response = self.client.get(reverse("update_report", kwargs={"date": TODAY}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_report.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertContains(response, reverse("update_run", kwargs={"run": 1}))
         self.assertContains(response, "bi bi-pencil-square")
 
@@ -671,7 +671,7 @@ class ReportUpdateViewTests(TestCase):
                 reverse("update_report", kwargs={"date": YESTERDAY})
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_report.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertNotContains(response, reverse("update_run", kwargs={"run": 1}))
         self.assertNotContains(response, "bi bi-pencil-square")
 
@@ -679,7 +679,7 @@ class ReportUpdateViewTests(TestCase):
         with self.assertNumQueries(20):
             response = self.client.get(reverse("update_report", kwargs={"date": TODAY}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_report.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertContains(response, reverse("create_expense", kwargs={"date": TODAY}))
         self.assertNotContains(
             response, reverse("create_expense", kwargs={"date": YESTERDAY})
@@ -692,7 +692,7 @@ class ReportUpdateViewTests(TestCase):
                 reverse("update_report", kwargs={"date": YESTERDAY})
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_report.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertContains(
             response, reverse("create_expense", kwargs={"date": YESTERDAY})
         )
@@ -704,7 +704,7 @@ class ReportUpdateViewTests(TestCase):
         with self.assertNumQueries(20):
             response = self.client.get(reverse("update_report", kwargs={"date": TODAY}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_report.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         response_after_guest = str(response.content).split("Guest")[-1]
         self.assertTrue("Orga" in response_after_guest)
 
@@ -719,7 +719,7 @@ class ReportUpdateViewTests(TestCase):
         with self.assertNumQueries(21):
             response = self.client.get(reverse("update_report", kwargs={"date": TODAY}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_report.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         guest_column = (
             response.content.decode(response.charset)
             .split("Guest")[1]
@@ -765,7 +765,7 @@ class ReportUpdateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/list_reports.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_list.html")
         self.report.refresh_from_db()
         self.assertEqual(self.report.cash_at_end, cash_at_end)
         self.assertEqual(self.report.remarks, new_remarks)
@@ -783,7 +783,7 @@ class ReportUpdateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/list_reports.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_list.html")
         self.assertContains(response, "Achtung, es haben noch nicht alle bezahlt.")
         self.assertNotContains(response, "Bitte Kassenstand erfassen.")
         self.assertNotContains(response, "Achtung, zu wenig Geld in der Kasse.")
@@ -811,7 +811,7 @@ class ReportUpdateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/list_reports.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_list.html")
         self.assertNotContains(response, "Achtung, es haben noch nicht alle bezahlt.")
         self.assertContains(response, "Bitte Kassenstand erfassen.")
         self.assertNotContains(response, "Achtung, zu wenig Geld in der Kasse.")
@@ -826,7 +826,7 @@ class ReportUpdateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/list_reports.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_list.html")
         self.assertNotContains(response, "Achtung, es haben noch nicht alle bezahlt.")
         self.assertNotContains(response, "Bitte Kassenstand erfassen.")
         self.assertContains(response, "Achtung, zu wenig Geld in der Kasse.")

@@ -16,7 +16,6 @@ locale.setlocale(locale.LC_TIME, "de_CH")
 
 class TrainingListView(LoginRequiredMixin, generic.ListView):
     paginate_by = 4
-    template_name = "trainings/list_trainings.html"
 
     def get_queryset(self):
         trainings = Training.objects.filter(date__gte=date.today()).prefetch_related(
@@ -46,7 +45,7 @@ class StaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
 
 class TrainingCreateView(StaffRequiredMixin, generic.FormView):
     form_class = forms.TrainingCreateForm
-    template_name = "trainings/create_trainings.html"
+    template_name = "trainings/training_create.html"
     success_url = reverse_lazy("trainings")
 
     def form_valid(self, form):
@@ -61,7 +60,7 @@ class OrgaRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
 
 class TrainingUpdateView(OrgaRequiredMixin, generic.UpdateView):
     form_class = forms.TrainingUpdateForm
-    template_name = "trainings/update_training.html"
+    template_name = "trainings/training_update.html"
 
     def get_object(self):
         if self.kwargs["date"] < date.today():
@@ -102,7 +101,7 @@ class EmergencyMailView(OrgaRequiredMixin, SuccessMessageMixin, generic.UpdateVi
 
 
 class SignupListView(LoginRequiredMixin, generic.ListView):
-    template_name = "trainings/list_signups.html"
+    model = Signup
 
     def get_queryset(self):
         today = date.today()
@@ -125,7 +124,7 @@ class SignupListView(LoginRequiredMixin, generic.ListView):
 
 class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateView):
     form_class = forms.SignupCreateForm
-    template_name = "trainings/signup.html"
+    template_name = "trainings/signup_create.html"
 
     def get_initial(self):
         """Set default date based on url pattern"""
@@ -188,7 +187,7 @@ class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateVi
 
 class SignupUpdateView(LoginRequiredMixin, generic.UpdateView):
     form_class = forms.SignupUpdateForm
-    template_name = "trainings/update_signup.html"
+    template_name = "trainings/signup_update.html"
 
     def get_object(self):
         if self.kwargs["date"] < date.today():

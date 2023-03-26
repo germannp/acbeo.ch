@@ -36,7 +36,7 @@ class PostListViewTests(TestCase):
     def test_author_name_shown(self):
         response = self.client.get(reverse("home"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "news/index.html")
+        self.assertTemplateUsed(response, "news/post_list.html")
         self.assertContains(response, "Author")
         self.assertNotContains(response, "author@example.com")
 
@@ -49,7 +49,7 @@ class PostDetailViewTests(TestCase):
     def test_author_name_shown(self):
         response = self.client.get(reverse("post", kwargs={"slug": "test-news"}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "news/post.html")
+        self.assertTemplateUsed(response, "news/post_detail.html")
         self.assertContains(response, "Author")
         self.assertNotContains(response, "author@example.com")
 
@@ -75,7 +75,7 @@ class ContactFormViewTests(TestCase):
             reverse("contact"), data=self.email_data, follow=True
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "news/index.html")
+        self.assertTemplateUsed(response, "news/post_list.html")
         self.assertContains(response, "Nachricht abgesendet.")
         self.assertEqual(1, len(mail.outbox))
         self.assertEqual(
@@ -164,7 +164,7 @@ class PilotCreateViewTests(TestCase):
                 reverse("register"), data=partial_data, follow=True
             )
             self.assertEqual(response.status_code, HTTPStatus.OK)
-            self.assertTemplateUsed(response, "news/register.html")
+            self.assertTemplateUsed(response, "news/pilot_create.html")
             for key, value in partial_data.items():
                 if "password" in key or key == "accept_safety_concept":
                     continue
@@ -176,7 +176,7 @@ class PilotCreateViewTests(TestCase):
         invalid_data["phone"] = "pilot@example.com"
         response = self.client.post(reverse("register"), data=invalid_data, follow=True)
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "news/register.html")
+        self.assertTemplateUsed(response, "news/pilot_create.html")
         self.assertEqual(0, len(Pilot.objects.all()))
 
     def test_safety_concept_must_be_accepted(self):
@@ -184,7 +184,7 @@ class PilotCreateViewTests(TestCase):
         invalid_data["accept_safety_concept"] = False
         response = self.client.post(reverse("register"), data=invalid_data, follow=True)
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "news/register.html")
+        self.assertTemplateUsed(response, "news/pilot_create.html")
         self.assertEqual(0, len(Pilot.objects.all()))
 
     def test_email_must_be_unique(self):
@@ -200,7 +200,7 @@ class PilotCreateViewTests(TestCase):
             reverse("register"), data=self.pilot_data, follow=True
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "news/register.html")
+        self.assertTemplateUsed(response, "news/pilot_create.html")
         self.assertContains(response, "Pilot mit diesem Email existiert bereits.")
         self.assertEqual(1, len(Pilot.objects.all()))
 
@@ -210,7 +210,7 @@ class PilotCreateViewTests(TestCase):
             reverse("register"), data=self.pilot_data, follow=True
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "news/register.html")
+        self.assertTemplateUsed(response, "news/pilot_create.html")
         self.assertContains(response, "Konto konnte nicht angelegt werden.")
         self.assertEqual(0, len(Pilot.objects.all()))
 
@@ -243,7 +243,7 @@ class PilotUpdateViewTests(TestCase):
     def test_form_is_prefilled(self):
         response = self.client.get(reverse("update_pilot"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "news/update_pilot.html")
+        self.assertTemplateUsed(response, "news/pilot_update.html")
         for value in self.pilot_data.values():
             self.assertContains(response, value)
 
@@ -266,7 +266,7 @@ class PilotUpdateViewTests(TestCase):
                 reverse("update_pilot"), data=partial_data, follow=True
             )
             self.assertEqual(response.status_code, HTTPStatus.OK)
-            self.assertTemplateUsed(response, "news/update_pilot.html")
+            self.assertTemplateUsed(response, "news/pilot_update.html")
 
     def test_phone_number_validation(self):
         invalid_data = self.pilot_data.copy()
@@ -275,7 +275,7 @@ class PilotUpdateViewTests(TestCase):
             reverse("update_pilot"), data=invalid_data, follow=True
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "news/update_pilot.html")
+        self.assertTemplateUsed(response, "news/pilot_update.html")
 
     def test_update_member_sends_notification_email(self):
         response = self.client.post(
@@ -288,7 +288,7 @@ class PilotUpdateViewTests(TestCase):
             reverse("update_pilot"), data=self.pilot_data, follow=True
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "news/index.html")
+        self.assertTemplateUsed(response, "news/post_list.html")
         self.assertContains(response, "Änderungen gespeichert.")
         self.pilot.refresh_from_db()
         self.assertEqual(self.pilot.phone, "666")
@@ -300,7 +300,7 @@ class PilotUpdateViewTests(TestCase):
             reverse("update_pilot"), data=self.pilot_data, follow=True
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "news/index.html")
+        self.assertTemplateUsed(response, "news/post_list.html")
         self.assertContains(response, "Änderungen gespeichert.")
         self.pilot.refresh_from_db()
         self.assertEqual(self.pilot.phone, "1337")
@@ -319,7 +319,7 @@ class PilotUpdateViewTests(TestCase):
             follow=True,
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertTemplateUsed(response, "trainings/training_list.html")
 
         response = self.client.post(
             reverse("update_pilot") + "?next=http://danger.com",
@@ -402,7 +402,7 @@ class MembershipFormViewTests(TestCase):
             reverse("membership"), data=self.membership_data, follow=True
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "news/index.html")
+        self.assertTemplateUsed(response, "news/post_list.html")
         self.guest.refresh_from_db()
         self.assertEqual(self.guest.role, Pilot.Role.Member)
 

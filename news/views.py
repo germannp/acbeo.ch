@@ -11,12 +11,10 @@ from .models import Post
 class PostListView(generic.ListView):
     model = Post
     paginate_by = 3
-    template_name = "news/index.html"
 
 
 class PostDetailView(generic.DetailView):
     model = Post
-    template_name = "news/post.html"
 
 
 class ContactFormView(SuccessMessageMixin, generic.FormView):
@@ -45,7 +43,7 @@ class LoginForbiddenMixin(UserPassesTestMixin):
 
 class PilotCreateView(LoginForbiddenMixin, SuccessMessageMixin, generic.CreateView):
     form_class = PilotCreationForm
-    template_name = "news/register.html"
+    template_name = "news/pilot_create.html"
     success_message = "Konto angelegt."
 
     def get_success_url(self):
@@ -57,7 +55,7 @@ class PilotCreateView(LoginForbiddenMixin, SuccessMessageMixin, generic.CreateVi
 
 class PilotUpdateView(LoginRequiredMixin, SuccessMessageMixin, generic.UpdateView):
     form_class = PilotUpdateForm
-    template_name = "news/update_pilot.html"
+    template_name = "news/pilot_update.html"
     success_message = "Änderungen gespeichert."
 
     def get_object(self):

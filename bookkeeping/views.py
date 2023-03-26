@@ -80,7 +80,6 @@ class ReportListView(OrgaRequiredMixin, YearArchiveView):
     model = Report
     name = "Berichte"
     date_field = "training__date"
-    template_name = "bookkeeping/list_reports.html"
 
     def get_queryset(self):
         """Prefetch & compute cash difference between consecutive reports"""
@@ -103,7 +102,7 @@ class BalanceView(OrgaRequiredMixin, YearArchiveView):
     model = Report
     name = "Berichte"
     date_field = "training__date"
-    template_name = "bookkeeping/balance_reports.html"
+    template_name = "bookkeeping/report_balance.html"
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -190,7 +189,7 @@ class BalanceView(OrgaRequiredMixin, YearArchiveView):
 class ReportCreateView(OrgaRequiredMixin, generic.CreateView):
     model = Report
     fields = ("cash_at_start",)
-    template_name = "bookkeeping/create_report.html"
+    template_name = "bookkeeping/report_create.html"
     success_url = reverse_lazy("update_report", kwargs={"date": date.today()})
 
     def get(self, *args, **kwargs):
@@ -214,7 +213,7 @@ class ReportCreateView(OrgaRequiredMixin, generic.CreateView):
 class ReportUpdateView(OrgaRequiredMixin, generic.UpdateView):
     model = Report
     fields = ("cash_at_start", "cash_at_end", "remarks")
-    template_name = "bookkeeping/update_report.html"
+    template_name = "bookkeeping/report_update.html"
     success_url = reverse_lazy("reports")
 
     def get_object(self):
@@ -271,7 +270,7 @@ class ReportUpdateView(OrgaRequiredMixin, generic.UpdateView):
 
 
 class RunCreateView(OrgaRequiredMixin, generic.TemplateView):
-    template_name = "bookkeeping/create_run.html"
+    template_name = "bookkeeping/run_create.html"
     success_url = reverse_lazy("create_report")
 
     def get(self, *args, **kwargs):
@@ -340,7 +339,7 @@ class RunCreateView(OrgaRequiredMixin, generic.TemplateView):
 
 
 class RunUpdateView(OrgaRequiredMixin, generic.TemplateView):
-    template_name = "bookkeeping/update_run.html"
+    template_name = "bookkeeping/run_update.html"
     success_url = reverse_lazy("create_report")
 
     def get_context_data(self, **kwargs):
@@ -433,7 +432,7 @@ class RunUpdateView(OrgaRequiredMixin, generic.TemplateView):
 
 class ExpenseCreateView(OrgaRequiredMixin, generic.CreateView):
     form_class = forms.ExpenseCreateForm
-    template_name = "bookkeeping/create_expense.html"
+    template_name = "bookkeeping/expense_create.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -460,7 +459,7 @@ class ExpenseCreateView(OrgaRequiredMixin, generic.CreateView):
 class ExpenseUpdateView(OrgaRequiredMixin, generic.UpdateView):
     model = Expense
     fields = ("reason", "amount")
-    template_name = "bookkeeping/update_expense.html"
+    template_name = "bookkeeping/expense_update.html"
 
     def post(self, request, *args, **kwargs):
         if "delete" in request.POST:
@@ -485,7 +484,6 @@ class BillListView(LoginRequiredMixin, YearArchiveView):
     model = Bill
     name = "Rechnungen"
     date_field = "signup__training__date"
-    template_name = "bookkeeping/list_bills.html"
 
     @property
     def filters(self):
@@ -505,7 +503,7 @@ class BillListView(LoginRequiredMixin, YearArchiveView):
 
 class BillCreateView(OrgaRequiredMixin, generic.CreateView):
     form_class = forms.BillForm
-    template_name = "bookkeeping/create_bill.html"
+    template_name = "bookkeeping/bill_create.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -552,7 +550,7 @@ class BillCreateView(OrgaRequiredMixin, generic.CreateView):
 
 class BillUpdateView(OrgaRequiredMixin, generic.UpdateView):
     form_class = forms.BillForm
-    template_name = "bookkeeping/update_bill.html"
+    template_name = "bookkeeping/bill_update.html"
 
     def get_object(self):
         return get_object_or_404(
@@ -589,7 +587,7 @@ class BillUpdateView(OrgaRequiredMixin, generic.UpdateView):
 
 class PurchaseCreateView(OrgaRequiredMixin, generic.FormView):
     form_class = forms.PurchaseCreateForm
-    template_name = "bookkeeping/create_purchase.html"
+    template_name = "bookkeeping/purchase_create.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

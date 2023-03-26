@@ -55,7 +55,7 @@ class RunCreateViewTests(TestCase):
         with self.assertNumQueries(9):
             response = self.client.get(reverse("create_run"), follow=True)
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/create_report.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_create.html")
 
     def test_get_create_run_selects_signups(self):
         for signup in Signup.objects.all():
@@ -64,7 +64,7 @@ class RunCreateViewTests(TestCase):
         with self.assertNumQueries(20):
             response = self.client.get(reverse("create_run"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/create_run.html")
+        self.assertTemplateUsed(response, "bookkeeping/run_create.html")
 
         for signup in Signup.objects.all():
             self.assertEqual(signup.status, Signup.Status.Selected)
@@ -73,7 +73,7 @@ class RunCreateViewTests(TestCase):
         with self.assertNumQueries(20):
             response = self.client.get(reverse("create_run"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/create_run.html")
+        self.assertTemplateUsed(response, "bookkeeping/run_create.html")
         self.assertContains(response, f'value="{Run.Kind.Flight}" checked')
         self.assertNotContains(response, f'value="{Run.Kind.Flight}" \\n')
 
@@ -81,7 +81,7 @@ class RunCreateViewTests(TestCase):
         with self.assertNumQueries(20):
             response = self.client.get(reverse("create_run"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/create_run.html")
+        self.assertTemplateUsed(response, "bookkeeping/run_create.html")
         response_before_guest_2, response_after_guest_2 = str(response.content).split(
             "Guest 2"
         )
@@ -101,7 +101,7 @@ class RunCreateViewTests(TestCase):
         with self.assertNumQueries(19):
             response = self.client.get(reverse("create_run"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/create_run.html")
+        self.assertTemplateUsed(response, "bookkeeping/run_create.html")
         self.assertNotContains(response, self.guest_2)
 
     def test_cannot_create_run_for_pilot_who_paid(self):
@@ -127,7 +127,7 @@ class RunCreateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/create_run.html")
+        self.assertTemplateUsed(response, "bookkeeping/run_create.html")
         self.assertContains(
             response, "Die Anzahl der Teilnehmenden hat sich verändert."
         )
@@ -148,7 +148,7 @@ class RunCreateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/create_run.html")
+        self.assertTemplateUsed(response, "bookkeeping/run_create.html")
         self.assertContains(response, "Höchstens eine Person kann Bus fahren.")
         self.assertContains(response, f'value="{Run.Kind.Flight}" checked')
         self.assertContains(response, f'value="{Run.Kind.Bus}" checked')
@@ -170,7 +170,7 @@ class RunCreateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/create_run.html")
+        self.assertTemplateUsed(response, "bookkeeping/run_create.html")
         self.assertContains(response, "Höchstens zwei Personen können Boot machen.")
         self.assertContains(response, f'value="{Run.Kind.Boat}" checked')
         self.assertNotContains(response, f'value="{Run.Kind.Flight}" checked')
@@ -191,7 +191,7 @@ class RunCreateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/create_run.html")
+        self.assertTemplateUsed(response, "bookkeeping/run_create.html")
         self.assertContains(
             response, "Die Anzahl der Teilnehmenden hat sich verändert."
         )
@@ -211,7 +211,7 @@ class RunCreateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_report.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertContains(response, "Run erstellt.")
         self.assertContains(response, "🚌")
         self.assertContains(response, "🪂")
@@ -239,7 +239,7 @@ class RunCreateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_report.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertContains(
             response,
             "Run erstellt, aber Achtung, es wurde vor weniger als fünf Minuten bereits ein Run erstellt!",
@@ -312,7 +312,7 @@ class RunUpdateViewTests(TestCase):
         with self.assertNumQueries(13):
             response = self.client.get(reverse("update_run", kwargs={"run": 1}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_run.html")
+        self.assertTemplateUsed(response, "bookkeeping/run_update.html")
         self.assertContains(response, f'value="{Run.Kind.Flight}" checked')
         self.assertNotContains(response, f'value="{Run.Kind.Flight}" \n')
         self.assertContains(response, f'value="{Run.Kind.Boat}" \n')
@@ -321,7 +321,7 @@ class RunUpdateViewTests(TestCase):
         with self.assertNumQueries(13):
             response = self.client.get(reverse("update_run", kwargs={"run": 1}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_run.html")
+        self.assertTemplateUsed(response, "bookkeeping/run_update.html")
         response_before_guest_2, response_after_guest_2 = str(response.content).split(
             "Guest 2"
         )
@@ -355,7 +355,7 @@ class RunUpdateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_run.html")
+        self.assertTemplateUsed(response, "bookkeeping/run_update.html")
         self.assertContains(response, f"{self.guest} hat bereits bezahlt.")
 
     def test_update_run(self):
@@ -376,7 +376,7 @@ class RunUpdateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_report.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertContains(response, "Run bearbeitet.")
 
         self.assertEqual(3, len(Run.objects.all()))
@@ -401,7 +401,7 @@ class RunUpdateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_report.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertContains(
             response, "Run hat sich verändert und wurde nicht gelöscht!"
         )
@@ -422,7 +422,7 @@ class RunUpdateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_report.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertContains(
             response, "Run hat sich verändert und wurde nicht gelöscht!"
         )
@@ -453,7 +453,7 @@ class RunUpdateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_report.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertContains(
             response, f"{self.guest} hat bereits bezahlt, Run wurde nicht gelöscht!"
         )
@@ -474,6 +474,6 @@ class RunUpdateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/update_report.html")
+        self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertContains(response, "Run gelöscht.")
         self.assertEqual(0, len(Run.objects.all()))

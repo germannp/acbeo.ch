@@ -38,7 +38,7 @@ class SingupListViewTests(TestCase):
         with self.assertNumQueries(9):
             response = self.client.get(reverse("signups"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_signups.html")
+        self.assertTemplateUsed(response, "trainings/signup_list.html")
         self.assertContains(
             response,
             TODAY.strftime("%a., %d. %b. %Y").replace(" 0", " ").replace("..", "."),
@@ -56,7 +56,7 @@ class SingupListViewTests(TestCase):
         with self.assertNumQueries(8):
             response = self.client.get(reverse("signups"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_signups.html")
+        self.assertTemplateUsed(response, "trainings/signup_list.html")
         self.assertContains(
             response,
             TOMORROW.strftime("%a., %d. %b. %Y").replace(" 0", " ").replace("..", "."),
@@ -77,7 +77,7 @@ class SingupListViewTests(TestCase):
         with self.assertNumQueries(9):
             response = self.client.get(reverse("signups"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_signups.html")
+        self.assertTemplateUsed(response, "trainings/signup_list.html")
 
         self.signup.refresh_from_db()
         self.assertEqual(self.signup.status, Signup.Status.Selected)
@@ -92,7 +92,7 @@ class SingupListViewTests(TestCase):
             with self.assertNumQueries(8):
                 response = self.client.get(reverse("signups"))
             self.assertEqual(response.status_code, HTTPStatus.OK)
-            self.assertTemplateUsed(response, "trainings/list_signups.html")
+            self.assertTemplateUsed(response, "trainings/signup_list.html")
             self.assertContains(response, i)
             if i < 6:
                 self.assertContains(response, "text-warning")
@@ -116,7 +116,7 @@ class SingupListViewTests(TestCase):
                 with self.assertNumQueries(8):
                     response = self.client.get(reverse("signups"))
                 self.assertEqual(response.status_code, HTTPStatus.OK)
-                self.assertTemplateUsed(response, "trainings/list_signups.html")
+                self.assertTemplateUsed(response, "trainings/signup_list.html")
                 self.assertNotContains(response, "bi-hourglass-split")
                 if warning:
                     self.assertContains(response, "text-warning")
@@ -133,7 +133,7 @@ class SingupListViewTests(TestCase):
                 with self.assertNumQueries(7):
                     response = self.client.get(reverse("signups"))
                 self.assertEqual(response.status_code, HTTPStatus.OK)
-                self.assertTemplateUsed(response, "trainings/list_signups.html")
+                self.assertTemplateUsed(response, "trainings/signup_list.html")
                 self.assertNotContains(response, "bi-hourglass-split")
                 if muted:
                     self.assertContains(response, "text-muted")
@@ -180,7 +180,7 @@ class SignupCreateViewTests(TestCase):
                 with self.assertNumQueries(2):
                     response = self.client.get(reverse("signup"))
                 self.assertEqual(response.status_code, HTTPStatus.OK)
-                self.assertTemplateUsed(response, "trainings/signup.html")
+                self.assertTemplateUsed(response, "trainings/signup_create.html")
                 self.assertContains(response, f'value="{default_date.isoformat()}"')
 
     @mock.patch("trainings.forms.date", wraps=date)
@@ -222,7 +222,7 @@ class SignupCreateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/signup.html")
+        self.assertTemplateUsed(response, "trainings/signup_create.html")
         self.assertContains(response, "alert-success")
         self.assertContains(response, f"<b>{TODAY.strftime('%A')}</b>")
         self.assertEqual(1, len(Signup.objects.all()))
@@ -234,7 +234,7 @@ class SignupCreateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/signup.html")
+        self.assertTemplateUsed(response, "trainings/signup_create.html")
         self.assertContains(response, "alert-warning")
         self.assertContains(response, f"<b>{TODAY.strftime('%A')}</b>")
         self.assertEqual(1, len(Signup.objects.all()))
@@ -243,7 +243,7 @@ class SignupCreateViewTests(TestCase):
         with self.assertNumQueries(2):
             response = self.client.post(reverse("signup"), data={"date": "2004-12-01"})
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/signup.html")
+        self.assertTemplateUsed(response, "trainings/signup_create.html")
         self.assertContains(response, "alert-warning")
         self.assertEqual(0, len(Signup.objects.all()))
 
@@ -251,7 +251,7 @@ class SignupCreateViewTests(TestCase):
         with self.assertNumQueries(2):
             response = self.client.get(reverse("signup"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/signup.html")
+        self.assertTemplateUsed(response, "trainings/signup_create.html")
         self.assertContains(response, 'value="True" required checked')
 
         with self.assertNumQueries(2):
@@ -259,7 +259,7 @@ class SignupCreateViewTests(TestCase):
                 reverse("signup"), data={"date": "2048-12-01", "is_certain": False}
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/signup.html")
+        self.assertTemplateUsed(response, "trainings/signup_create.html")
         self.assertContains(response, "alert-warning")
         self.assertEqual(0, len(Signup.objects.all()))
         self.assertContains(response, 'value="False" required checked')
@@ -277,7 +277,7 @@ class SignupCreateViewTests(TestCase):
             reverse("signup", kwargs={"date": TODAY}) + f"?page=2&training=3",
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/signup.html")
+        self.assertTemplateUsed(response, "trainings/signup_create.html")
         self.assertContains(response, reverse("trainings") + "?page=2#training_3")
 
         with self.assertNumQueries(8):
@@ -287,7 +287,7 @@ class SignupCreateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/signup.html")
+        self.assertTemplateUsed(response, "trainings/signup_create.html")
         self.assertContains(response, f'value="{TOMORROW.isoformat()}"')
         self.assertEqual(1, len(Signup.objects.all()))
 
@@ -305,14 +305,14 @@ class SignupUpdateViewTests(TestCase):
         with self.assertNumQueries(6):
             response = self.client.get(reverse("update_signup", kwargs={"date": TODAY}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/update_signup.html")
+        self.assertTemplateUsed(response, "trainings/signup_update.html")
         self.assertContains(response, TODAY.strftime("%A, %d. %B").replace(" 0", " "))
 
     def test_comment_is_in_form_and_can_be_updated(self):
         with self.assertNumQueries(6):
             response = self.client.get(reverse("update_signup", kwargs={"date": TODAY}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/update_signup.html")
+        self.assertTemplateUsed(response, "trainings/signup_update.html")
         self.assertContains(response, 'value="Test comment"')
 
         with self.assertNumQueries(15):
@@ -322,7 +322,7 @@ class SignupUpdateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertTemplateUsed(response, "trainings/training_list.html")
         self.signup.refresh_from_db()
         self.assertContains(response, "Updated comment")
         self.assertEqual(self.signup.comment, "Updated comment")
@@ -331,7 +331,7 @@ class SignupUpdateViewTests(TestCase):
         with self.assertNumQueries(10):
             response = self.client.get(reverse("trainings"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertTemplateUsed(response, "trainings/training_list.html")
         self.assertContains(response, "100%")
         self.assertContains(response, "Ganzer Tag")
         self.assertContains(response, "bi-cloud-haze2-fill")
@@ -350,7 +350,7 @@ class SignupUpdateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertTemplateUsed(response, "trainings/training_list.html")
         self.assertContains(response, "bi-x-octagon")
         self.assertNotContains(response, "%")
         self.assertNotContains(response, "Ganzer Tag")
@@ -369,7 +369,7 @@ class SignupUpdateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertTemplateUsed(response, "trainings/training_list.html")
         self.assertContains(response, "bi-cloud-check")
         self.assertTrue(self.signup.is_certain)
         self.assertContains(response, "100%")
@@ -390,7 +390,7 @@ class SignupUpdateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_signups.html")
+        self.assertTemplateUsed(response, "trainings/signup_list.html")
         self.assertContains(response, "bi-x-octagon")
 
         with self.assertNumQueries(13):
@@ -402,20 +402,20 @@ class SignupUpdateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_signups.html")
+        self.assertTemplateUsed(response, "trainings/signup_list.html")
         self.assertContains(response, "bi-cloud-check")
 
     def test_update_is_certain(self):
         with self.assertNumQueries(10):
             response = self.client.get(reverse("trainings"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertTemplateUsed(response, "trainings/training_list.html")
         self.assertContains(response, "100%")
 
         with self.assertNumQueries(6):
             response = self.client.get(reverse("update_signup", kwargs={"date": TODAY}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/update_signup.html")
+        self.assertTemplateUsed(response, "trainings/signup_update.html")
         self.assertContains(response, 'name="is_certain"')
 
         with self.assertNumQueries(15):
@@ -425,20 +425,20 @@ class SignupUpdateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertTemplateUsed(response, "trainings/training_list.html")
         self.assertContains(response, "75%")
 
     def test_update_for_time(self):
         with self.assertNumQueries(10):
             response = self.client.get(reverse("trainings"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertTemplateUsed(response, "trainings/training_list.html")
         self.assertContains(response, "Ganzer Tag")
 
         with self.assertNumQueries(6):
             response = self.client.get(reverse("update_signup", kwargs={"date": TODAY}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/update_signup.html")
+        self.assertTemplateUsed(response, "trainings/signup_update.html")
         self.assertContains(response, 'name="for_time"')
 
         with self.assertNumQueries(15):
@@ -451,21 +451,21 @@ class SignupUpdateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertTemplateUsed(response, "trainings/training_list.html")
         self.assertContains(response, "Kommt später")
 
     def test_update_for_sketchy_weather(self):
         with self.assertNumQueries(10):
             response = self.client.get(reverse("trainings"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertTemplateUsed(response, "trainings/training_list.html")
         self.assertContains(response, "bi-cloud-haze2-fill")
         self.assertNotContains(response, "bi-sun")
 
         with self.assertNumQueries(6):
             response = self.client.get(reverse("update_signup", kwargs={"date": TODAY}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/update_signup.html")
+        self.assertTemplateUsed(response, "trainings/signup_update.html")
         self.assertContains(response, 'name="for_sketchy_weather"')
 
         with self.assertNumQueries(14):
@@ -479,7 +479,7 @@ class SignupUpdateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertTemplateUsed(response, "trainings/training_list.html")
         self.assertNotContains(response, "bi-cloud-haze2-fill")
         self.assertContains(response, "bi-sun")
 
@@ -490,7 +490,7 @@ class SignupUpdateViewTests(TestCase):
                 + f"?next={reverse('trainings')}&page=2&training=3",
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/update_signup.html")
+        self.assertTemplateUsed(response, "trainings/signup_update.html")
         self.assertContains(response, reverse("trainings") + "?page=2#training_3")
 
         with self.assertNumQueries(15):
@@ -501,7 +501,7 @@ class SignupUpdateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertTemplateUsed(response, "trainings/training_list.html")
 
     def test_cannot_update_past_or_non_existent_signup(self):
         training = Training.objects.create(date=YESTERDAY)
@@ -543,7 +543,7 @@ class SignupUpdateViewTests(TestCase):
                 reverse("update_signup", kwargs={"date": TODAY}),
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/update_signup.html")
+        self.assertTemplateUsed(response, "trainings/signup_update.html")
         self.assertContains(response, "btn btn-danger")
 
         report = Report.objects.create(training=self.training, cash_at_start=1337)
@@ -559,7 +559,7 @@ class SignupUpdateViewTests(TestCase):
                 reverse("update_signup", kwargs={"date": TODAY}),
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/update_signup.html")
+        self.assertTemplateUsed(response, "trainings/signup_update.html")
         self.assertContains(response, "btn btn-danger")
 
         Run(
@@ -574,7 +574,7 @@ class SignupUpdateViewTests(TestCase):
                 reverse("update_signup", kwargs={"date": TODAY}),
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/update_signup.html")
+        self.assertTemplateUsed(response, "trainings/signup_update.html")
         self.assertNotContains(response, "btn btn-danger")
 
     def test_cannot_cancel_signup_with_relevant_runs(self):
