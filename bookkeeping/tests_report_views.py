@@ -8,7 +8,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from .models import Bill, Expense, Report, Run
-from trainings.models import Signup, Training
+from trainings.models import Purchase, Signup, Training
 
 locale.setlocale(locale.LC_TIME, "de_CH")
 
@@ -213,6 +213,219 @@ class ReportListViewTests(TestCase):
             response = self.client.get(reverse("reports"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/list_reports.html")
+        self.assertNotContains(response, TODAY.year)
+
+
+class BalanceViewTests(TestCase):
+    def setUp(self):
+        orga = get_user_model().objects.create(
+            email="orga@example.com", role=get_user_model().Role.Orga
+        )
+        self.client.force_login(orga)
+
+        self.training = Training.objects.create(date=TODAY)
+        signup = Signup.objects.create(pilot=orga, training=self.training)
+        self.report = Report.objects.create(
+            training=self.training, cash_at_start=1337, remarks="Some remarks."
+        )
+        self.day_pass = Purchase.save_day_pass(signup=signup, report=self.report)
+        self.prepaid_flights = Purchase.save_item(
+            signup=signup, report=self.report, choice=Purchase.ITEMS.PREPAID_FLIGHTS
+        )
+        self.cash_bill = Bill.objects.create(
+            signup=signup,
+            report=self.report,
+            prepaid_flights=0,
+            paid=self.day_pass.price + self.prepaid_flights.price,
+            method=Bill.METHODS.CASH,
+        )
+
+        self.guest = get_user_model().objects.create(email="guest@example.com")
+        signup = Signup.objects.create(pilot=self.guest, training=self.training)
+        self.life_jacket = Purchase.save_item(
+            signup=signup, report=self.report, choice=Purchase.ITEMS.LIFEJACKET
+        )
+        self.rearming_kit = Purchase.save_item(
+            signup=signup, report=self.report, choice=Purchase.ITEMS.REARMING_KIT
+        )
+        self.twint_bill = Bill.objects.create(
+            signup=signup,
+            report=self.report,
+            prepaid_flights=0,
+            paid=self.life_jacket.price + self.rearming_kit.price,
+            method=Bill.METHODS.TWINT,
+        )
+
+        self.first_gas = Expense.objects.create(
+            report=self.report, reason="Gas", amount=87
+        )
+        self.second_gas = Expense.objects.create(
+            report=self.report, reason="Gas", amount=25
+        )
+        self.other_expense = Expense.objects.create(
+            report=self.report, reason="other", amount=25
+        )
+
+    def test_orga_required_to_see(self):
+        self.client.force_login(self.guest)
+        with self.assertNumQueries(2):
+            response = self.client.get(reverse("balance"))
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
+        self.assertTemplateUsed(response, "403.html")
+
+    def test_orga_required_to_see_menu(self):
+        with self.assertNumQueries(4):
+            response = self.client.get(reverse("home"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "base.html")
+        self.assertContains(response, reverse("balance"))
+
+        self.client.force_login(self.guest)
+        with self.assertNumQueries(3):
+            response = self.client.get(reverse("home"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "base.html")
+        self.assertNotContains(response, reverse("balance") + '"')
+
+    def test_pagination_by_year(self):
+        with self.assertNumQueries(20):
+            response = self.client.get(reverse("balance"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/balance_reports.html")
+        self.assertNotContains(
+            response, reverse("balance", kwargs={"year": TODAY.year + 1})
+        )
+        self.assertNotContains(
+            response, reverse("balance", kwargs={"year": TODAY.year - 1})
+        )
+
+        for date in [
+            YESTERDAY,
+            TODAY - timedelta(days=365),
+            TODAY - 3 * timedelta(days=365),
+        ]:
+            training = Training.objects.create(date=date)
+            Report(training=training, cash_at_start=1337).save()
+
+        with self.assertNumQueries(22):
+            response = self.client.get(reverse("balance"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/balance_reports.html")
+        self.assertContains(response, reverse("reports", kwargs={"year": TODAY.year}))
+        self.assertContains(
+            response, reverse("balance", kwargs={"year": TODAY.year - 1})
+        )
+        self.assertNotContains(
+            response, reverse("balance", kwargs={"year": TODAY.year - 2})
+        )
+        self.assertNotContains(
+            response, reverse("balance", kwargs={"year": TODAY.year - 3})
+        )
+
+        with self.assertNumQueries(11):
+            response = self.client.get(
+                reverse("balance", kwargs={"year": TODAY.year - 1})
+            )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/balance_reports.html")
+        self.assertContains(
+            response, reverse("reports", kwargs={"year": TODAY.year - 1})
+        )
+        self.assertContains(response, reverse("balance", kwargs={"year": TODAY.year}))
+        self.assertNotContains(
+            response, reverse("balance", kwargs={"year": TODAY.year - 2})
+        )
+        self.assertContains(
+            response, reverse("balance", kwargs={"year": TODAY.year - 3})
+        )
+
+        with self.assertNumQueries(11):
+            response = self.client.get(
+                reverse("balance", kwargs={"year": TODAY.year - 3})
+            )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/balance_reports.html")
+        self.assertContains(
+            response, reverse("reports", kwargs={"year": TODAY.year - 3})
+        )
+        self.assertNotContains(
+            response, reverse("balance", kwargs={"year": TODAY.year})
+        )
+        self.assertContains(
+            response, reverse("balance", kwargs={"year": TODAY.year - 1})
+        )
+        self.assertNotContains(
+            response, reverse("balance", kwargs={"year": TODAY.year - 4})
+        )
+
+    def test_latest_cash(self):
+        with self.assertNumQueries(20):
+            response = self.client.get(reverse("balance"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/balance_reports.html")
+        self.assertContains(response, self.report.cash_at_start)
+
+        self.report.cash_at_end = 2 * self.report.cash_at_start
+        self.report.save()
+        with self.assertNumQueries(20):
+            response = self.client.get(reverse("balance"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/balance_reports.html")
+        self.assertNotContains(response, self.report.cash_at_start)
+        self.assertContains(response, self.report.cash_at_end)
+
+    def test_purchases_added_up(self):
+        with self.assertNumQueries(20):
+            response = self.client.get(reverse("balance"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/balance_reports.html")
+
+        self.assertContains(response, Bill.METHODS.CASH.label)
+        self.assertContains(response, self.day_pass.price)
+        self.assertContains(response, self.prepaid_flights.price)
+        self.assertContains(response, self.cash_bill.paid)
+
+        self.assertContains(response, Bill.METHODS.TWINT.label)
+        self.assertContains(response, self.life_jacket.price + self.rearming_kit.price)
+        self.assertContains(response, self.twint_bill.paid)
+
+    def test_expenses_shown(self):
+        with self.assertNumQueries(20):
+            response = self.client.get(reverse("balance"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/balance_reports.html")
+
+        self.assertContains(response, self.first_gas.amount + self.second_gas.amount)
+        self.assertContains(response, self.other_expense.amount)
+        self.assertContains(
+            response,
+            self.first_gas.amount + self.second_gas.amount + self.other_expense.amount,
+        )
+
+        self.assertContains(response, self.first_gas.amount)
+        self.assertContains(response, self.first_gas.reason)
+        self.assertContains(response, self.second_gas.amount)
+        self.assertContains(response, self.other_expense.amount)
+        self.assertContains(response, self.other_expense.reason)
+
+    def test_no_reports_in_year_404(self):
+        with self.assertNumQueries(4):
+            response = self.client.get(reverse("balance", kwargs={"year": 1984}))
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
+        self.assertTemplateUsed(response, "404.html")
+
+        Report.objects.all().delete()
+        with self.assertNumQueries(4):
+            response = self.client.get(reverse("balance"))
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
+        self.assertTemplateUsed(response, "404.html")
+
+        training = Training.objects.create(date=TODAY - timedelta(days=365))
+        Report(training=training, cash_at_start=1337).save()
+        with self.assertNumQueries(12):
+            response = self.client.get(reverse("balance"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/balance_reports.html")
         self.assertNotContains(response, TODAY.year)
 
 

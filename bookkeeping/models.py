@@ -209,7 +209,7 @@ class Purchase(models.Model):
         assert not signup.is_paid, "Cannot save item for paid signup."
         description, price = cls.ITEMS.choices[choice][1].split(", Fr. ")
         return cls.objects.create(
-            signup=signup, report=report, description=description, price=price
+            signup=signup, report=report, description=description, price=int(price)
         )
 
     @classmethod
@@ -220,6 +220,17 @@ class Purchase(models.Model):
             report=report,
             description=cls.DAY_PASS_DESCRIPTION,
             price=cls.DAY_PASS_PRICE,
+        )
+
+    @property
+    def is_day_pass(self):
+        return self.description == self.DAY_PASS_DESCRIPTION
+
+    @property
+    def is_equipment(self):
+        return (
+            self.description in self.ITEMS.REARMING_KIT.label
+            or self.description in self.ITEMS.LIFEJACKET.label
         )
 
 

@@ -269,6 +269,20 @@ class BillTests(TestCase):
         bill.save()
         self.assertEqual(8, self.pilot.prepaid_flights)
 
+    def test_was_paid_in_cash(self):
+        signup = Signup.objects.create(pilot=self.pilot, training=self.training)
+        for method in Bill.METHODS:
+            with self.subTest(method=method):
+                bill = Bill.objects.create(
+                    signup=signup,
+                    report=self.report,
+                    prepaid_flights=0,
+                    paid=420,
+                    method=method,
+                )
+                self.assertEqual(method == Bill.METHODS.CASH, bill.was_paid_in_cash)
+                bill.delete()
+
 
 class PurchaseTests(TestCase):
     def setUp(self):
@@ -278,6 +292,26 @@ class PurchaseTests(TestCase):
         training = Training.objects.create(date=TODAY)
         self.signup = Signup.objects.create(pilot=self.pilot, training=training)
         self.report = Report.objects.create(training=training, cash_at_start=0)
+
+    def test_is_day_pass(self):
+        for item in Purchase.ITEMS:
+            with self.subTest(item=item):
+                purchase = Purchase.save_item(self.signup, self.report, item)
+                self.assertFalse(purchase.is_day_pass)
+
+        purchase = Purchase.save_day_pass(self.signup, self.report)
+        self.assertTrue(purchase.is_day_pass)
+
+    def test_is_equipment(self):
+        for item in Purchase.ITEMS:
+            with self.subTest(item=item):
+                purchase = Purchase.save_item(self.signup, self.report, item)
+                self.assertEqual(
+                    item != Purchase.ITEMS.PREPAID_FLIGHTS, purchase.is_equipment
+                )
+
+        purchase = Purchase.save_day_pass(self.signup, self.report)
+        self.assertFalse(purchase.is_equipment)
 
     def test_create_and_delete_prepaid_flights(self):
         self.assertEqual(0, self.pilot.prepaid_flights)

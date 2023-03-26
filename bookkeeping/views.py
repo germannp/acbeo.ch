@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from itertools import groupby
 
 from django.db.models import prefetch_related_objects
 from django.contrib import messages
@@ -96,6 +97,94 @@ class ReportListView(OrgaRequiredMixin, YearArchiveView):
                     report.cash_at_start - previous_report.cash_at_end
                 )
         return queryset
+
+
+class BalanceView(OrgaRequiredMixin, YearArchiveView):
+    model = Report
+    name = "Berichte"
+    date_field = "training__date"
+    template_name = "bookkeeping/balance_reports.html"
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        prefetch_related_objects(queryset, "training__signups")
+        prefetch_related_objects(queryset, "bills")
+        prefetch_related_objects(queryset, "expenses")
+        prefetch_related_objects(queryset, "purchases")
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Overview
+        reports = sorted(
+            context["report_list"], key=lambda report: report.training.date
+        )
+        context["num_reports"] = len(reports)
+        context["num_runs"] = len(
+            set(run.created_on for report in reports for run in report.runs.all())
+        )
+        context["num_flights"] = sum(
+            run.is_flight for report in reports for run in report.runs.all()
+        )
+        context["num_pilots"] = len(
+            set(
+                signup.pilot
+                for report in reports
+                for signup in report.training.signups.all()
+                if signup.is_paid
+            )
+        )
+        context["latest_cash"] = (
+            reports[-1].cash_at_end
+            if reports[-1].cash_at_end
+            else reports[-1].cash_at_start
+        )
+
+        # Revenue
+        context["revenue_from_day_passes"] = {}
+        context["revenue_from_equipment"] = {}
+        context["revenue_from_flights"] = {}
+        context["total_revenue"] = {}
+        bills = [bill for report in reports for bill in report.bills.all()]
+        by_method = lambda bill: bill.method
+        for method, bills_paid_with_method in groupby(
+            sorted(bills, key=by_method), key=by_method
+        ):
+            method_label = Bill.METHODS.choices[method][1]
+            bills_paid_with_method = list(bills_paid_with_method)
+            purchases = [
+                purchase
+                for bill in bills_paid_with_method
+                for purchase in bill.signup.purchases.all()
+            ]
+            context["revenue_from_day_passes"][method_label] = sum(
+                purchase.price for purchase in purchases if purchase.is_day_pass
+            )
+            context["revenue_from_equipment"][method_label] = sum(
+                purchase.price for purchase in purchases if purchase.is_equipment
+            )
+            context["total_revenue"][method_label] = sum(
+                bill.paid for bill in bills_paid_with_method
+            )
+            context["revenue_from_flights"][method_label] = (
+                context["total_revenue"][method_label]
+                - context["revenue_from_day_passes"][method_label]
+                - context["revenue_from_equipment"][method_label]
+            )
+
+        # Expenses
+        expenses = [expense for report in reports for expense in report.expenses.all()]
+        context["expense_list"] = expenses
+        by_reason = lambda expense: expense.reason
+        context["expenses_by_reason"] = {
+            reason: sum(expense.amount for expense in expenses_with_reason)
+            for reason, expenses_with_reason in groupby(
+                sorted(expenses, key=by_reason), key=by_reason
+            )
+        }
+        context["total_expenses"] = sum(expense.amount for expense in expenses)
+        return context
 
 
 class ReportCreateView(OrgaRequiredMixin, generic.CreateView):

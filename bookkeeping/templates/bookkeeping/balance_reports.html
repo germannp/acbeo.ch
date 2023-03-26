@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}Abrechnung {{ year }}{% endblock title %}
+
+{% block headline %}Abrechnung {{ year }}{% endblock headline %}
+
+{% block content %}
+
+<div class="row mt-2">
+
+    <div class="col-md-4 left">
+        <div class="card mb-4">
+            <h5 class="card-header">Übersicht</h5>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <tbody>
+                            <tr>
+                                <td>Berichte <a href="{% url 'reports' year=year %}" class="bi bi-pencil-square"></a></td>
+                                <td>{{ num_reports }}</td>
+                            </tr>
+                            <tr>
+                                <td>Runs</td>
+                                <td>{{ num_runs }}</td>
+                            </tr>
+                            <tr>
+                                <td>Flüge</td>
+                                <td>{{ num_flights }}</td>
+                            </tr>
+                            <tr>
+                                <td>Pilot·innen</td>
+                                <td>{{ num_pilots }}</td>
+                            </tr>
+                            <tr>
+                                <td>Letzter Kassenstand</td>
+                                <td>{{ latest_cash }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 left">
+        <div class="card mb-4">
+            <h5 class="card-header">Einnahmen</h5>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead>
+                            <tr>
+                                <th scope="col"></th>
+                                {% for method in total_revenue.keys %}
+                                <th scope="col">{{ method }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody class="table-group-divider">
+                            <tr>
+                                <td>Tagesmitgliedschaften</td>
+                                {% for amount in revenue_from_day_passes.values %}
+                                <td>{{ amount }}</td>
+                                {% endfor %}
+                            </tr>
+                            <tr>
+                                <td>Material</td>
+                                {% for amount in revenue_from_equipment.values %}
+                                <td>{{ amount }}</td>
+                                {% endfor %}
+                            </tr>
+                            <tr>
+                                <td>Flüge</td>
+                                {% for amount in revenue_from_flights.values %}
+                                <td>{{ amount }}</td>
+                                {% endfor %}
+                            </tr>
+                        </tbody>
+                        <tfoot class="table-group-divider">
+                            <td>Total</td>
+                            {% for amount in total_revenue.values %}
+                            <td>{{ amount }}</td>
+                            {% endfor %}
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 left">
+        <div class="card mb-4">
+            <h5 class="card-header">Ausgaben</h5>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead>
+                            <tr>
+                                <th scope="col"></th>
+                                <th scope="col">Betrag</th>
+                            </tr>
+                        </thead>
+                        <tbody class="table-group-divider">
+                            {% for reason, expenses in expenses_by_reason.items %}
+                            <tr>
+                                <td>{{ reason }}</td>
+                                <td>{{ expenses }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="table-group-divider">
+                            <td>Total</td>
+                            <td>{{ total_expenses }}</td>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-12 left">
+
+        <div class="card mb-4">
+            <h5 class="card-header">Ausgaben im Detail</h5>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead>
+                            <tr>
+                                <th scope="col">Datum</th>
+                                <th scope="col">Zweck</th>
+                                <th scope="col">Betrag</th>
+                            </tr>
+                        </thead>
+                        <tbody class="table-group-divider">
+                            {% for expense in expense_list %}
+                            <tr>
+                                <td>{{ expense.report.training.date }}</td>
+                                <td>{{ expense.reason }}</td>
+                                <td>{{ expense.amount }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        {% if previous_year or next_year %}
+        <ul class="pagination justify-content-center">
+            <div class="btn-group">
+                {% if previous_year %}
+                <a href="{% url 'balance' year=previous_year %}" type="button" class="btn btn-primary"><i
+                        class="bi bi-chevron-double-left"></i></a>
+                {% endif %}
+                {% if next_year %}
+                <a href="{% url 'balance' %}" type="button" class="btn btn-primary">Aktuelles Jahr</a>
+                <a href="{% url 'balance' year=next_year %}" type="button" class="btn btn-primary"><i
+                        class="bi bi-chevron-double-right"></i></a>
+                {% endif %}
+            </div>
+        </ul>
+        {% endif %}
+
+    </div>
+</div>
+
+{% endblock content %}
