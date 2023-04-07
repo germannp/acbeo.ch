@@ -305,6 +305,10 @@ class SignupTests(TestCase):
                 ).save()
                 self.assertEqual(self.signup.is_cancelable, is_cancelable)
 
+        self.assertTrue(self.signup.is_cancelable)
+        Purchase.save_item(self.signup, report, Purchase.ITEMS.LIFEJACKET)
+        self.assertFalse(self.signup.is_cancelable)
+
     def test_is_active(self):
         self.signup.status = Signup.Status.Waiting
         self.assertFalse(self.signup.is_active)
@@ -324,7 +328,6 @@ class SignupTests(TestCase):
 
     def test_must_be_paid(self):
         self.assertFalse(self.signup.must_be_paid)
-
         report = Report.objects.create(training=self.training, cash_at_start=1337)
         for kind, must_be_paid in [
             (Run.Kind.Flight, True),
@@ -341,6 +344,10 @@ class SignupTests(TestCase):
                     created_on=timezone.now(),
                 ).save()
                 self.assertEqual(self.signup.must_be_paid, must_be_paid)
+
+        self.assertFalse(self.signup.must_be_paid)
+        Purchase.save_item(self.signup, report, Purchase.ITEMS.LIFEJACKET)
+        self.assertTrue(self.signup.must_be_paid)
 
         Bill(
             signup=self.signup,

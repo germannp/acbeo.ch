@@ -302,14 +302,14 @@ class SignupUpdateViewTests(TestCase):
         )
 
     def test_day_is_displayed(self):
-        with self.assertNumQueries(6):
+        with self.assertNumQueries(7):
             response = self.client.get(reverse("update_signup", kwargs={"date": TODAY}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "trainings/signup_update.html")
         self.assertContains(response, TODAY.strftime("%A, %d. %B").replace(" 0", " "))
 
     def test_comment_is_in_form_and_can_be_updated(self):
-        with self.assertNumQueries(6):
+        with self.assertNumQueries(7):
             response = self.client.get(reverse("update_signup", kwargs={"date": TODAY}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "trainings/signup_update.html")
@@ -337,7 +337,7 @@ class SignupUpdateViewTests(TestCase):
         self.assertContains(response, "bi-cloud-haze2-fill")
         self.assertContains(response, "Test comment")
 
-        with self.assertNumQueries(15):
+        with self.assertNumQueries(16):
             response = self.client.post(
                 reverse("update_signup", kwargs={"date": TODAY}),
                 data={
@@ -377,7 +377,7 @@ class SignupUpdateViewTests(TestCase):
         self.assertContains(response, "Test comment")
 
     def test_cancel_and_resignup_from_signups_list(self):
-        with self.assertNumQueries(13):
+        with self.assertNumQueries(14):
             response = self.client.post(
                 reverse("update_signup", kwargs={"date": TODAY})
                 + "?next="
@@ -412,7 +412,7 @@ class SignupUpdateViewTests(TestCase):
         self.assertTemplateUsed(response, "trainings/training_list.html")
         self.assertContains(response, "100%")
 
-        with self.assertNumQueries(6):
+        with self.assertNumQueries(7):
             response = self.client.get(reverse("update_signup", kwargs={"date": TODAY}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "trainings/signup_update.html")
@@ -435,7 +435,7 @@ class SignupUpdateViewTests(TestCase):
         self.assertTemplateUsed(response, "trainings/training_list.html")
         self.assertContains(response, "Ganzer Tag")
 
-        with self.assertNumQueries(6):
+        with self.assertNumQueries(7):
             response = self.client.get(reverse("update_signup", kwargs={"date": TODAY}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "trainings/signup_update.html")
@@ -462,7 +462,7 @@ class SignupUpdateViewTests(TestCase):
         self.assertContains(response, "bi-cloud-haze2-fill")
         self.assertNotContains(response, "bi-sun")
 
-        with self.assertNumQueries(6):
+        with self.assertNumQueries(7):
             response = self.client.get(reverse("update_signup", kwargs={"date": TODAY}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "trainings/signup_update.html")
@@ -484,7 +484,7 @@ class SignupUpdateViewTests(TestCase):
         self.assertContains(response, "bi-sun")
 
     def test_next_urls(self):
-        with self.assertNumQueries(6):
+        with self.assertNumQueries(7):
             response = self.client.get(
                 reverse("update_signup", kwargs={"date": TODAY})
                 + f"?next={reverse('trainings')}&page=2&training=3",
@@ -538,7 +538,7 @@ class SignupUpdateViewTests(TestCase):
         self.assertTemplateUsed(response, "404.html")
 
     def test_no_cancel_button_for_signup_with_relevant_runs(self):
-        with self.assertNumQueries(6):
+        with self.assertNumQueries(7):
             response = self.client.get(
                 reverse("update_signup", kwargs={"date": TODAY}),
             )
@@ -554,7 +554,7 @@ class SignupUpdateViewTests(TestCase):
             created_on=timezone.now(),
         ).save()
 
-        with self.assertNumQueries(6):
+        with self.assertNumQueries(7):
             response = self.client.get(
                 reverse("update_signup", kwargs={"date": TODAY}),
             )
@@ -569,7 +569,7 @@ class SignupUpdateViewTests(TestCase):
             created_on=timezone.now(),
         ).save()
 
-        with self.assertNumQueries(6):
+        with self.assertNumQueries(7):
             response = self.client.get(
                 reverse("update_signup", kwargs={"date": TODAY}),
             )

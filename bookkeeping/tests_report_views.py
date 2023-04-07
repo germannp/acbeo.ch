@@ -305,7 +305,7 @@ class BalanceViewTests(TestCase):
         self.assertNotContains(response, reverse("balance") + '"')
 
     def test_pagination_by_year(self):
-        with self.assertNumQueries(23):
+        with self.assertNumQueries(24):
             response = self.client.get(reverse("balance"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/report_balance.html")
@@ -324,7 +324,7 @@ class BalanceViewTests(TestCase):
             training = Training.objects.create(date=date)
             Report(training=training, cash_at_start=1337).save()
 
-        with self.assertNumQueries(25):
+        with self.assertNumQueries(26):
             response = self.client.get(reverse("balance"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/report_balance.html")
@@ -376,7 +376,7 @@ class BalanceViewTests(TestCase):
         )
 
     def test_first_and_latest_cash(self):
-        with self.assertNumQueries(23):
+        with self.assertNumQueries(24):
             response = self.client.get(reverse("balance"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/report_balance.html")
@@ -385,7 +385,7 @@ class BalanceViewTests(TestCase):
         self.assertContains(response, reverse("reports"))
 
     def test_purchases_added_up(self):
-        with self.assertNumQueries(23):
+        with self.assertNumQueries(24):
             response = self.client.get(reverse("balance"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/report_balance.html")
@@ -400,7 +400,7 @@ class BalanceViewTests(TestCase):
         self.assertContains(response, self.twint_bill.amount)
 
     def test_expeditures_shown(self):
-        with self.assertNumQueries(23):
+        with self.assertNumQueries(24):
             response = self.client.get(reverse("balance"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/report_balance.html")
@@ -422,7 +422,7 @@ class BalanceViewTests(TestCase):
         self.assertContains(response, self.other_expense.reason)
 
     def test_non_zero_transactions_shown(self):
-        with self.assertNumQueries(23):
+        with self.assertNumQueries(24):
             response = self.client.get(reverse("balance"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/report_balance.html")
@@ -804,7 +804,7 @@ class ReportUpdateViewTests(TestCase):
         self.assertNotContains(response, "Achtung, zu wenig Geld in der Kasse.")
 
     def test_everyone_paid_warnings_not_enough_cash_warnings(self):
-        with self.assertNumQueries(34):
+        with self.assertNumQueries(38):  # Seems like a lot of queries 🤔
             response = self.client.post(
                 reverse("update_report", kwargs={"date": TODAY}),
                 data={

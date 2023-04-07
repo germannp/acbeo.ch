@@ -136,11 +136,11 @@ class Signup(models.Model):
 
     @property
     def is_cancelable(self):
-        if hasattr(self, "runs"):
-            runs = self.runs.all()
-            return not any(run.is_relevant_for_bill for run in runs)
+        if self.purchases.all():
+            return False
 
-        return True
+        runs = self.runs.all()
+        return not any(run.is_relevant_for_bill for run in runs)
 
     @property
     def is_active(self):
