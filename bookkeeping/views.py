@@ -269,6 +269,56 @@ class ReportUpdateView(OrgaRequiredMixin, generic.UpdateView):
         return super().form_valid(form)
 
 
+class ExpenseCreateView(OrgaRequiredMixin, generic.CreateView):
+    form_class = forms.ExpenseCreateForm
+    template_name = "bookkeeping/expense_create.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        training = get_object_or_404(Training, date=self.kwargs["date"])
+        get_object_or_404(Report, training=training)
+        context["date"] = self.kwargs["date"]
+        return context
+
+    def form_valid(self, form):
+        """Fill in report"""
+        training = get_object_or_404(Training, date=self.kwargs["date"])
+        report = get_object_or_404(Report, training=training)
+        form.instance.report = report
+        messages.success(
+            self.request,
+            f"Ausgabe für {form.instance.reason} über CHF {form.instance.amount} gespeichert.",
+        )
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy("update_report", kwargs={"date": self.kwargs["date"]})
+
+
+class ExpenseUpdateView(OrgaRequiredMixin, generic.UpdateView):
+    model = Expense
+    fields = ("reason", "amount")
+    template_name = "bookkeeping/expense_update.html"
+
+    def post(self, request, *args, **kwargs):
+        if "delete" in request.POST:
+            self.get_object().delete()
+            messages.success(request, "Ausgabe gelöscht.")
+            return HttpResponseRedirect(self.get_success_url())
+
+        return super().post(self, request, *args, **kwargs)
+
+    def form_valid(self, form):
+        messages.success(
+            self.request,
+            f"Ausgabe für {form.instance.reason} über CHF {form.instance.amount} gespeichert.",
+        )
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy("update_report", kwargs={"date": self.kwargs["date"]})
+
+
 class RunCreateView(OrgaRequiredMixin, generic.TemplateView):
     template_name = "bookkeeping/run_create.html"
     success_url = reverse_lazy("create_report")
@@ -430,56 +480,6 @@ class RunUpdateView(OrgaRequiredMixin, generic.TemplateView):
         return HttpResponseRedirect(self.success_url)
 
 
-class ExpenseCreateView(OrgaRequiredMixin, generic.CreateView):
-    form_class = forms.ExpenseCreateForm
-    template_name = "bookkeeping/expense_create.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        training = get_object_or_404(Training, date=self.kwargs["date"])
-        get_object_or_404(Report, training=training)
-        context["date"] = self.kwargs["date"]
-        return context
-
-    def form_valid(self, form):
-        """Fill in report"""
-        training = get_object_or_404(Training, date=self.kwargs["date"])
-        report = get_object_or_404(Report, training=training)
-        form.instance.report = report
-        messages.success(
-            self.request,
-            f"Ausgabe für {form.instance.reason} über CHF {form.instance.amount} gespeichert.",
-        )
-        return super().form_valid(form)
-
-    def get_success_url(self):
-        return reverse_lazy("update_report", kwargs={"date": self.kwargs["date"]})
-
-
-class ExpenseUpdateView(OrgaRequiredMixin, generic.UpdateView):
-    model = Expense
-    fields = ("reason", "amount")
-    template_name = "bookkeeping/expense_update.html"
-
-    def post(self, request, *args, **kwargs):
-        if "delete" in request.POST:
-            self.get_object().delete()
-            messages.success(request, "Ausgabe gelöscht.")
-            return HttpResponseRedirect(self.get_success_url())
-
-        return super().post(self, request, *args, **kwargs)
-
-    def form_valid(self, form):
-        messages.success(
-            self.request,
-            f"Ausgabe für {form.instance.reason} über CHF {form.instance.amount} gespeichert.",
-        )
-        return super().form_valid(form)
-
-    def get_success_url(self):
-        return reverse_lazy("update_report", kwargs={"date": self.kwargs["date"]})
-
-
 class BillListView(LoginRequiredMixin, YearArchiveView):
     model = Bill
     name = "Rechnungen"
@@ -515,8 +515,7 @@ class BillCreateView(OrgaRequiredMixin, generic.CreateView):
         if signup.needs_day_pass and self.request.GET.get("day_pass") != "False":
             Purchase.save_day_pass(signup, report)
         prefetch_related_objects([signup], "purchases")
-        bill = Bill(signup=signup, report=report)
-        context["bill"] = bill
+        context["bill"] = Bill(signup=signup, report=report)
         return context
 
     def form_valid(self, form):
