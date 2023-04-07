@@ -11,7 +11,7 @@ from django.utils import timezone
 from django.views import generic
 
 from . import forms
-from .models import Bill, Expense, Purchase, Report, Run
+from .models import Absorption, Bill, Expense, PAYMENT_METHODS, Purchase, Report, Run
 from trainings.views import OrgaRequiredMixin
 from trainings.models import Signup, Training
 
@@ -84,9 +84,10 @@ class ReportListView(OrgaRequiredMixin, YearArchiveView):
     def get_queryset(self):
         """Prefetch & compute cash difference between consecutive reports"""
         queryset = super().get_queryset()
+        prefetch_related_objects(queryset, "absorptions")
+        prefetch_related_objects(queryset, "expenses")
         prefetch_related_objects(queryset, "training__signups")
         prefetch_related_objects(queryset, "bills")
-        prefetch_related_objects(queryset, "expenses")
 
         for previous_report, report in zip(queryset, queryset[1:]):
             if previous_report.cash_at_end is None:
@@ -106,9 +107,11 @@ class BalanceView(OrgaRequiredMixin, YearArchiveView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        prefetch_related_objects(queryset, "training__signups")
-        prefetch_related_objects(queryset, "bills")
+        prefetch_related_objects(queryset, "training__signups__pilot")
+        prefetch_related_objects(queryset, "training__signups__runs")
+        prefetch_related_objects(queryset, "absorptions__signup__pilot")
         prefetch_related_objects(queryset, "expenses")
+        prefetch_related_objects(queryset, "bills__signup__pilot")
         prefetch_related_objects(queryset, "purchases")
         return queryset
 
@@ -134,55 +137,94 @@ class BalanceView(OrgaRequiredMixin, YearArchiveView):
                 if signup.is_paid
             )
         )
-        context["latest_cash"] = (
-            reports[-1].cash_at_end
-            if reports[-1].cash_at_end
-            else reports[-1].cash_at_start
+        context["num_open_signups"] = sum(
+            signup.must_be_paid
+            for report in reports
+            for signup in report.training.signups.all()
         )
 
         # Revenue
         context["revenue_from_day_passes"] = {}
-        context["revenue_from_equipment"] = {}
+        context["revenue_from_prepaid_flights"] = {}
         context["revenue_from_flights"] = {}
+        context["revenue_from_equipment"] = {}
         context["total_revenue"] = {}
         bills = [bill for report in reports for bill in report.bills.all()]
-        by_method = lambda bill: bill.method
+        by_method = lambda bill: bill.get_method_display()
         for method, bills_paid_with_method in groupby(
             sorted(bills, key=by_method), key=by_method
         ):
-            method_label = Bill.METHODS.choices[method][1]
             bills_paid_with_method = list(bills_paid_with_method)
             purchases = [
                 purchase
                 for bill in bills_paid_with_method
                 for purchase in bill.signup.purchases.all()
             ]
-            context["revenue_from_day_passes"][method_label] = sum(
+            context["revenue_from_day_passes"][method] = sum(
                 purchase.price for purchase in purchases if purchase.is_day_pass
             )
-            context["revenue_from_equipment"][method_label] = sum(
+            context["revenue_from_prepaid_flights"][method] = sum(
+                purchase.price for purchase in purchases if purchase.is_prepaid_flights
+            )
+            context["revenue_from_equipment"][method] = sum(
                 purchase.price for purchase in purchases if purchase.is_equipment
             )
-            context["total_revenue"][method_label] = sum(
-                bill.paid for bill in bills_paid_with_method
+            context["total_revenue"][method] = sum(
+                bill.amount for bill in bills_paid_with_method
             )
-            context["revenue_from_flights"][method_label] = (
-                context["total_revenue"][method_label]
-                - context["revenue_from_day_passes"][method_label]
-                - context["revenue_from_equipment"][method_label]
+            context["revenue_from_flights"][method] = (
+                context["total_revenue"][method]
+                - context["revenue_from_day_passes"][method]
+                - context["revenue_from_prepaid_flights"][method]
+                - context["revenue_from_equipment"][method]
             )
 
-        # Expenses
-        expenses = [expense for report in reports for expense in report.expenses.all()]
-        context["expense_list"] = expenses
-        by_reason = lambda expense: expense.reason
-        context["expenses_by_reason"] = {
-            reason: sum(expense.amount for expense in expenses_with_reason)
-            for reason, expenses_with_reason in groupby(
-                sorted(expenses, key=by_reason), key=by_reason
+        # Expeditures
+        expeditures = [
+            expense for report in reports for expense in report.expenses.all()
+        ] + [
+            absorption for report in reports for absorption in report.absorptions.all()
+        ]
+        by_reason = lambda expediture: expediture.reason
+        context["expeditures_by_reason"] = {
+            reason: sum(expediture.amount for expediture in expeditures_with_reason)
+            for reason, expeditures_with_reason in groupby(
+                sorted(expeditures, key=by_reason), key=by_reason
             )
         }
-        context["total_expenses"] = sum(expense.amount for expense in expenses)
+        context["total_expeditures"] = sum(
+            expediture.amount for expediture in expeditures
+        )
+        by_date = lambda expediture: expediture.report.training.date
+        context["expediture_list"] = sorted(
+            [expediture for expediture in expeditures if expediture.amount], key=by_date
+        )
+
+        # Amount
+        context["first_cash"] = reports[0].cash_at_start
+        if reports[-1].cash_at_end is not None:
+            context["latest_cash"] = reports[-1].cash_at_end
+            context["amount"] = reports[-1].cash_at_end - (
+                reports[0].cash_at_start
+                + context["total_revenue"].get(PAYMENT_METHODS.CASH.label, 0)
+                - context.get("total_expeditures", 0)
+            )
+
+        # Transactions
+        transactions = [bill for report in reports for bill in report.bills.all()] + [
+            absorption for report in reports for absorption in report.absorptions.all()
+        ]
+        transactions = [
+            transaction
+            for transaction in transactions
+            if transaction.method != PAYMENT_METHODS.CASH and transaction.amount
+        ]
+        context["transactions_by_method"] = {
+            method: sorted(transactions_with_method, key=by_date)
+            for method, transactions_with_method in groupby(
+                sorted(transactions, key=by_method), key=by_method
+            )
+        }
         return context
 
 
@@ -277,7 +319,6 @@ class ExpenseCreateView(OrgaRequiredMixin, generic.CreateView):
         context = super().get_context_data(**kwargs)
         training = get_object_or_404(Training, date=self.kwargs["date"])
         get_object_or_404(Report, training=training)
-        context["date"] = self.kwargs["date"]
         return context
 
     def form_valid(self, form):
@@ -287,7 +328,7 @@ class ExpenseCreateView(OrgaRequiredMixin, generic.CreateView):
         form.instance.report = report
         messages.success(
             self.request,
-            f"Ausgabe für {form.instance.reason} über CHF {form.instance.amount} gespeichert.",
+            f"Ausgabe für {form.instance.reason} über Fr. {form.instance.amount} gespeichert.",
         )
         return super().form_valid(form)
 
@@ -311,7 +352,85 @@ class ExpenseUpdateView(OrgaRequiredMixin, generic.UpdateView):
     def form_valid(self, form):
         messages.success(
             self.request,
-            f"Ausgabe für {form.instance.reason} über CHF {form.instance.amount} gespeichert.",
+            f"Ausgabe für {form.instance.reason} über Fr. {form.instance.amount} gespeichert.",
+        )
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy("update_report", kwargs={"date": self.kwargs["date"]})
+
+
+class AbsorptionCreateView(OrgaRequiredMixin, generic.CreateView):
+    form_class = forms.AbsorptionForm
+    template_name = "bookkeeping/absorption_create.html"
+
+    def get_context_data(self, **kwargs):
+        """Fill in selected signups"""
+        context = super().get_context_data(**kwargs)
+        training = get_object_or_404(Training, date=self.kwargs["date"])
+        selected_signups = training.signups.filter(
+            status=Signup.Status.Selected
+        ).select_related("pilot")
+        context["form"].fields["signup"].queryset = selected_signups
+        if user_signup := next(
+            (
+                signup
+                for signup in selected_signups
+                if signup.pilot == self.request.user
+            ),
+            None,
+        ):
+            context["form"].fields["signup"].initial = user_signup
+        else:
+            context["form"].fields["signup"].initial = selected_signups.first()
+        get_object_or_404(Report, training=training)
+        return context
+
+    def form_valid(self, form):
+        """Fill in report & check sanity"""
+        training = get_object_or_404(Training, date=self.kwargs["date"])
+        report = get_object_or_404(Report, training=training)
+        if form.instance.amount > (cash := report.cash_at_start + report.cash_revenue):
+            form.add_error(None, f"Man kann höchstens Fr. {cash} abschöpfen.")
+            return super().form_invalid(form)
+
+        form.instance.report = report
+        messages.success(
+            self.request,
+            f"Abschöpfung von {form.instance.signup.pilot} über Fr. {form.instance.amount} gespeichert.",
+        )
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy("update_report", kwargs={"date": self.kwargs["date"]})
+
+
+class AbsorptionUpdateView(OrgaRequiredMixin, generic.UpdateView):
+    model = Absorption
+    form_class = forms.AbsorptionForm
+    template_name = "bookkeeping/absorption_update.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        training = get_object_or_404(Training, date=self.kwargs["date"])
+        context["form"].fields["signup"].queryset = training.signups.filter(
+            status=Signup.Status.Selected
+        ).select_related("pilot")
+        get_object_or_404(Report, training=training)
+        return context
+
+    def post(self, request, *args, **kwargs):
+        if "delete" in request.POST:
+            self.get_object().delete()
+            messages.success(request, "Abschöpfung gelöscht.")
+            return HttpResponseRedirect(self.get_success_url())
+
+        return super().post(self, request, *args, **kwargs)
+
+    def form_valid(self, form):
+        messages.success(
+            self.request,
+            f"Abschöpfung von {form.instance.signup.pilot} über Fr. {form.instance.amount} gespeichert.",
         )
         return super().form_valid(form)
 
@@ -534,9 +653,9 @@ class BillCreateView(OrgaRequiredMixin, generic.CreateView):
         form.instance.signup = signup
         report = get_object_or_404(Report, training=signup.training)
         form.instance.report = report
-        if form.instance.paid < form.instance.to_pay:
+        if form.instance.amount < form.instance.to_pay:
             form.add_error(
-                None, f"{signup.pilot} muss {form.instance.to_pay} bezahlen."
+                None, f"{signup.pilot} muss Fr. {form.instance.to_pay} bezahlen."
             )
             return super().form_invalid(form)
 
@@ -568,10 +687,10 @@ class BillUpdateView(OrgaRequiredMixin, generic.UpdateView):
         return super().post(self, request, *args, **kwargs)
 
     def form_valid(self, form):
-        if form.instance.paid < form.instance.to_pay:
+        if form.instance.amount < form.instance.to_pay:
             form.add_error(
                 None,
-                f"{form.instance.signup.pilot} muss {form.instance.to_pay} bezahlen.",
+                f"{form.instance.signup.pilot} muss Fr. {form.instance.to_pay} bezahlen.",
             )
             return super().form_invalid(form)
 

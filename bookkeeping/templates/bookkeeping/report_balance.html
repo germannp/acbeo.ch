@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 
-{% block title %}Abrechnung {{ year }}{% endblock title %}
+{% block title %}Bilanz {{ year }}{% endblock title %}
 
-{% block headline %}Abrechnung {{ year }}{% endblock headline %}
+{% block headline %}Bilanz {{ year }}{% endblock headline %}
 
 {% block content %}
 
 <div class="row mt-2">
 
-    <div class="col-md-4 left">
+    <div class="col-lg-4 left">
         <div class="card mb-4">
             <h5 class="card-header">Übersicht</h5>
             <div class="card-body">
@@ -16,7 +16,8 @@
                     <table class="table table-sm table-hover">
                         <tbody>
                             <tr>
-                                <td>Berichte <a href="{% url 'reports' year=year %}" class="bi bi-pencil-square"></a></td>
+                                <td>Berichte <a href="{% url 'reports' year=year %}" class="bi bi-pencil-square"></a>
+                                </td>
                                 <td>{{ num_reports }}</td>
                             </tr>
                             <tr>
@@ -32,8 +33,20 @@
                                 <td>{{ num_pilots }}</td>
                             </tr>
                             <tr>
+                                <td>Offene Rechnungen</td>
+                                <td>{{ num_open_signups }}</td>
+                            </tr>
+                            <tr>
+                                <td>Erster Kassenstand</td>
+                                <td>{{ first_cash }}</td>
+                            </tr>
+                            <tr>
                                 <td>Letzter Kassenstand</td>
                                 <td>{{ latest_cash }}</td>
+                            </tr>
+                            <tr>
+                                <td>Ergebnis Kasse</td>
+                                <td>{{ amount }}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -42,7 +55,7 @@
         </div>
     </div>
 
-    <div class="col-md-4 left">
+    <div class="col-lg-4 left">
         <div class="card mb-4">
             <h5 class="card-header">Einnahmen</h5>
             <div class="card-body">
@@ -70,6 +83,12 @@
                                 {% endfor %}
                             </tr>
                             <tr>
+                                <td>Abos</td>
+                                {% for amount in revenue_from_prepaid_flights.values %}
+                                <td>{{ amount }}</td>
+                                {% endfor %}
+                            </tr>
+                            <tr>
                                 <td>Flüge</td>
                                 {% for amount in revenue_from_flights.values %}
                                 <td>{{ amount }}</td>
@@ -88,7 +107,7 @@
         </div>
     </div>
 
-    <div class="col-md-4 left">
+    <div class="col-lg-4 left">
         <div class="card mb-4">
             <h5 class="card-header">Ausgaben</h5>
             <div class="card-body">
@@ -101,16 +120,16 @@
                             </tr>
                         </thead>
                         <tbody class="table-group-divider">
-                            {% for reason, expenses in expenses_by_reason.items %}
+                            {% for reason, expeditures in expeditures_by_reason.items %}
                             <tr>
                                 <td>{{ reason }}</td>
-                                <td>{{ expenses }}</td>
+                                <td>{{ expeditures }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
                         <tfoot class="table-group-divider">
                             <td>Total</td>
-                            <td>{{ total_expenses }}</td>
+                            <td>{{ total_expeditures }}</td>
                         </tfoot>
                     </table>
                 </div>
@@ -118,8 +137,7 @@
         </div>
     </div>
 
-    <div class="col-md-12 left">
-
+    <div class="col-lg-6">
         <div class="card mb-4">
             <h5 class="card-header">Ausgaben im Detail</h5>
             <div class="card-body">
@@ -127,17 +145,19 @@
                     <table class="table table-sm table-hover">
                         <thead>
                             <tr>
-                                <th scope="col">Datum</th>
+                                <th scope="col">Bericht</th>
                                 <th scope="col">Zweck</th>
                                 <th scope="col">Betrag</th>
                             </tr>
                         </thead>
                         <tbody class="table-group-divider">
-                            {% for expense in expense_list %}
+                            {% for expediture in expediture_list %}
                             <tr>
-                                <td>{{ expense.report.training.date }}</td>
-                                <td>{{ expense.reason }}</td>
-                                <td>{{ expense.amount }}</td>
+                                <td>{{ expediture.report.training.date | date:"j.n." }} <a
+                                        href="{% url 'update_report' date=expediture.report.training.date.isoformat %}"
+                                        class="bi bi-pencil-square"></a></td>
+                                <td>{{ expediture.description }}</td>
+                                <td>{{ expediture.amount }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -145,24 +165,58 @@
                 </div>
             </div>
         </div>
-
-        {% if previous_year or next_year %}
-        <ul class="pagination justify-content-center">
-            <div class="btn-group">
-                {% if previous_year %}
-                <a href="{% url 'balance' year=previous_year %}" type="button" class="btn btn-primary"><i
-                        class="bi bi-chevron-double-left"></i></a>
-                {% endif %}
-                {% if next_year %}
-                <a href="{% url 'balance' %}" type="button" class="btn btn-primary">Aktuelles Jahr</a>
-                <a href="{% url 'balance' year=next_year %}" type="button" class="btn btn-primary"><i
-                        class="bi bi-chevron-double-right"></i></a>
-                {% endif %}
-            </div>
-        </ul>
-        {% endif %}
-
     </div>
+
+    {% for method, transactions in transactions_by_method.items %}
+    <div class="col-lg-6">
+        <div class="card mb-4">
+            <h5 class="card-header">Transaktionen per {{ method }}</h5>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead>
+                            <tr>
+                                <th scope="col">Bericht</th>
+                                <th scope="col">Zweck</th>
+                                <th scope="col">Betrag</th>
+                            </tr>
+                        </thead>
+                        <tbody class="table-group-divider">
+                            {% for transaction in transactions %}
+                            <tr>
+                                <td>{{ transaction.report.training.date | date:"j.n." }} <a
+                                        href="{% url 'update_report' date=transaction.report.training.date.isoformat %}"
+                                        class="bi bi-pencil-square"></a></td>
+                                <td>{{ transaction.description }}</td>
+                                <td>{{ transaction.amount }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+</div>
+
+{% if previous_year or next_year %}
+<ul class="pagination justify-content-center">
+    <div class="btn-group">
+        {% if previous_year %}
+        <a href="{% url 'balance' year=previous_year %}" type="button" class="btn btn-primary"><i
+                class="bi bi-chevron-double-left"></i></a>
+        {% endif %}
+        {% if next_year %}
+        <a href="{% url 'balance' %}" type="button" class="btn btn-primary">Aktuelles Jahr</a>
+        <a href="{% url 'balance' year=next_year %}" type="button" class="btn btn-primary"><i
+                class="bi bi-chevron-double-right"></i></a>
+        {% endif %}
+    </div>
+</ul>
+{% endif %}
+
 </div>
 
 {% endblock content %}

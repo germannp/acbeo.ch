@@ -67,7 +67,7 @@ class ExpenseCreateViewTests(TestCase):
     def test_create_expense(self):
         reason = Expense.REASONS.GAS
         amount = 42
-        with self.assertNumQueries(16):
+        with self.assertNumQueries(17):
             response = self.client.post(
                 reverse("create_expense", kwargs={"date": TODAY}),
                 data={"reason": reason, "amount": amount},
@@ -77,7 +77,7 @@ class ExpenseCreateViewTests(TestCase):
         self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertContains(
             response,
-            f"Ausgabe für {Expense.REASONS.GAS.label} über CHF {amount} gespeichert.",
+            f"Ausgabe für {Expense.REASONS.GAS.label} über Fr. {amount} gespeichert.",
         )
         self.assertEqual(1, len(Expense.objects.all()))
         created_expense = Expense.objects.first()
@@ -87,7 +87,7 @@ class ExpenseCreateViewTests(TestCase):
     def test_create_expense_for_other_reason(self):
         other_reason = "Other reason"
         amount = 42
-        with self.assertNumQueries(16):
+        with self.assertNumQueries(17):
             response = self.client.post(
                 reverse("create_expense", kwargs={"date": TODAY}),
                 data={
@@ -100,7 +100,7 @@ class ExpenseCreateViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertContains(
-            response, f"Ausgabe für {other_reason} über CHF {amount} gespeichert."
+            response, f"Ausgabe für {other_reason} über Fr. {amount} gespeichert."
         )
         self.assertEqual(1, len(Expense.objects.all()))
         created_expense = Expense.objects.first()
@@ -172,7 +172,7 @@ class ExpenseUpdateViewTests(TestCase):
     def test_update_expense(self):
         new_reason = "Petrol"
         new_amount = 23
-        with self.assertNumQueries(15):
+        with self.assertNumQueries(16):
             response = self.client.post(
                 reverse(
                     "update_expense", kwargs={"date": TODAY, "pk": self.expense.pk}
@@ -183,7 +183,7 @@ class ExpenseUpdateViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertContains(
-            response, f"Ausgabe für {new_reason} über CHF {new_amount} gespeichert."
+            response, f"Ausgabe für {new_reason} über Fr. {new_amount} gespeichert."
         )
         self.assertEqual(1, len(Expense.objects.all()))
         self.expense.refresh_from_db()
@@ -191,7 +191,7 @@ class ExpenseUpdateViewTests(TestCase):
         self.assertEqual(new_amount, self.expense.amount)
 
     def test_delete_expense(self):
-        with self.assertNumQueries(15):
+        with self.assertNumQueries(16):
             response = self.client.post(
                 reverse(
                     "update_expense", kwargs={"date": TODAY, "pk": self.expense.pk}

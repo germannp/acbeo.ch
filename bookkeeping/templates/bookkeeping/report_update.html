@@ -85,9 +85,17 @@
                                 {% for expense in report.expenses.all %}
                                 <tr>
                                     <td>{{ expense.reason }} 
-                                        <a href="{% url 'update_expense' date=report.training.date.isoformat pk=expense.pk %}" 
+                                        <a href="{% url 'update_expense' date=report.training.date.isoformat pk=expense.pk %}"
                                             class="bi bi-pencil-square"></a></td>
                                     <td>- {{ expense.amount }}</td>
+                                </tr>
+                                {% endfor %}
+                                {% for absorption in report.absorptions.all %}
+                                <tr>
+                                    <td>{{ absorption.reason }} 
+                                        <a href="{% url 'update_absorption' date=report.training.date.isoformat pk=absorption.pk %}"
+                                            class="bi bi-pencil-square"></a></td>
+                                    <td>- {{ absorption.amount }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -104,6 +112,7 @@
                         </div>
                         <div class="d-grid gap-2">
                             <a href="{% url 'create_expense' date=report.training.date.isoformat %}" class="btn btn-primary">Ausgabe erfassen</a>
+                            <a href="{% url 'create_absorption' date=report.training.date.isoformat %}" class="btn btn-primary">Abschöpfen</a>
                             <button class="btn btn-primary" type="submit">Speichern</button>
                             <a href="javascript:history.back()" class="btn btn-outline-dark">Abbrechen</a>
                         </div>

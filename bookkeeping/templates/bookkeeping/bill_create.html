@@ -81,9 +81,9 @@
                             {% endfor %}
                         </div>
                         <div class="form-floating mb-3">
-                            <input type="number" min="{{ bill.to_pay }}" name="paid" class="form-control"
+                            <input type="number" min="{{ bill.to_pay }}" name="amount" class="form-control"
                                 placeholder="text"
-                                value="{% if form.paid.value %}{{ form.paid.value }}{% else %}{{ bill.to_pay }}{% endif %}">
+                                value="{% if form.amount.value %}{{ form.amount.value }}{% else %}{{ bill.to_pay }}{% endif %}">
                             <label>Betrag</label>
                         </div>
                         <div class="d-grid gap-2 d-sm-block">

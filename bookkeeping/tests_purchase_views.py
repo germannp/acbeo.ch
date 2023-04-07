@@ -7,7 +7,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import Bill, Purchase, Report, Run
+from .models import Bill, PAYMENT_METHODS, Purchase, Report, Run
 from trainings.models import Signup, Training
 
 locale.setlocale(locale.LC_TIME, "de_CH")
@@ -82,10 +82,10 @@ class PurchaseCreateViewTests(TestCase):
             signup=self.signup,
             report=self.report,
             prepaid_flights=0,
-            paid=42,
-            method=Bill.METHODS.CASH,
+            amount=42,
+            method=PAYMENT_METHODS.CASH,
         ).save()
-        with self.assertNumQueries(23):
+        with self.assertNumQueries(24):
             response = self.client.post(
                 reverse(
                     "create_purchase", kwargs={"date": TODAY, "signup": self.signup.pk}
@@ -205,10 +205,10 @@ class PurchaseDeleteViewTests(TestCase):
             signup=self.signup,
             report=self.report,
             prepaid_flights=0,
-            paid=42,
-            method=Bill.METHODS.CASH,
+            amount=42,
+            method=PAYMENT_METHODS.CASH,
         ).save()
-        with self.assertNumQueries(25):
+        with self.assertNumQueries(26):
             response = self.client.post(
                 reverse(
                     "delete_purchase", kwargs={"date": TODAY, "pk": self.purchase.pk}

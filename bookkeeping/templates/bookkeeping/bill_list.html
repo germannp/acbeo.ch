@@ -22,7 +22,8 @@
                                 <th scope="col">Dienste</th>
                                 <th scope="col">Mit Abo bezahlt</th>
                                 <th scope="col">Einkäufe</th>
-                                <th scope="col">Bezahlt</th>
+                                <th scope="col">Betrag</th>
+                                <th scope="col">Zahlungsart</th>
                             </tr>
                         </thead>
                         <tbody class="table-group-divider">
@@ -34,7 +35,8 @@
                                 <td>{{ bill.num_services }}</td>
                                 <td>{{ bill.prepaid_flights }}</td>
                                 <td>{{ bill.purchases }}</td>
-                                <td>{{ bill.paid }}</td>
+                                <td>{{ bill.amount }}</td>
+                                <td>{{ bill.get_method_display }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>

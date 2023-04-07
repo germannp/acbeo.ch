@@ -20,22 +20,24 @@ class Report(models.Model):
     @property
     def cash_revenue(self):
         bills = self.bills.all()
-        return sum(bill.paid for bill in bills if bill.was_paid_in_cash)
+        return sum(bill.amount for bill in bills if bill.was_paid_in_cash)
 
     @property
     def other_revenue(self):
         bills = self.bills.all()
-        return sum(bill.paid for bill in bills if not bill.was_paid_in_cash)
+        return sum(bill.amount for bill in bills if not bill.was_paid_in_cash)
 
     @property
-    def total_expenses(self):
-        return sum(expense.amount for expense in self.expenses.all())
+    def cash_expediture(self):
+        expenses = sum(expense.amount for expense in self.expenses.all())
+        absorptions = sum(absorption.amount for absorption in self.absorptions.all())
+        return expenses + absorptions
 
     @property
     def difference(self):
         if self.cash_at_end:
             return self.cash_at_end - (
-                self.cash_at_start + self.cash_revenue - self.total_expenses
+                self.cash_at_start + self.cash_revenue - self.cash_expediture
             )
 
     @property
@@ -57,6 +59,32 @@ class Expense(models.Model):
     )
     reason = models.CharField(max_length=50, blank=True)
     amount = models.SmallIntegerField(validators=[MinValueValidator(0)])
+
+    @property
+    def description(self):
+        return self.reason
+
+
+class PAYMENT_METHODS(models.IntegerChoices):
+    CASH = 0, "Bar"
+    BANK_TRANSFER = 1, "Überweisung"
+    TWINT = 2, "TWINT"
+
+
+class Absorption(models.Model):
+    report = models.ForeignKey(
+        Report, on_delete=models.CASCADE, related_name="absorptions"
+    )
+    signup = models.ForeignKey(
+        "trainings.Signup", on_delete=models.CASCADE, related_name="absorptions"
+    )
+    reason = "Abschöpfung"
+    amount = models.SmallIntegerField(validators=[MinValueValidator(0)])
+    method = models.SmallIntegerField(choices=PAYMENT_METHODS.choices)
+
+    @property
+    def description(self):
+        return f"Abschöpfung {self.signup.pilot}"
 
 
 class Run(models.Model):
@@ -97,10 +125,6 @@ class Run(models.Model):
 class Bill(models.Model):
     PRICE_OF_FLIGHT = 9
 
-    class METHODS(models.IntegerChoices):
-        CASH = 0, "Bar"
-        TWINT = 1, "TWINT"
-
     signup = models.OneToOneField(
         "trainings.Signup", on_delete=models.CASCADE, related_name="bill"
     )
@@ -108,14 +132,18 @@ class Bill(models.Model):
     # Rather than handing money out, we add extra services to pilot.prepaid_flights,
     # thus bill.prepaid_flights can be negative.
     prepaid_flights = models.SmallIntegerField()
-    paid = models.SmallIntegerField(validators=[MinValueValidator(0)])
-    method = models.SmallIntegerField(choices=METHODS.choices)
+    amount = models.SmallIntegerField(validators=[MinValueValidator(0)])
+    method = models.SmallIntegerField(choices=PAYMENT_METHODS.choices)
 
     class Meta:
         unique_together = (("signup", "report"),)
 
     def __str__(self):
         return f"Bill for {self.signup.pilot} on {self.signup.training}"
+
+    @property
+    def description(self):
+        return f"Rechnung {self.signup.pilot}"
 
     @property
     def num_flights(self):
@@ -162,7 +190,7 @@ class Bill(models.Model):
 
     @property
     def was_paid_in_cash(self):
-        return self.method == self.METHODS.CASH
+        return self.method == PAYMENT_METHODS.CASH
 
 
 @receiver(models.signals.post_save, sender=Bill)
@@ -225,6 +253,10 @@ class Purchase(models.Model):
     @property
     def is_day_pass(self):
         return self.description == self.DAY_PASS_DESCRIPTION
+
+    @property
+    def is_prepaid_flights(self):
+        return self.description in self.ITEMS.PREPAID_FLIGHTS.label
 
     @property
     def is_equipment(self):

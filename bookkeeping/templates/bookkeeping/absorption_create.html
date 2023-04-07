@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Abschöpfen{% endblock title %}
+
+{% block headline %}Abschöpfen{% endblock headline %}
+
+{% block content %}
+
+<div class="col-xl-4 col-lg-5">
+    <div class="card my-4">
+        <h5 class="card-header">Am {{ view.kwargs.date | date:"l, j. E" }}</h5>
+        <div class="card-body">
+            <main class="form">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row mb-3">
+                        <label class="col-6 col-form-label">Betrag</label>
+                        <div class="col-6">
+                            <input type="number" class="form-control" name="amount" value={{ form.amount.value }}>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label>Abgeschöpft von</label>
+                        {% for signup in form.signup %}
+                        <div class="form-check">
+                            {{ signup.tag }}
+                            <label class="form-check-label" for="{{ signup.id_for_label }}">
+                                {{ signup.choice_label }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="mb-3">
+                        <label>Zahlungsart</label>
+                        {% for method in form.method %}
+                        <div class="form-check">
+                            {{ method.tag }}
+                            <label class="form-check-label" for="{{ method.id_for_label }}">
+                                {{ method.choice_label }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                        <small class="text-muted">Bitte nach Möglichkeit per Überweisung, da dort keine Gebühren
+                            anfallen.</small>
+                    </div>
+                    <button class="btn btn-primary" type="submit">Speichern</button>
+                    <a href="{{ view.get_success_url }}" class="btn btn-outline-dark">Abbrechen</a>
+                </form>
+            </main>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}

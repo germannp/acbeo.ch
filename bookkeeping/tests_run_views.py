@@ -7,7 +7,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import Bill, Report, Run
+from .models import Bill, PAYMENT_METHODS, Report, Run
 from trainings.models import Signup, Training
 
 locale.setlocale(locale.LC_TIME, "de_CH")
@@ -93,8 +93,8 @@ class RunCreateViewTests(TestCase):
             signup=self.guest_2_signup,
             report=self.report,
             prepaid_flights=0,
-            paid=420,
-            method=Bill.METHODS.CASH,
+            amount=420,
+            method=PAYMENT_METHODS.CASH,
         ).save()
         self.assertTrue(self.guest_2_signup.is_paid)
 
@@ -109,8 +109,8 @@ class RunCreateViewTests(TestCase):
             signup=self.guest_2_signup,
             report=self.report,
             prepaid_flights=0,
-            paid=420,
-            method=Bill.METHODS.CASH,
+            amount=420,
+            method=PAYMENT_METHODS.CASH,
         ).save()
         self.assertTrue(self.guest_2_signup.is_paid)
 
@@ -198,7 +198,7 @@ class RunCreateViewTests(TestCase):
         self.assertEqual(0, len(Run.objects.all()))
 
     def test_create_run(self):
-        with self.assertNumQueries(48):
+        with self.assertNumQueries(49):
             response = self.client.post(
                 reverse("create_run"),
                 data={
@@ -226,7 +226,7 @@ class RunCreateViewTests(TestCase):
             created_on=timezone.now() - timedelta(minutes=2),
         ).save()
 
-        with self.assertNumQueries(49):
+        with self.assertNumQueries(50):
             response = self.client.post(
                 reverse("create_run"),
                 data={
@@ -333,8 +333,8 @@ class RunUpdateViewTests(TestCase):
             signup=self.guest_signup,
             report=self.report,
             prepaid_flights=0,
-            paid=420,
-            method=Bill.METHODS.CASH,
+            amount=420,
+            method=PAYMENT_METHODS.CASH,
         ).save()
         self.assertTrue(self.guest_signup.is_paid)
 
@@ -359,7 +359,7 @@ class RunUpdateViewTests(TestCase):
         self.assertContains(response, f"{self.guest} hat bereits bezahlt.")
 
     def test_update_run(self):
-        with self.assertNumQueries(48):
+        with self.assertNumQueries(49):
             response = self.client.post(
                 reverse("update_run", kwargs={"run": 1}),
                 data={
@@ -388,7 +388,7 @@ class RunUpdateViewTests(TestCase):
         self.assertEqual(Run.Kind.Break, self.orga_run.kind)
 
     def test_run_with_changed_number_of_pilots_cannot_be_deleted(self):
-        with self.assertNumQueries(42):
+        with self.assertNumQueries(43):
             response = self.client.post(
                 reverse("update_run", kwargs={"run": 1}),
                 data={
@@ -408,7 +408,7 @@ class RunUpdateViewTests(TestCase):
         self.assertEqual(3, len(Run.objects.all()))
 
     def test_run_with_changed_kind_cannot_be_deleted(self):
-        with self.assertNumQueries(42):
+        with self.assertNumQueries(43):
             response = self.client.post(
                 reverse("update_run", kwargs={"run": 1}),
                 data={
@@ -433,13 +433,13 @@ class RunUpdateViewTests(TestCase):
             signup=self.guest_signup,
             report=self.report,
             prepaid_flights=0,
-            paid=420,
-            method=Bill.METHODS.CASH,
+            amount=420,
+            method=PAYMENT_METHODS.CASH,
         ).save()
         self.assertTrue(self.guest_signup.is_paid)
         self.assertEqual(3, len(Run.objects.all()))
 
-        with self.assertNumQueries(39):
+        with self.assertNumQueries(40):
             response = self.client.post(
                 reverse("update_run", kwargs={"run": 1}),
                 data={
@@ -460,7 +460,7 @@ class RunUpdateViewTests(TestCase):
         self.assertEqual(3, len(Run.objects.all()))
 
     def test_delete_run(self):
-        with self.assertNumQueries(40):
+        with self.assertNumQueries(41):
             response = self.client.post(
                 reverse("update_run", kwargs={"run": 1}),
                 data={

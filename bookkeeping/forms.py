@@ -2,7 +2,8 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.forms import modelformset_factory
 
-from .models import Bill, Expense, Run, Purchase
+from .models import Absorption, Bill, Expense, PAYMENT_METHODS, Purchase, Run
+from trainings.models import Signup
 
 
 class ExpenseCreateForm(forms.ModelForm):
@@ -26,6 +27,30 @@ class ExpenseCreateForm(forms.ModelForm):
         if not (other_reason := cleaned_data.get("other_reason")):
             raise ValidationError("Bitte Grund angeben.")
         self.instance.reason = other_reason
+
+
+class AbsorptionForm(forms.ModelForm):
+    class SignupChoiceField(forms.ModelChoiceField):
+        def label_from_instance(self, signup):
+            return signup.pilot
+
+    signup = SignupChoiceField(
+        queryset=Signup.objects,
+        widget=forms.RadioSelect(attrs={"class": "form-check-input"}),
+    )
+    method = forms.ChoiceField(
+        choices=[
+            choice
+            for choice in PAYMENT_METHODS.choices
+            if choice[0] != PAYMENT_METHODS.CASH
+        ],
+        initial=PAYMENT_METHODS.BANK_TRANSFER,
+        widget=forms.widgets.RadioSelect(attrs={"class": "form-check-input"}),
+    )
+
+    class Meta:
+        model = Absorption
+        fields = ("signup", "amount", "method")
 
 
 class BaseRunFormSet(forms.BaseModelFormSet):
@@ -52,8 +77,12 @@ RunFormset = modelformset_factory(
 
 class BillForm(forms.ModelForm):
     method = forms.ChoiceField(
-        choices=Bill.METHODS.choices,
-        initial=Bill.METHODS.CASH,
+        choices=[
+            choice
+            for choice in PAYMENT_METHODS.choices
+            if choice[0] != PAYMENT_METHODS.BANK_TRANSFER
+        ],
+        initial=PAYMENT_METHODS.CASH,
         widget=forms.widgets.RadioSelect(attrs={"class": "form-check-input"}),
     )
 

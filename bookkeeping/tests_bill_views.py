@@ -7,7 +7,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import Bill, Purchase, Report, Run
+from .models import Bill, PAYMENT_METHODS, Purchase, Report, Run
 from trainings.models import Signup, Training
 
 locale.setlocale(locale.LC_TIME, "de_CH")
@@ -32,8 +32,8 @@ class BillListViewTests(TestCase):
             signup=signup,
             report=report,
             prepaid_flights=1312,
-            paid=420,
-            method=Bill.METHODS.CASH,
+            amount=420,
+            method=PAYMENT_METHODS.CASH,
         )
 
         self.guest_2 = get_user_model().objects.create(email="guest_2@example.com")
@@ -42,8 +42,8 @@ class BillListViewTests(TestCase):
             signup=other_signup,
             report=report,
             prepaid_flights=0,
-            paid=666,
-            method=Bill.METHODS.CASH,
+            amount=666,
+            method=PAYMENT_METHODS.CASH,
         )
 
     def test_login_required(self):
@@ -90,8 +90,8 @@ class BillListViewTests(TestCase):
                 signup=signup,
                 report=report,
                 prepaid_flights=0,
-                paid=420,
-                method=Bill.METHODS.CASH,
+                amount=420,
+                method=PAYMENT_METHODS.CASH,
             ).save()
 
         with self.assertNumQueries(7):
@@ -135,8 +135,8 @@ class BillListViewTests(TestCase):
             response = self.client.get(reverse("bills"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/bill_list.html")
-        self.assertContains(response, self.bill.paid)
-        self.assertNotContains(response, self.other_bill.paid)
+        self.assertContains(response, self.bill.amount)
+        self.assertNotContains(response, self.other_bill.amount)
 
     def test_purchase_shown(self):
         with self.assertNumQueries(7):
@@ -357,20 +357,20 @@ class BillCreateViewTests(TestCase):
                 ),
                 data={
                     "prepaid_flights": 0,
-                    "paid": to_pay - 1,
-                    "method": Bill.METHODS.CASH,
+                    "amount": to_pay - 1,
+                    "method": PAYMENT_METHODS.CASH,
                 },
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/bill_create.html")
-        self.assertContains(response, f"{self.guest} muss {to_pay} bezahlen.")
+        self.assertContains(response, f"{self.guest} muss Fr. {to_pay} bezahlen.")
         self.assertEqual(0, len(Bill.objects.all()))
 
     def test_create_bill(self):
         to_pay = Bill(signup=self.guest_signup, report=self.report).to_pay
-        method = Bill.METHODS.TWINT
-        with self.assertNumQueries(30):
+        method = PAYMENT_METHODS.TWINT
+        with self.assertNumQueries(31):
             response = self.client.post(
                 reverse(
                     "create_bill",
@@ -378,7 +378,7 @@ class BillCreateViewTests(TestCase):
                 ),
                 data={
                     "prepaid_flights": 0,
-                    "paid": to_pay,
+                    "amount": to_pay,
                     "method": method,
                 },
                 follow=True,
@@ -388,7 +388,7 @@ class BillCreateViewTests(TestCase):
         self.assertContains(response, f"Bezahlung von {self.guest} gespeichert.")
         self.assertEqual(1, len(Bill.objects.all()))
         created_bill = Bill.objects.first()
-        self.assertEqual(to_pay, created_bill.paid)
+        self.assertEqual(to_pay, created_bill.amount)
         self.assertEqual(method, created_bill.method)
 
     def test_cannot_pay_twice(self):
@@ -396,16 +396,16 @@ class BillCreateViewTests(TestCase):
             signup=self.guest_signup,
             report=self.report,
             prepaid_flights=0,
-            paid=42,
-            method=Bill.METHODS.CASH,
+            amount=42,
+            method=PAYMENT_METHODS.CASH,
         ).save()
-        with self.assertNumQueries(28):
+        with self.assertNumQueries(29):
             response = self.client.post(
                 reverse(
                     "create_bill",
                     kwargs={"date": TODAY, "signup": self.guest_signup.pk},
                 ),
-                data={"prepaid_flights": 0, "paid": 420, "method": Bill.METHODS.CASH},
+                data={"prepaid_flights": 0, "amount": 420, "method": PAYMENT_METHODS.CASH},
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
@@ -467,8 +467,8 @@ class BillUpdateViewTests(TestCase):
             signup=self.signup,
             report=self.report,
             prepaid_flights=0,
-            paid=42,
-            method=Bill.METHODS.CASH,
+            amount=42,
+            method=PAYMENT_METHODS.CASH,
         )
 
     def test_orga_required_to_see(self):
@@ -557,7 +557,7 @@ class BillUpdateViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/bill_update.html")
         self.assertContains(response, f'value="{self.bill.num_prepaid_flights}"')
-        self.assertContains(response, f'value="{self.bill.paid}"')
+        self.assertContains(response, f'value="{self.bill.amount}"')
         self.assertNotContains(response, "Mit Abo bezahlt")
 
     def test_must_pay_enough(self):
@@ -567,25 +567,25 @@ class BillUpdateViewTests(TestCase):
                 reverse("update_bill", kwargs={"date": TODAY, "pk": self.bill.pk}),
                 data={
                     "prepaid_flights": 0,
-                    "paid": to_pay - 1,
-                    "method": Bill.METHODS.CASH,
+                    "amount": to_pay - 1,
+                    "method": PAYMENT_METHODS.CASH,
                 },
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/bill_update.html")
-        self.assertContains(response, f"{self.orga} muss {to_pay} bezahlen.")
+        self.assertContains(response, f"{self.orga} muss Fr. {to_pay} bezahlen.")
         self.assertEqual(1, len(Bill.objects.all()))
 
     def test_update_bill(self):
         to_pay = Bill(signup=self.signup, report=self.report).to_pay
-        method = Bill.METHODS.TWINT
-        with self.assertNumQueries(25):
+        method = PAYMENT_METHODS.TWINT
+        with self.assertNumQueries(26):
             response = self.client.post(
                 reverse("update_bill", kwargs={"date": TODAY, "pk": self.bill.pk}),
                 data={
                     "prepaid_flights": 0,
-                    "paid": to_pay,
+                    "amount": to_pay,
                     "method": method,
                 },
                 follow=True,
@@ -595,11 +595,11 @@ class BillUpdateViewTests(TestCase):
         self.assertContains(response, f"Bezahlung von {self.orga} gespeichert.")
         self.assertEqual(1, len(Bill.objects.all()))
         created_bill = Bill.objects.first()
-        self.assertEqual(to_pay, created_bill.paid)
+        self.assertEqual(to_pay, created_bill.amount)
         self.assertEqual(method, created_bill.method)
 
     def test_delete_bill(self):
-        with self.assertNumQueries(24):
+        with self.assertNumQueries(25):
             response = self.client.post(
                 reverse("update_bill", kwargs={"date": TODAY, "pk": self.bill.pk}),
                 data={"delete": ""},

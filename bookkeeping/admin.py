@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Bill, Expense, Purchase, Report, Run
+from .models import Absorption, Bill, Expense, Purchase, Report, Run
 
 
 class ReportAdmin(admin.ModelAdmin):
@@ -19,6 +19,14 @@ class ExpenseAdmin(admin.ModelAdmin):
 admin.site.register(Expense, ExpenseAdmin)
 
 
+class AbsorptionAdmin(admin.ModelAdmin):
+    list_display = ("report", "signup", "amount", "method")
+    ordering = ("-report", "signup")
+
+
+admin.site.register(Absorption, AbsorptionAdmin)
+
+
 class RunAdmin(admin.ModelAdmin):
     list_display = ("report", "signup", "kind", "created_on")
     ordering = ("-created_on", "signup__pilot")
@@ -28,7 +36,7 @@ admin.site.register(Run, RunAdmin)
 
 
 class BillAdmin(admin.ModelAdmin):
-    list_display = ("report", "signup", "paid")
+    list_display = ("report", "signup", "amount", "method")
     ordering = ("-report", "signup__pilot")
 
 

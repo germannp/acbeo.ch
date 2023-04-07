@@ -6,7 +6,7 @@ from django.test import TestCase
 from django.utils import timezone
 
 from .models import Training, Signup
-from bookkeeping.models import Bill, Purchase, Report, Run
+from bookkeeping.models import Bill, PAYMENT_METHODS, Purchase, Report, Run
 
 
 TODAY = date.today()
@@ -317,8 +317,8 @@ class SignupTests(TestCase):
             signup=self.signup,
             report=report,
             prepaid_flights=0,
-            paid=10,
-            method=Bill.METHODS.CASH,
+            amount=10,
+            method=PAYMENT_METHODS.CASH,
         ).save()
         self.assertFalse(self.signup.is_active)
 
@@ -332,7 +332,7 @@ class SignupTests(TestCase):
             (Run.Kind.Boat, True),
             (Run.Kind.Break, False),
         ]:
-            with self.subTest(kind=kind, must_be_paid=must_be_paid):
+            with self.subTest(kind=kind, must_be_amount=must_be_paid):
                 Run.objects.all().delete()
                 Run(
                     signup=self.signup,
@@ -346,8 +346,8 @@ class SignupTests(TestCase):
             signup=self.signup,
             report=report,
             prepaid_flights=0,
-            paid=420,
-            method=Bill.METHODS.CASH,
+            amount=420,
+            method=PAYMENT_METHODS.CASH,
         ).save()
         self.assertFalse(self.signup.must_be_paid)
 
@@ -424,7 +424,7 @@ class SignupTests(TestCase):
             signup=self.signup,
             report=report,
             prepaid_flights=0,
-            paid=420,
-            method=Bill.METHODS.CASH,
+            amount=420,
+            method=PAYMENT_METHODS.CASH,
         ).save()
         self.assertTrue(self.signup.is_paid)
