@@ -18,13 +18,11 @@
                             <tr>
                                 <th scope="col">#</th>
                                 <th scope="col">Datum</th>
-                                <th scope="col">Diff. Vortraining</th>
+                                <th scope="col">Offen</th>
                                 <th scope="col">Kasse Anfang</th>
                                 <th scope="col">Einnahmen</th>
                                 <th scope="col">Ausgaben</th>
                                 <th scope="col">Kasse Ende</th>
-                                <th scope="col">Differenz</th>
-                                <th scope="col">Offen</th>
                                 <th scope="col">TWINT</th>
                                 <th scope="col" style="min-width: 300px">Bemerkungen</th>
                             </tr>
@@ -37,13 +35,11 @@
                                     <a href="{% url 'update_report' date=report.training.date.isoformat %}"
                                         class="bi bi-pencil-square" /a>
                                 </td>
-                                <td>{{ report.difference_between_reports }}</td>
-                                <td>{{ report.cash_at_start }}</td>
+                                <td>{{ report.num_unpaid_signups }} / {{ report.training.selected_signups | length }}</td>
+                                <td>{{ report.cash_at_start }}{% if report.difference_between_reports %} ({{ report.difference_between_reports }}){% endif %}</td>
                                 <td>{{ report.cash_revenue }}</td>
                                 <td>{{ report.cash_expediture }}</td>
-                                <td>{{ report.cash_at_end }}</td>
-                                <td>{{ report.difference }}</td>
-                                <td>{{ report.num_unpaid_signups }} / {{ report.training.selected_signups | length }}</td>
+                                <td>{{ report.cash_at_end }}{% if report.difference %} ({{ report.difference }}){% endif %}</td>
                                 <td>{{ report.other_revenue }}</td>
                                 <td>{{ report.remarks }}</td>
                             </tr>

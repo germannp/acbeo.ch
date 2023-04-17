@@ -146,7 +146,9 @@ class ReportListViewTests(TestCase):
             response = self.client.get(reverse("reports"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/report_list.html")
-        self.assertContains(response, difference_between_reports)
+        self.assertContains(
+            response, f"{self.report.cash_at_start} ({difference_between_reports})"
+        )
 
     def test_revenue_shown(self):
         with self.assertNumQueries(18):
@@ -176,7 +178,9 @@ class ReportListViewTests(TestCase):
             response = self.client.get(reverse("reports"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/report_list.html")
-        self.assertContains(response, difference_within_report)
+        self.assertContains(
+            response, f"{self.report.cash_at_end} ({difference_within_report})"
+        )
 
     def test_num_unpaid_signups_shown(self):
         with self.assertNumQueries(18):
@@ -233,7 +237,9 @@ class BalanceViewTests(TestCase):
         )
         self.day_pass = Purchase.save_day_pass(signup=orga_signup, report=self.report)
         self.prepaid_flights = Purchase.save_item(
-            signup=orga_signup, report=self.report, choice=Purchase.ITEMS.PREPAID_FLIGHTS
+            signup=orga_signup,
+            report=self.report,
+            choice=Purchase.ITEMS.PREPAID_FLIGHTS,
         )
         self.cash_bill = Bill.objects.create(
             signup=orga_signup,
@@ -381,7 +387,9 @@ class BalanceViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/report_balance.html")
         self.assertContains(response, self.report.cash_at_start)
-        self.assertContains(response, self.report.cash_at_end)
+        self.assertContains(
+            response, f"{self.report.cash_at_end} ({self.report.difference})"
+        )
         self.assertContains(response, reverse("reports"))
 
     def test_purchases_added_up(self):
