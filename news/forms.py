@@ -70,6 +70,14 @@ class MembershipForm(forms.Form):
                 "\nMöchte Mitglied werden.",
             ]
         )
+        if day_passes := self.sender.day_passes_of_this_season:
+            dates = ", ".join(
+                str(day_pass.signup.training.date) for day_pass in day_passes
+            )
+            message += (
+                f"\n\n{self.sender.first_name} hat diese Saison {len(day_passes)} "
+                f"Tagesmitgliedschaft(en) bezahlt ({dates})."
+            )
         if comment := self.cleaned_data["comment"]:
             message += "\n\nKommentar:\n" + comment
         send_mail(

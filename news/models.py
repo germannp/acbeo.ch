@@ -100,3 +100,15 @@ class Pilot(AbstractBaseUser):
     @property
     def is_staff(self):
         return self.role == self.Role.Staff
+
+    @property
+    def day_passes_of_this_season(self):
+        signups_of_this_season = self.signups.filter(
+            **{"training__date__gte": f"{now().year}-1-1"}
+        ).select_related("training").prefetch_related("purchases")
+        purchases = [
+            purchase
+            for signup in signups_of_this_season
+            for purchase in signup.purchases.all()
+        ]
+        return [purchase for purchase in purchases if purchase.is_day_pass]
