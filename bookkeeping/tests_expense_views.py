@@ -43,7 +43,7 @@ class ExpenseCreateViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/expense_create.html")
         self.assertContains(response, TODAY.strftime("%A, %d. %B").replace(" 0", " "))
-        for reason in Expense.REASONS:
+        for reason in Expense.Reasons:
             self.assertContains(response, reason.label)
 
     def test_amount_cannot_be_negative_and_is_prefilled(self):
@@ -53,7 +53,7 @@ class ExpenseCreateViewTests(TestCase):
             response = self.client.post(
                 reverse("create_expense", kwargs={"date": TODAY}),
                 data={
-                    "reason": Expense.REASONS.OTHER,
+                    "reason": Expense.Reasons.OTHER,
                     "other_reason": other_reason,
                     "amount": amount,
                 },
@@ -65,7 +65,7 @@ class ExpenseCreateViewTests(TestCase):
         self.assertContains(response, amount)
 
     def test_create_expense(self):
-        reason = Expense.REASONS.GAS
+        reason = Expense.Reasons.GAS
         amount = 42
         with self.assertNumQueries(17):
             response = self.client.post(
@@ -77,11 +77,11 @@ class ExpenseCreateViewTests(TestCase):
         self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertContains(
             response,
-            f"Ausgabe für {Expense.REASONS.GAS.label} über Fr. {amount} gespeichert.",
+            f"Ausgabe für {Expense.Reasons.GAS.label} über Fr. {amount} gespeichert.",
         )
         self.assertEqual(1, len(Expense.objects.all()))
         created_expense = Expense.objects.first()
-        self.assertEqual(Expense.REASONS.GAS.label, created_expense.reason)
+        self.assertEqual(Expense.Reasons.GAS.label, created_expense.reason)
         self.assertEqual(amount, created_expense.amount)
 
     def test_create_expense_for_other_reason(self):
@@ -91,7 +91,7 @@ class ExpenseCreateViewTests(TestCase):
             response = self.client.post(
                 reverse("create_expense", kwargs={"date": TODAY}),
                 data={
-                    "reason": Expense.REASONS.OTHER,
+                    "reason": Expense.Reasons.OTHER,
                     "other_reason": other_reason,
                     "amount": amount,
                 },

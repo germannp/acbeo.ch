@@ -2,14 +2,14 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.forms import modelformset_factory
 
-from .models import Absorption, Bill, Expense, PAYMENT_METHODS, Purchase, Run
+from .models import Absorption, Bill, Expense, PaymentMethods, Purchase, Run
 from trainings.models import Signup
 
 
 class ExpenseCreateForm(forms.ModelForm):
     reason = forms.ChoiceField(
-        choices=Expense.REASONS.choices,
-        initial=Expense.REASONS.GAS,
+        choices=Expense.Reasons.choices,
+        initial=Expense.Reasons.GAS,
         widget=forms.widgets.RadioSelect(attrs={"class": "form-check-input"}),
     )
     other_reason = forms.CharField(max_length=50, required=False)
@@ -20,8 +20,8 @@ class ExpenseCreateForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        if (reason := int(cleaned_data.get("reason"))) != Expense.REASONS.OTHER:
-            self.instance.reason = Expense.REASONS.choices[reason][1]
+        if (reason := int(cleaned_data.get("reason"))) != Expense.Reasons.OTHER:
+            self.instance.reason = Expense.Reasons.choices[reason][1]
             return
 
         if not (other_reason := cleaned_data.get("other_reason")):
@@ -39,12 +39,8 @@ class AbsorptionForm(forms.ModelForm):
         widget=forms.RadioSelect(attrs={"class": "form-check-input"}),
     )
     method = forms.ChoiceField(
-        choices=[
-            choice
-            for choice in PAYMENT_METHODS.choices
-            if choice[0] != PAYMENT_METHODS.CASH
-        ],
-        initial=PAYMENT_METHODS.BANK_TRANSFER,
+        choices=Absorption.PAYMENT_CHOICES,
+        initial=PaymentMethods.BANK_TRANSFER,
         widget=forms.widgets.RadioSelect(attrs={"class": "form-check-input"}),
     )
 
@@ -77,12 +73,8 @@ RunFormset = modelformset_factory(
 
 class BillForm(forms.ModelForm):
     method = forms.ChoiceField(
-        choices=[
-            choice
-            for choice in PAYMENT_METHODS.choices
-            if choice[0] != PAYMENT_METHODS.BANK_TRANSFER
-        ],
-        initial=PAYMENT_METHODS.CASH,
+        choices=Bill.PAYMENT_CHOICES,
+        initial=PaymentMethods.CASH,
         widget=forms.widgets.RadioSelect(attrs={"class": "form-check-input"}),
     )
 
@@ -93,8 +85,8 @@ class BillForm(forms.ModelForm):
 
 class PurchaseCreateForm(forms.ModelForm):
     item = forms.ChoiceField(
-        choices=Purchase.ITEMS.choices,
-        initial=Purchase.ITEMS.PREPAID_FLIGHTS,
+        choices=Purchase.Items.choices,
+        initial=Purchase.Items.PREPAID_FLIGHTS,
         widget=forms.widgets.RadioSelect(attrs={"class": "form-check-input"}),
     )
 

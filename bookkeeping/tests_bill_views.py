@@ -7,7 +7,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import Bill, PAYMENT_METHODS, Purchase, Report, Run
+from .models import Bill, PaymentMethods, Purchase, Report, Run
 from trainings.models import Signup, Training
 
 locale.setlocale(locale.LC_TIME, "de_CH")
@@ -33,7 +33,7 @@ class BillListViewTests(TestCase):
             report=report,
             prepaid_flights=1312,
             amount=420,
-            method=PAYMENT_METHODS.CASH,
+            method=PaymentMethods.CASH,
         )
 
         self.guest_2 = get_user_model().objects.create(email="guest_2@example.com")
@@ -43,7 +43,7 @@ class BillListViewTests(TestCase):
             report=report,
             prepaid_flights=0,
             amount=666,
-            method=PAYMENT_METHODS.CASH,
+            method=PaymentMethods.CASH,
         )
 
     def test_login_required(self):
@@ -91,7 +91,7 @@ class BillListViewTests(TestCase):
                 report=report,
                 prepaid_flights=0,
                 amount=420,
-                method=PAYMENT_METHODS.CASH,
+                method=PaymentMethods.CASH,
             ).save()
 
         with self.assertNumQueries(7):
@@ -346,6 +346,11 @@ class BillCreateViewTests(TestCase):
         self.assertContains(response, f'value="{bill.num_prepaid_flights}"')
         self.assertContains(response, f'value="{bill.to_pay}"')
         self.assertNotContains(response, "Mit Abo bezahlt")
+        self.assertContains(
+            response,
+            f'value="{PaymentMethods.CASH}" class="form-check-input" id="id_method_0" required checked',
+        )
+        self.assertNotContains(response, PaymentMethods.BANK_TRANSFER.label)
 
     def test_must_pay_enough(self):
         to_pay = Bill(signup=self.guest_signup, report=self.report).to_pay
@@ -358,7 +363,7 @@ class BillCreateViewTests(TestCase):
                 data={
                     "prepaid_flights": 0,
                     "amount": to_pay - 1,
-                    "method": PAYMENT_METHODS.CASH,
+                    "method": PaymentMethods.CASH,
                 },
                 follow=True,
             )
@@ -369,7 +374,7 @@ class BillCreateViewTests(TestCase):
 
     def test_create_bill(self):
         to_pay = Bill(signup=self.guest_signup, report=self.report).to_pay
-        method = PAYMENT_METHODS.TWINT
+        method = PaymentMethods.TWINT
         with self.assertNumQueries(31):
             response = self.client.post(
                 reverse(
@@ -397,7 +402,7 @@ class BillCreateViewTests(TestCase):
             report=self.report,
             prepaid_flights=0,
             amount=42,
-            method=PAYMENT_METHODS.CASH,
+            method=PaymentMethods.CASH,
         ).save()
         with self.assertNumQueries(29):
             response = self.client.post(
@@ -405,7 +410,11 @@ class BillCreateViewTests(TestCase):
                     "create_bill",
                     kwargs={"date": TODAY, "signup": self.guest_signup.pk},
                 ),
-                data={"prepaid_flights": 0, "amount": 420, "method": PAYMENT_METHODS.CASH},
+                data={
+                    "prepaid_flights": 0,
+                    "amount": 420,
+                    "method": PaymentMethods.CASH,
+                },
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
@@ -468,7 +477,7 @@ class BillUpdateViewTests(TestCase):
             report=self.report,
             prepaid_flights=0,
             amount=42,
-            method=PAYMENT_METHODS.CASH,
+            method=PaymentMethods.CASH,
         )
 
     def test_orga_required_to_see(self):
@@ -559,6 +568,11 @@ class BillUpdateViewTests(TestCase):
         self.assertContains(response, f'value="{self.bill.num_prepaid_flights}"')
         self.assertContains(response, f'value="{self.bill.amount}"')
         self.assertNotContains(response, "Mit Abo bezahlt")
+        self.assertContains(
+            response,
+            f'value="{self.bill.method}" class="form-check-input" id="id_method_0" required checked',
+        )
+        self.assertNotContains(response, PaymentMethods.BANK_TRANSFER.label)
 
     def test_must_pay_enough(self):
         to_pay = Bill(signup=self.signup, report=self.report).to_pay
@@ -568,7 +582,7 @@ class BillUpdateViewTests(TestCase):
                 data={
                     "prepaid_flights": 0,
                     "amount": to_pay - 1,
-                    "method": PAYMENT_METHODS.CASH,
+                    "method": PaymentMethods.CASH,
                 },
                 follow=True,
             )
@@ -579,7 +593,7 @@ class BillUpdateViewTests(TestCase):
 
     def test_update_bill(self):
         to_pay = Bill(signup=self.signup, report=self.report).to_pay
-        method = PAYMENT_METHODS.TWINT
+        method = PaymentMethods.TWINT
         with self.assertNumQueries(26):
             response = self.client.post(
                 reverse("update_bill", kwargs={"date": TODAY, "pk": self.bill.pk}),
