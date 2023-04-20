@@ -7,7 +7,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import Absorption, Bill, Expense, PAYMENT_METHODS, Report, Run
+from .models import Absorption, Bill, Expense, PaymentMethods, Report, Run
 from trainings.models import Purchase, Signup, Training
 
 locale.setlocale(locale.LC_TIME, "de_CH")
@@ -33,7 +33,7 @@ class ReportListViewTests(TestCase):
             report=self.report,
             prepaid_flights=0,
             amount=420,
-            method=PAYMENT_METHODS.CASH,
+            method=PaymentMethods.CASH,
         )
         self.guest = get_user_model().objects.create(email="guest@example.com")
         signup = Signup.objects.create(pilot=self.guest, training=self.training)
@@ -42,7 +42,7 @@ class ReportListViewTests(TestCase):
             report=self.report,
             prepaid_flights=0,
             amount=420,
-            method=PAYMENT_METHODS.TWINT,
+            method=PaymentMethods.TWINT,
         )
         self.expense = Expense.objects.create(
             report=self.report, reason="Gas", amount=13
@@ -239,14 +239,14 @@ class BalanceViewTests(TestCase):
         self.prepaid_flights = Purchase.save_item(
             signup=orga_signup,
             report=self.report,
-            choice=Purchase.ITEMS.PREPAID_FLIGHTS,
+            choice=Purchase.Items.PREPAID_FLIGHTS,
         )
         self.cash_bill = Bill.objects.create(
             signup=orga_signup,
             report=self.report,
             prepaid_flights=0,
             amount=self.day_pass.price + self.prepaid_flights.price,
-            method=PAYMENT_METHODS.CASH,
+            method=PaymentMethods.CASH,
         )
 
         self.guest = get_user_model().objects.create(
@@ -254,17 +254,17 @@ class BalanceViewTests(TestCase):
         )
         guest_signup = Signup.objects.create(pilot=self.guest, training=self.training)
         self.life_jacket = Purchase.save_item(
-            signup=guest_signup, report=self.report, choice=Purchase.ITEMS.LIFEJACKET
+            signup=guest_signup, report=self.report, choice=Purchase.Items.LIFEJACKET
         )
         self.rearming_kit = Purchase.save_item(
-            signup=guest_signup, report=self.report, choice=Purchase.ITEMS.REARMING_KIT
+            signup=guest_signup, report=self.report, choice=Purchase.Items.REARMING_KIT
         )
         self.twint_bill = Bill.objects.create(
             signup=guest_signup,
             report=self.report,
             prepaid_flights=0,
             amount=self.life_jacket.price + self.rearming_kit.price,
-            method=PAYMENT_METHODS.TWINT,
+            method=PaymentMethods.TWINT,
         )
 
         self.first_gas = Expense.objects.create(
@@ -280,13 +280,13 @@ class BalanceViewTests(TestCase):
             report=self.report,
             signup=orga_signup,
             amount=83,
-            method=PAYMENT_METHODS.BANK_TRANSFER,
+            method=PaymentMethods.BANK_TRANSFER,
         )
         self.zero_absorption = Absorption.objects.create(
             report=self.report,
             signup=guest_signup,
             amount=0,
-            method=PAYMENT_METHODS.TWINT,
+            method=PaymentMethods.TWINT,
         )
 
     def test_orga_required_to_see(self):
@@ -398,12 +398,12 @@ class BalanceViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/report_balance.html")
 
-        self.assertContains(response, PAYMENT_METHODS.CASH.label)
+        self.assertContains(response, PaymentMethods.CASH.label)
         self.assertContains(response, self.day_pass.price)
         self.assertContains(response, self.prepaid_flights.price)
         self.assertContains(response, self.cash_bill.amount)
 
-        self.assertContains(response, PAYMENT_METHODS.TWINT.label)
+        self.assertContains(response, PaymentMethods.TWINT.label)
         self.assertContains(response, self.life_jacket.price + self.rearming_kit.price)
         self.assertContains(response, self.twint_bill.amount)
 
@@ -436,11 +436,11 @@ class BalanceViewTests(TestCase):
         self.assertTemplateUsed(response, "bookkeeping/report_balance.html")
         self.assertContains(response, reverse("update_report", kwargs={"date": TODAY}))
 
-        self.assertContains(response, PAYMENT_METHODS.BANK_TRANSFER.label)
+        self.assertContains(response, PaymentMethods.BANK_TRANSFER.label)
         self.assertContains(response, self.absorption.amount)
         self.assertContains(response, f"Abschöpfung {self.orga}")
 
-        self.assertContains(response, PAYMENT_METHODS.TWINT.label)
+        self.assertContains(response, PaymentMethods.TWINT.label)
         self.assertContains(response, self.twint_bill.amount)
         self.assertContains(response, self.absorption.description)
 
@@ -611,7 +611,7 @@ class ReportUpdateViewTests(TestCase):
             report=self.report,
             prepaid_flights=0,
             amount=420,
-            method=PAYMENT_METHODS.CASH,
+            method=PaymentMethods.CASH,
         )
         with self.assertNumQueries(21):
             response = self.client.get(reverse("update_report", kwargs={"date": TODAY}))
@@ -634,7 +634,7 @@ class ReportUpdateViewTests(TestCase):
             report=self.report,
             prepaid_flights=0,
             amount=420,
-            method=PAYMENT_METHODS.CASH,
+            method=PaymentMethods.CASH,
         )
         with self.assertNumQueries(21):
             response = self.client.get(reverse("update_report", kwargs={"date": TODAY}))
@@ -781,14 +781,14 @@ class ReportUpdateViewTests(TestCase):
             report=self.report,
             prepaid_flights=0,
             amount=10,
-            method=PAYMENT_METHODS.CASH,
+            method=PaymentMethods.CASH,
         ).save()
         Bill(
             signup=self.guest_signup,
             report=self.report,
             prepaid_flights=0,
             amount=2,
-            method=PAYMENT_METHODS.CASH,
+            method=PaymentMethods.CASH,
         ).save()
         cash_at_end = 2000
         new_remarks = "Some new remarks"
@@ -831,14 +831,14 @@ class ReportUpdateViewTests(TestCase):
             report=self.report,
             prepaid_flights=0,
             amount=10,
-            method=PAYMENT_METHODS.CASH,
+            method=PaymentMethods.CASH,
         ).save()
         Bill(
             signup=self.guest_signup,
             report=self.report,
             prepaid_flights=0,
             amount=2,
-            method=PAYMENT_METHODS.CASH,
+            method=PaymentMethods.CASH,
         ).save()
         with self.assertNumQueries(28):
             response = self.client.post(

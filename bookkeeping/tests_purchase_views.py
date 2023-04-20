@@ -7,7 +7,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import Bill, PAYMENT_METHODS, Purchase, Report, Run
+from .models import Bill, PaymentMethods, Purchase, Report, Run
 from trainings.models import Signup, Training
 
 locale.setlocale(locale.LC_TIME, "de_CH")
@@ -54,7 +54,7 @@ class PurchaseCreateViewTests(TestCase):
         self.assertTemplateUsed(response, "bookkeeping/purchase_create.html")
         self.assertContains(response, self.orga)
         self.assertContains(response, TODAY.strftime("%a, %d. %b.").replace(" 0", " "))
-        for item in Purchase.ITEMS:
+        for item in Purchase.Items:
             self.assertContains(response, item.label)
 
     def test_create_purchase(self):
@@ -63,7 +63,7 @@ class PurchaseCreateViewTests(TestCase):
                 reverse(
                     "create_purchase", kwargs={"date": TODAY, "signup": self.signup.pk}
                 ),
-                data={"item": Purchase.ITEMS.REARMING_KIT},
+                data={"item": Purchase.Items.REARMING_KIT},
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
@@ -71,10 +71,10 @@ class PurchaseCreateViewTests(TestCase):
         self.assertEqual(1, len(Purchase.objects.all()))
         created_purchase = Purchase.objects.first()
         self.assertTrue(
-            created_purchase.description in Purchase.ITEMS.REARMING_KIT.label
+            created_purchase.description in Purchase.Items.REARMING_KIT.label
         )
         self.assertTrue(
-            str(created_purchase.price) in Purchase.ITEMS.REARMING_KIT.label
+            str(created_purchase.price) in Purchase.Items.REARMING_KIT.label
         )
 
     def test_cannot_create_purchase_for_paid_signup(self):
@@ -83,14 +83,14 @@ class PurchaseCreateViewTests(TestCase):
             report=self.report,
             prepaid_flights=0,
             amount=42,
-            method=PAYMENT_METHODS.CASH,
+            method=PaymentMethods.CASH,
         ).save()
         with self.assertNumQueries(24):
             response = self.client.post(
                 reverse(
                     "create_purchase", kwargs={"date": TODAY, "signup": self.signup.pk}
                 ),
-                data={"item": Purchase.ITEMS.REARMING_KIT},
+                data={"item": Purchase.Items.REARMING_KIT},
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
@@ -206,7 +206,7 @@ class PurchaseDeleteViewTests(TestCase):
             report=self.report,
             prepaid_flights=0,
             amount=42,
-            method=PAYMENT_METHODS.CASH,
+            method=PaymentMethods.CASH,
         ).save()
         with self.assertNumQueries(26):
             response = self.client.post(

@@ -48,7 +48,7 @@ class Report(models.Model):
 
 
 class Expense(models.Model):
-    class REASONS(models.IntegerChoices):
+    class Reasons(models.IntegerChoices):
         GAS = 0, "Tanken"
         PARKING = 1, "Parkkarte"
         STREET = 2, "Kleber Axalpstrasse"
@@ -65,13 +65,19 @@ class Expense(models.Model):
         return self.reason
 
 
-class PAYMENT_METHODS(models.IntegerChoices):
+class PaymentMethods(models.IntegerChoices):
     CASH = 0, "Bar"
     BANK_TRANSFER = 1, "Überweisung"
     TWINT = 2, "TWINT"
 
 
 class Absorption(models.Model):
+    PAYMENT_CHOICES = [
+        choice
+        for choice in PaymentMethods.choices
+        if choice[0] != PaymentMethods.CASH
+    ]
+
     report = models.ForeignKey(
         Report, on_delete=models.CASCADE, related_name="absorptions"
     )
@@ -80,7 +86,7 @@ class Absorption(models.Model):
     )
     reason = "Abschöpfung"
     amount = models.SmallIntegerField(validators=[MinValueValidator(0)])
-    method = models.SmallIntegerField(choices=PAYMENT_METHODS.choices)
+    method = models.SmallIntegerField(choices=PAYMENT_CHOICES)
 
     @property
     def description(self):
@@ -124,6 +130,11 @@ class Run(models.Model):
 
 class Bill(models.Model):
     PRICE_OF_FLIGHT = 9
+    PAYMENT_CHOICES = [
+        choice
+        for choice in PaymentMethods.choices
+        if choice[0] != PaymentMethods.BANK_TRANSFER
+    ]
 
     signup = models.OneToOneField(
         "trainings.Signup", on_delete=models.CASCADE, related_name="bill"
@@ -133,7 +144,7 @@ class Bill(models.Model):
     # thus bill.prepaid_flights can be negative.
     prepaid_flights = models.SmallIntegerField()
     amount = models.SmallIntegerField(validators=[MinValueValidator(0)])
-    method = models.SmallIntegerField(choices=PAYMENT_METHODS.choices)
+    method = models.SmallIntegerField(choices=PAYMENT_CHOICES)
 
     class Meta:
         unique_together = (("signup", "report"),)
@@ -190,7 +201,7 @@ class Bill(models.Model):
 
     @property
     def was_paid_in_cash(self):
-        return self.method == PAYMENT_METHODS.CASH
+        return self.method == PaymentMethods.CASH
 
 
 @receiver(models.signals.post_save, sender=Bill)
@@ -215,7 +226,7 @@ def return_prepaid_flights(sender, instance, **kwargs):
 
 
 class Purchase(models.Model):
-    class ITEMS(models.IntegerChoices):
+    class Items(models.IntegerChoices):
         PREPAID_FLIGHTS = 0, "Abo (10 Flüge), Fr. 72"
         REARMING_KIT = 1, "Patrone, Fr. 36"
         LIFEJACKET = 2, "Schwimmweste, Fr. 80"
@@ -235,7 +246,7 @@ class Purchase(models.Model):
     @classmethod
     def save_item(cls, signup, report, choice):
         assert not signup.is_paid, "Cannot save item for paid signup."
-        description, price = cls.ITEMS.choices[choice][1].split(", Fr. ")
+        description, price = cls.Items.choices[choice][1].split(", Fr. ")
         return cls.objects.create(
             signup=signup, report=report, description=description, price=int(price)
         )
@@ -256,25 +267,25 @@ class Purchase(models.Model):
 
     @property
     def is_prepaid_flights(self):
-        return self.description in self.ITEMS.PREPAID_FLIGHTS.label
+        return self.description in self.Items.PREPAID_FLIGHTS.label
 
     @property
     def is_equipment(self):
         return (
-            self.description in self.ITEMS.REARMING_KIT.label
-            or self.description in self.ITEMS.LIFEJACKET.label
+            self.description in self.Items.REARMING_KIT.label
+            or self.description in self.Items.LIFEJACKET.label
         )
 
 
 @receiver(models.signals.post_save, sender=Purchase)
 def add_prepaid_flights(sender, instance, **kwargs):
-    if instance.description in sender.ITEMS.PREPAID_FLIGHTS.label:
+    if instance.description in sender.Items.PREPAID_FLIGHTS.label:
         instance.signup.pilot.prepaid_flights += 10
         instance.signup.pilot.save()
 
 
 @receiver(models.signals.post_delete, sender=Purchase)
 def delete_prepaid_flights(sender, instance, **kwargs):
-    if instance.description in sender.ITEMS.PREPAID_FLIGHTS.label:
+    if instance.description in sender.Items.PREPAID_FLIGHTS.label:
         instance.signup.pilot.prepaid_flights -= 10
         instance.signup.pilot.save()

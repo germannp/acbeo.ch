@@ -6,7 +6,7 @@ from django.test import TestCase
 from django.utils import timezone
 
 from .models import Training, Signup
-from bookkeeping.models import Bill, PAYMENT_METHODS, Purchase, Report, Run
+from bookkeeping.models import Bill, PaymentMethods, Purchase, Report, Run
 
 
 TODAY = date.today()
@@ -306,7 +306,7 @@ class SignupTests(TestCase):
                 self.assertEqual(self.signup.is_cancelable, is_cancelable)
 
         self.assertTrue(self.signup.is_cancelable)
-        Purchase.save_item(self.signup, report, Purchase.ITEMS.LIFEJACKET)
+        Purchase.save_item(self.signup, report, Purchase.Items.LIFEJACKET)
         self.assertFalse(self.signup.is_cancelable)
 
     def test_is_active(self):
@@ -322,7 +322,7 @@ class SignupTests(TestCase):
             report=report,
             prepaid_flights=0,
             amount=10,
-            method=PAYMENT_METHODS.CASH,
+            method=PaymentMethods.CASH,
         ).save()
         self.assertFalse(self.signup.is_active)
 
@@ -346,7 +346,7 @@ class SignupTests(TestCase):
                 self.assertEqual(self.signup.must_be_paid, must_be_paid)
 
         self.assertFalse(self.signup.must_be_paid)
-        Purchase.save_item(self.signup, report, Purchase.ITEMS.LIFEJACKET)
+        Purchase.save_item(self.signup, report, Purchase.Items.LIFEJACKET)
         self.assertTrue(self.signup.must_be_paid)
 
         Bill(
@@ -354,7 +354,7 @@ class SignupTests(TestCase):
             report=report,
             prepaid_flights=0,
             amount=420,
-            method=PAYMENT_METHODS.CASH,
+            method=PaymentMethods.CASH,
         ).save()
         self.assertFalse(self.signup.must_be_paid)
 
@@ -432,6 +432,6 @@ class SignupTests(TestCase):
             report=report,
             prepaid_flights=0,
             amount=420,
-            method=PAYMENT_METHODS.CASH,
+            method=PaymentMethods.CASH,
         ).save()
         self.assertTrue(self.signup.is_paid)

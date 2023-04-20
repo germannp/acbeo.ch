@@ -20,7 +20,7 @@
                             <label class="form-check-label" for="{{ reason.id_for_label }}">
                                 {{ reason.choice_label }}
                             </label>
-                            {% if reason.choice_label == form.instance.REASONS.OTHER.label %}
+                            {% if reason.choice_label == form.instance.Reasons.OTHER.label %}
                             <div class="form-floating mb-3">
                                 <textarea type="text" name="other_reason" id="other_reason" class="form-control" placeholder="text"
                                     onclick="checkOtherRadio()">{% if form.other_reason.value %}{{ form.other_reason.value }}{% endif %}</textarea>
@@ -46,7 +46,7 @@
 
 <script>
     function checkOtherRadio() {
-        document.getElementById("id_reason_{{ form.instance.REASONS.OTHER }}").checked = "true";
+        document.getElementById("id_reason_{{ form.instance.Reasons.OTHER }}").checked = "true";
     }
 </script>
 

@@ -7,7 +7,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import Bill, PAYMENT_METHODS, Report, Run
+from .models import Bill, PaymentMethods, Report, Run
 from trainings.models import Signup, Training
 
 locale.setlocale(locale.LC_TIME, "de_CH")
@@ -94,7 +94,7 @@ class RunCreateViewTests(TestCase):
             report=self.report,
             prepaid_flights=0,
             amount=420,
-            method=PAYMENT_METHODS.CASH,
+            method=PaymentMethods.CASH,
         ).save()
         self.assertTrue(self.guest_2_signup.is_paid)
 
@@ -110,7 +110,7 @@ class RunCreateViewTests(TestCase):
             report=self.report,
             prepaid_flights=0,
             amount=420,
-            method=PAYMENT_METHODS.CASH,
+            method=PaymentMethods.CASH,
         ).save()
         self.assertTrue(self.guest_2_signup.is_paid)
 
@@ -334,7 +334,7 @@ class RunUpdateViewTests(TestCase):
             report=self.report,
             prepaid_flights=0,
             amount=420,
-            method=PAYMENT_METHODS.CASH,
+            method=PaymentMethods.CASH,
         ).save()
         self.assertTrue(self.guest_signup.is_paid)
 
@@ -434,7 +434,7 @@ class RunUpdateViewTests(TestCase):
             report=self.report,
             prepaid_flights=0,
             amount=420,
-            method=PAYMENT_METHODS.CASH,
+            method=PaymentMethods.CASH,
         ).save()
         self.assertTrue(self.guest_signup.is_paid)
         self.assertEqual(3, len(Run.objects.all()))

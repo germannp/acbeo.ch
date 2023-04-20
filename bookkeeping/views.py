@@ -11,7 +11,7 @@ from django.utils import timezone
 from django.views import generic
 
 from . import forms
-from .models import Absorption, Bill, Expense, PAYMENT_METHODS, Purchase, Report, Run
+from .models import Absorption, Bill, Expense, PaymentMethods, Purchase, Report, Run
 from trainings.views import OrgaRequiredMixin
 from trainings.models import Signup, Training
 
@@ -207,7 +207,7 @@ class BalanceView(OrgaRequiredMixin, YearArchiveView):
             context["latest_cash"] = reports[-1].cash_at_end
             context["amount"] = reports[-1].cash_at_end - (
                 reports[0].cash_at_start
-                + context["total_revenue"].get(PAYMENT_METHODS.CASH.label, 0)
+                + context["total_revenue"].get(PaymentMethods.CASH.label, 0)
                 - context.get("total_expeditures", 0)
             )
 
@@ -218,7 +218,7 @@ class BalanceView(OrgaRequiredMixin, YearArchiveView):
         transactions = [
             transaction
             for transaction in transactions
-            if transaction.method != PAYMENT_METHODS.CASH and transaction.amount
+            if transaction.method != PaymentMethods.CASH and transaction.amount
         ]
         context["transactions_by_method"] = {
             method: sorted(transactions_with_method, key=by_date)

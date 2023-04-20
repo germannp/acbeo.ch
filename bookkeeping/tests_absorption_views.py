@@ -6,7 +6,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from .models import Absorption, PAYMENT_METHODS, Report
+from .models import Absorption, PaymentMethods, Report
 from trainings.models import Signup, Training
 
 locale.setlocale(locale.LC_TIME, "de_CH")
@@ -54,8 +54,9 @@ class AbsorptionCreateViewTests(TestCase):
         )
         self.assertContains(
             response,
-            f'value="{PAYMENT_METHODS.BANK_TRANSFER}" class="form-check-input" id="id_method_0" required checked',
+            f'value="{PaymentMethods.BANK_TRANSFER}" class="form-check-input" id="id_method_0" required checked',
         )
+        self.assertNotContains(response, PaymentMethods.CASH.label)
 
     def test_amount_cannot_be_negative_and_is_prefilled(self):
         amount = -42
@@ -65,7 +66,7 @@ class AbsorptionCreateViewTests(TestCase):
                 data={
                     "signup": self.signup.pk,
                     "amount": amount,
-                    "method": PAYMENT_METHODS.BANK_TRANSFER,
+                    "method": PaymentMethods.BANK_TRANSFER,
                 },
                 follow=True,
             )
@@ -81,7 +82,7 @@ class AbsorptionCreateViewTests(TestCase):
                 data={
                     "signup": self.signup.pk,
                     "amount": amount,
-                    "method": PAYMENT_METHODS.BANK_TRANSFER,
+                    "method": PaymentMethods.BANK_TRANSFER,
                 },
                 follow=True,
             )
@@ -95,7 +96,7 @@ class AbsorptionCreateViewTests(TestCase):
         created_absorption = Absorption.objects.first()
         self.assertEqual(self.signup, created_absorption.signup)
         self.assertEqual(amount, created_absorption.amount)
-        self.assertEqual(PAYMENT_METHODS.BANK_TRANSFER, created_absorption.method)
+        self.assertEqual(PaymentMethods.BANK_TRANSFER, created_absorption.method)
 
     def test_report_not_found_404(self):
         with self.assertNumQueries(4):
@@ -122,7 +123,7 @@ class AbsorptionUpdateViewTests(TestCase):
             report=self.report,
             signup=self.signup,
             amount=42,
-            method=PAYMENT_METHODS.BANK_TRANSFER,
+            method=PaymentMethods.BANK_TRANSFER,
         )
         training.select_signups()
 
@@ -158,10 +159,11 @@ class AbsorptionUpdateViewTests(TestCase):
             response,
             f'value="{self.absorption.method}" class="form-check-input" id="id_method_0" required checked',
         )
+        self.assertNotContains(response, PaymentMethods.CASH.label)
 
     def test_amount_cannot_be_negative_and_is_prefilled(self):
         new_amount = -42
-        new_method = PAYMENT_METHODS.TWINT
+        new_method = PaymentMethods.TWINT
         with self.assertNumQueries(9):
             response = self.client.post(
                 reverse(
@@ -191,7 +193,7 @@ class AbsorptionUpdateViewTests(TestCase):
 
     def test_update_absorption(self):
         new_amount = 23
-        new_method = PAYMENT_METHODS.TWINT
+        new_method = PaymentMethods.TWINT
         with self.assertNumQueries(25):
             response = self.client.post(
                 reverse(
