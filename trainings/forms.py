@@ -124,7 +124,7 @@ class EmergencyMailForm(forms.ModelForm):
     def clean_emergency_contacts(self):
         emergency_contacts = self.cleaned_data["emergency_contacts"]
         if len(emergency_contacts) != 2:
-            raise ValidationError("Bitte genau zwei Notfallkontakte ausgewählen.")
+            raise ValidationError("Bitte genau zwei Notfallkontakte auswählen.")
         return emergency_contacts
 
     def send_mail(self):

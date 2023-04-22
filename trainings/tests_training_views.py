@@ -718,7 +718,7 @@ class EmergencyMailViewTests(TestCase):
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "trainings/emergency_mail.html")
-        self.assertContains(response, "Bitte genau zwei Notfallkontakte ausgewählen.")
+        self.assertContains(response, "Bitte genau zwei Notfallkontakte auswählen.")
 
         with self.assertNumQueries(7):
             response = self.client.post(
@@ -728,7 +728,7 @@ class EmergencyMailViewTests(TestCase):
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "trainings/emergency_mail.html")
-        self.assertContains(response, "Bitte genau zwei Notfallkontakte ausgewählen.")
+        self.assertContains(response, "Bitte genau zwei Notfallkontakte auswählen.")
 
     def test_cannot_send_emergency_mail_for_past_or_non_existing_trainings(self):
         with self.assertNumQueries(3):
