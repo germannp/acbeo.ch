@@ -67,7 +67,7 @@ class ExpenseCreateViewTests(TestCase):
     def test_create_expense(self):
         reason = Expense.Reasons.GAS
         amount = 42
-        with self.assertNumQueries(17):
+        with self.assertNumQueries(16):
             response = self.client.post(
                 reverse("create_expense", kwargs={"date": TODAY}),
                 data={"reason": reason, "amount": amount},
@@ -87,7 +87,7 @@ class ExpenseCreateViewTests(TestCase):
     def test_create_expense_for_other_reason(self):
         other_reason = "Other reason"
         amount = 42
-        with self.assertNumQueries(17):
+        with self.assertNumQueries(16):
             response = self.client.post(
                 reverse("create_expense", kwargs={"date": TODAY}),
                 data={
@@ -172,7 +172,7 @@ class ExpenseUpdateViewTests(TestCase):
     def test_update_expense(self):
         new_reason = "Petrol"
         new_amount = 23
-        with self.assertNumQueries(16):
+        with self.assertNumQueries(15):
             response = self.client.post(
                 reverse(
                     "update_expense", kwargs={"date": TODAY, "pk": self.expense.pk}
@@ -191,7 +191,7 @@ class ExpenseUpdateViewTests(TestCase):
         self.assertEqual(new_amount, self.expense.amount)
 
     def test_delete_expense(self):
-        with self.assertNumQueries(16):
+        with self.assertNumQueries(15):
             response = self.client.post(
                 reverse(
                     "update_expense", kwargs={"date": TODAY, "pk": self.expense.pk}

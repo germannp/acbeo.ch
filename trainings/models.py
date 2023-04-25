@@ -150,6 +150,10 @@ class Signup(models.Model):
         return not self.is_cancelable and not self.is_paid
 
     @property
+    def is_training_orga(self):
+        return self in {self.training.report.orga_1, self.training.report.orga_2}
+
+    @property
     def needs_day_pass(self):
         if self.pilot.is_member:
             return False

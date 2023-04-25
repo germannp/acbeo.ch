@@ -423,6 +423,17 @@ class SignupTests(TestCase):
         Purchase.save_day_pass(prev_signup, report)
         self.assertFalse(signup.needs_day_pass)
 
+    def test_is_training_orga(self):
+        report = Report.objects.create(training=self.training, cash_at_start=1337)
+        self.assertFalse(self.signup.is_training_orga)
+
+        report.orga_1 = self.signup
+        self.assertTrue(self.signup.is_training_orga)
+
+        report.orga_1 = None
+        report.orga_1 = self.signup
+        self.assertTrue(self.signup.is_training_orga)
+
     def test_is_paid(self):
         report = Report.objects.create(training=self.training, cash_at_start=1337)
         self.assertFalse(self.signup.is_paid)

@@ -12,10 +12,28 @@ class Report(models.Model):
     cash_at_end = models.SmallIntegerField(
         blank=True, null=True, validators=[MinValueValidator(0)]
     )
+    orga_1 = models.ForeignKey(
+        "trainings.Signup",
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name="reports_1",
+    )
+    orga_2 = models.ForeignKey(
+        "trainings.Signup",
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name="reports_2",
+    )
     remarks = models.CharField(max_length=300, default="", blank=True)
 
     def __str__(self):
         return f"{self.training}"
+
+    @property
+    def orgas(self):
+        return [orga for orga in [self.orga_1, self.orga_2] if orga]
 
     @property
     def cash_revenue(self):
@@ -73,9 +91,7 @@ class PaymentMethods(models.IntegerChoices):
 
 class Absorption(models.Model):
     PAYMENT_CHOICES = [
-        choice
-        for choice in PaymentMethods.choices
-        if choice[0] != PaymentMethods.CASH
+        choice for choice in PaymentMethods.choices if choice[0] != PaymentMethods.CASH
     ]
 
     report = models.ForeignKey(
@@ -168,7 +184,10 @@ class Bill(models.Model):
     @property
     def num_services(self):
         runs = self.signup.runs.all()
-        return len([run for run in runs if run.is_service])
+        num_services = len([run for run in runs if run.is_service])
+        if self.signup.is_training_orga:
+            num_services += 1
+        return num_services
 
     @property
     def revenue_services(self):

@@ -4,7 +4,7 @@ from .models import Absorption, Bill, Expense, Purchase, Report, Run
 
 
 class ReportAdmin(admin.ModelAdmin):
-    list_display = ("training", "cash_at_start", "cash_at_end")
+    list_display = ("training", "cash_at_start", "cash_at_end", "orga_1", "orga_2")
     ordering = ("-training",)
 
 

@@ -261,7 +261,15 @@ class ReportUpdateView(OrgaRequiredMixin, generic.UpdateView):
 
     def get_object(self):
         training = get_object_or_404(Training, date=self.kwargs["date"])
-        return get_object_or_404(Report, training=training)
+        report = get_object_or_404(
+            Report.objects.select_related("training")
+            .prefetch_related("training__signups__pilot")
+            .prefetch_related("runs__signup")
+            .prefetch_related("expenses")
+            .prefetch_related("absorptions"),
+            training=training,
+        )
+        return report
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -289,26 +297,32 @@ class ReportUpdateView(OrgaRequiredMixin, generic.UpdateView):
 
     def form_valid(self, form):
         if form.instance.num_unpaid_signups:
-            messages.warning(
-                self.request,
-                'Achtung, es haben noch nicht alle bezahlt. <a href="javascript:history.back()">Zurück</a>.',
+            messages.warning(self.request, "Es haben noch nicht alle bezahlt.")
+            self.success_url = reverse_lazy(
+                "update_report", kwargs={"date": form.instance.training.date}
             )
             return super().form_valid(form)
 
         if not (difference := form.instance.difference):
-            messages.warning(
-                self.request,
-                'Bitte Kassenstand erfassen. <a href="javascript:history.back()">Zurück</a>.',
+            messages.warning(self.request, "Bitte Kassenstand erfassen.")
+            self.success_url = reverse_lazy(
+                "update_report", kwargs={"date": form.instance.training.date}
             )
             return super().form_valid(form)
 
         if difference < 0:
             messages.warning(
                 self.request,
-                'Achtung, zu wenig Geld in der Kasse. <a href="javascript:history.back()">Zurück</a>.',
+                'Zu wenig Geld in der Kasse. <a href="javascript:history.back()">Zurück</a>.',
+            )
+            self.success_url = reverse_lazy(
+                "update_report", kwargs={"date": form.instance.training.date}
             )
             return super().form_valid(form)
 
+        messages.success(
+            self.request, "Alle haben bezahlt und der Kassenstand ist gespeichert 😊"
+        )
         return super().form_valid(form)
 
 
@@ -454,7 +468,9 @@ class RunCreateView(OrgaRequiredMixin, generic.TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["Kind"] = Run.Kind
-        training = get_object_or_404(Training, date=date.today())
+        training = get_object_or_404(
+            Training.objects.prefetch_related("signups__pilot"), date=date.today()
+        )
         active_signups = training.active_signups
         if "formset" in context:
             formset = context["formset"]
@@ -569,7 +585,11 @@ class RunUpdateView(OrgaRequiredMixin, generic.TemplateView):
         report = get_object_or_404(Report, training=training)
         times_of_runs = sorted(set(run.created_on for run in report.runs.all()))
         num_run = self.kwargs["run"] - 1
-        runs = Run.objects.filter(created_on=times_of_runs[num_run])
+        runs = (
+            Run.objects.filter(created_on=times_of_runs[num_run])
+            .prefetch_related("signup__pilot")
+            .prefetch_related("signup__bill")
+        )
 
         for run in runs:
             if not run.signup.is_paid:
@@ -613,6 +633,7 @@ class BillListView(LoginRequiredMixin, YearArchiveView):
         queryset = super().get_queryset()
         prefetch_related_objects(queryset, "signup__runs")
         prefetch_related_objects(queryset, "signup__purchases")
+        prefetch_related_objects(queryset, "signup__training__report")
 
         for bill in queryset:
             bill.purchases = ", ".join(
@@ -625,7 +646,19 @@ class BillCreateView(OrgaRequiredMixin, generic.CreateView):
     form_class = forms.BillForm
     template_name = "bookkeeping/bill_create.html"
 
+    def get(self, *args, **kwargs):
+        """Redirect if paid"""
+        signup = get_object_or_404(
+            Signup.objects.select_related("bill"), pk=self.kwargs["signup"]
+        )
+        if signup.is_paid:
+            messages.warning(self.request, f"{signup.pilot} hat bereits bezahlt.")
+            return redirect(self.get_success_url())
+
+        return super().get(*args, **kwargs)
+
     def get_context_data(self, **kwargs):
+        """Prepare Bill"""
         context = super().get_context_data(**kwargs)
         signup = get_object_or_404(
             Signup.objects.select_related("training").prefetch_related("runs"),
@@ -637,6 +670,71 @@ class BillCreateView(OrgaRequiredMixin, generic.CreateView):
         prefetch_related_objects([signup], "purchases")
         context["bill"] = Bill(signup=signup, report=report)
         return context
+
+    def post(self, request, *args, **kwargs):
+        """Deal with training orgas"""
+        create_bill_url = reverse_lazy(
+            "create_bill",
+            kwargs={"date": self.kwargs["date"], "signup": self.kwargs["signup"]},
+        )
+        if "make-orga" in request.POST:
+            signup = get_object_or_404(
+                Signup.objects.select_related("bill"), pk=self.kwargs["signup"]
+            )
+            if signup.is_paid:
+                messages.warning(
+                    request,
+                    f"Nicht zu Tagesleiter·in gemacht, {signup.pilot} hat bereits bezahlt.",
+                )
+                return HttpResponseRedirect(self.get_success_url())
+
+            if signup.is_training_orga:
+                messages.warning(request, "Ist bereits Tagesleiter·in.")
+                return HttpResponseRedirect(create_bill_url)
+
+            report = get_object_or_404(Report, training=signup.training)
+            if not report.orga_1:
+                report.orga_1 = signup
+                report.save()
+                messages.success(request, "Zu Tagesleiter·in gemacht.")
+                return HttpResponseRedirect(create_bill_url)
+
+            if not report.orga_2:
+                report.orga_2 = signup
+                report.save()
+                messages.success(request, "Zu Tagesleiter·in gemacht.")
+                return HttpResponseRedirect(create_bill_url)
+
+            messages.warning(
+                request,
+                f"Nicht zu Tagesleiter·in gemacht, {report.orga_1.pilot} und "
+                f"{report.orga_2.pilot} sind bereits als Tagesleiter·innen gespeichert.",
+            )
+            return HttpResponseRedirect(create_bill_url)
+
+        if "undo-orga" in request.POST:
+            signup = get_object_or_404(
+                Signup.objects.select_related("bill"), pk=self.kwargs["signup"]
+            )
+            if signup.is_paid:
+                messages.warning(
+                    request,
+                    f"Tagesleiter·in nicht entfernt, {signup.pilot} hat bereits bezahlt.",
+                )
+                return HttpResponseRedirect(self.get_success_url())
+
+            report = get_object_or_404(Report, training=signup.training)
+            if report.orga_1 == signup:
+                report.orga_1 = report.orga_2
+                report.orga_2 = None
+                report.save()
+            if report.orga_2 == signup:
+                report.orga_2 = None
+                report.save()
+            messages.warning(request, "Tagesleiter·in entfernt.")
+            return HttpResponseRedirect(create_bill_url)
+
+        return super().post(self, request, *args, **kwargs)
 
     def form_valid(self, form):
         """Fill in pilot and report"""

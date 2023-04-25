@@ -1,5 +1,4 @@
 from datetime import date, timedelta
-from itertools import product
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -253,6 +252,18 @@ class BillTests(TestCase):
 
                 # Tear down sub test.
                 signup.delete()
+
+    def test_training_orga_receives_extra_service(self):
+        signup = Signup.objects.create(pilot=self.pilot, training=self.training)
+        bill = Bill(signup=signup, report=self.report, method=PaymentMethods.CASH)
+        self.assertEqual(bill.num_services, 0)
+
+        self.report.orga_1 = signup
+        self.assertEqual(bill.num_services, 1)
+
+        self.report.orga_1 = None
+        self.report.orga_2 = signup
+        self.assertEqual(bill.num_services, 1)
 
     def test_update_does_not_affect_prepaid_flights(self):
         signup = Signup.objects.create(pilot=self.pilot, training=self.training)

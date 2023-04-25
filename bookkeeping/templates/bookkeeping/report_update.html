@@ -105,7 +105,17 @@
                                 {% if form.cash_at_end.value %}value="{{ form.cash_at_end.value }}"{% endif %}>
                             <label>Kassenstand nach dem Training</label>
                         </div>
-                        <div class="form-floating mb-3">
+                        <label for="id_orgas" class="form-label">Tagesleiter·innen:</label>
+                        {% if report.orgas %}
+                        <ul>
+                            {% for orga in report.orgas %}
+                            <li>{{ orga.pilot }}</li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        Noch keine.
+                        {% endif %}
+                        <div class="form-floating my-3">
                             <textarea type="text" name="remarks" id="remarks" class="form-control" placeholder="text"
                                 style="height: 100px">{% if form.remarks.value %}{{ form.remarks.value }}{% endif %}</textarea>
                             <label for="floatingInput">Bemerkungen</label>
