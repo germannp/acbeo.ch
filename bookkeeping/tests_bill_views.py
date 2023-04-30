@@ -168,7 +168,7 @@ class BillListViewTests(TestCase):
 class BillCreateViewTests(TestCase):
     def setUp(self):
         self.orga = get_user_model().objects.create(
-            first_name="Orga", email="orga@example.com", role=get_user_model().Role.Orga
+            first_name="Orga", email="orga@example.com", role=get_user_model().Role.ORGA
         )
         self.client.force_login(self.orga)
         self.guest = get_user_model().objects.create(
@@ -198,21 +198,21 @@ class BillCreateViewTests(TestCase):
         Run(
             signup=self.guest_signup,
             report=self.report,
-            kind=Run.Kind.Flight,
+            kind=Run.Kind.FLIGHT,
             created_on=now,
         ).save()
         now += timedelta(hours=1)
         Run(
             signup=self.guest_signup,
             report=self.report,
-            kind=Run.Kind.Flight,
+            kind=Run.Kind.FLIGHT,
             created_on=now,
         ).save()
         now += timedelta(hours=1)
         Run(
             signup=self.guest_signup,
             report=self.report,
-            kind=Run.Kind.Bus,
+            kind=Run.Kind.BUS,
             created_on=now,
         ).save()
 
@@ -324,7 +324,7 @@ class BillCreateViewTests(TestCase):
         Run(
             signup=self.guest_signup,
             report=self.report,
-            kind=Run.Kind.Flight,
+            kind=Run.Kind.FLIGHT,
             created_on=timezone.now() + timedelta(hours=7),
         ).save()
         self.assertTrue(self.guest_signup.needs_day_pass)
@@ -612,7 +612,7 @@ class BillCreateViewTests(TestCase):
 class BillUpdateViewTests(TestCase):
     def setUp(self):
         self.orga = get_user_model().objects.create(
-            first_name="Orga", email="orga@example.com", role=get_user_model().Role.Orga
+            first_name="Orga", email="orga@example.com", role=get_user_model().Role.ORGA
         )
         self.client.force_login(self.orga)
 
@@ -624,15 +624,15 @@ class BillUpdateViewTests(TestCase):
         self.report = Report.objects.create(training=training, cash_at_start=1337)
         now += timedelta(hours=1)
         Run(
-            signup=self.signup, report=self.report, kind=Run.Kind.Flight, created_on=now
+            signup=self.signup, report=self.report, kind=Run.Kind.FLIGHT, created_on=now
         ).save()
         now += timedelta(hours=1)
         Run(
-            signup=self.signup, report=self.report, kind=Run.Kind.Flight, created_on=now
+            signup=self.signup, report=self.report, kind=Run.Kind.FLIGHT, created_on=now
         ).save()
         now += timedelta(hours=1)
         Run(
-            signup=self.signup, report=self.report, kind=Run.Kind.Boat, created_on=now
+            signup=self.signup, report=self.report, kind=Run.Kind.BOAT, created_on=now
         ).save()
         self.purchase = Purchase.objects.create(
             signup=self.signup, report=self.report, description="Description", price=42

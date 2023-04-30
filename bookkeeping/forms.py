@@ -57,11 +57,11 @@ class BaseRunFormSet(forms.BaseModelFormSet):
             # Don't bother validating the formset unless each form is valid on its own
             return
 
-        num_buses = sum(form.instance.kind == Run.Kind.Bus for form in self.forms)
+        num_buses = sum(form.instance.kind == Run.Kind.BUS for form in self.forms)
         if num_buses > 1:
             raise ValidationError("Höchstens eine Person kann Bus fahren.")
 
-        num_boats = sum(form.instance.kind == Run.Kind.Boat for form in self.forms)
+        num_boats = sum(form.instance.kind == Run.Kind.BOAT for form in self.forms)
         if num_boats > 2:
             raise ValidationError("Höchstens zwei Personen können Boot machen.")
 

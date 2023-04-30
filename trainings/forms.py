@@ -118,7 +118,7 @@ class EmergencyMailForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["emergency_contacts"].queryset = self.instance.signups.filter(
-            status=Signup.Status.Selected
+            status=Signup.Status.SELECTED
         ).select_related("pilot")
 
     def clean_emergency_contacts(self):
@@ -201,4 +201,4 @@ class SignupUpdateForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         self.instance.update_is_certain(cleaned_data["is_certain"])
-        self.instance.update_for_time(cleaned_data["for_time"])
+        self.instance.update_duration(cleaned_data["duration"])

@@ -18,7 +18,7 @@ YESTERDAY = TODAY - timedelta(days=1)
 class ExpenseCreateViewTests(TestCase):
     def setUp(self):
         orga = get_user_model().objects.create(
-            email="orga@example.com", role=get_user_model().Role.Orga
+            email="orga@example.com", role=get_user_model().Role.ORGA
         )
         self.client.force_login(orga)
 
@@ -119,7 +119,7 @@ class ExpenseCreateViewTests(TestCase):
 class ExpenseUpdateViewTests(TestCase):
     def setUp(self):
         orga = get_user_model().objects.create(
-            email="orga@example.com", role=get_user_model().Role.Orga
+            email="orga@example.com", role=get_user_model().Role.ORGA
         )
         self.client.force_login(orga)
 

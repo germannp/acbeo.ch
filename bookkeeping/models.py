@@ -110,7 +110,7 @@ class Absorption(models.Model):
 
 
 class Run(models.Model):
-    Kind = models.IntegerChoices("Kind", "Flight Bus Boat Break")
+    Kind = models.IntegerChoices("Kind", "FLIGHT BUS BOAT BREAK")
 
     signup = models.ForeignKey(
         "trainings.Signup", on_delete=models.CASCADE, related_name="runs"
@@ -128,15 +128,15 @@ class Run(models.Model):
 
     @property
     def is_relevant_for_bill(self):
-        return self.kind != self.Kind.Break
+        return self.kind != self.Kind.BREAK
 
     @property
     def is_flight(self):
-        return self.kind == self.Kind.Flight
+        return self.kind == self.Kind.FLIGHT
 
     @property
     def is_service(self):
-        return self.kind in (self.Kind.Bus, self.Kind.Boat)
+        return self.kind in (self.Kind.BUS, self.Kind.BOAT)
 
     def save(self, *args, **kwargs):
         if self.signup.is_paid:

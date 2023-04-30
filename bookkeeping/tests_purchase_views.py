@@ -19,7 +19,7 @@ YESTERDAY = TODAY - timedelta(days=1)
 class PurchaseCreateViewTests(TestCase):
     def setUp(self):
         self.orga = get_user_model().objects.create(
-            email="orga@example.com", role=get_user_model().Role.Orga
+            email="orga@example.com", role=get_user_model().Role.ORGA
         )
         self.client.force_login(self.orga)
 
@@ -120,7 +120,7 @@ class PurchaseCreateViewTests(TestCase):
 class PurchaseDeleteViewTests(TestCase):
     def setUp(self):
         self.orga = get_user_model().objects.create(
-            email="orga@example.com", role=get_user_model().Role.Orga
+            email="orga@example.com", role=get_user_model().Role.ORGA
         )
         self.client.force_login(self.orga)
 
@@ -184,7 +184,7 @@ class PurchaseDeleteViewTests(TestCase):
             Run(
                 signup=signup,
                 report=self.report,
-                kind=Run.Kind.Flight,
+                kind=Run.Kind.FLIGHT,
                 created_on=now + timedelta(hours=i),
             ).save()
         self.assertTrue(signup.needs_day_pass)

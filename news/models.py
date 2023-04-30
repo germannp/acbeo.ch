@@ -38,7 +38,7 @@ class PilotManager(BaseUserManager):
             email,
             password=password,
         )
-        pilot.role = Pilot.Role.Staff
+        pilot.role = Pilot.Role.STAFF
         pilot.save()
         return pilot
 
@@ -52,14 +52,14 @@ def validate_phone(phone):
 
 
 class Pilot(AbstractBaseUser):
-    Role = models.IntegerChoices("Role", "Guest Member Orga Staff")
+    Role = models.IntegerChoices("Role", "GUEST MEMBER ORGA STAFF")
 
     email = models.EmailField(max_length=255, unique=True)
     first_name = models.CharField(max_length=150)
     last_name = models.CharField(max_length=150)
     phone = models.CharField(max_length=20, validators=[validate_phone])
     date_joined = models.DateTimeField(auto_now_add=True)
-    role = models.IntegerField(choices=Role.choices, default=Role.Guest)
+    role = models.IntegerField(choices=Role.choices, default=Role.GUEST)
     prepaid_flights = models.SmallIntegerField(
         validators=[MinValueValidator(0)], default=0
     )
@@ -86,20 +86,20 @@ class Pilot(AbstractBaseUser):
         return True
 
     def make_member(self):
-        self.role = self.Role.Member
+        self.role = self.Role.MEMBER
         self.save()
 
     @property
     def is_member(self):
-        return self.role >= self.Role.Member
+        return self.role >= self.Role.MEMBER
 
     @property
     def is_orga(self):
-        return self.role >= self.Role.Orga
+        return self.role >= self.Role.ORGA
 
     @property
     def is_staff(self):
-        return self.role == self.Role.Staff
+        return self.role == self.Role.STAFF
 
     @property
     def day_passes_of_this_season(self):

@@ -24,7 +24,7 @@ class SignupAdmin(admin.ModelAdmin):
         "status",
         "signed_up_on",
         "is_certain",
-        "for_time",
+        "duration",
         "for_sketchy_weather",
         "comment",
     )

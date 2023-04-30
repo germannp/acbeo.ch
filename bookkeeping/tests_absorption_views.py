@@ -19,7 +19,7 @@ class AbsorptionCreateViewTests(TestCase):
     def setUp(self):
         self.guest = get_user_model().objects.create(email="guest@example.com", first_name="Guest")
         self.orga = get_user_model().objects.create(
-            email="orga@example.com", first_name="Orga", role=get_user_model().Role.Orga
+            email="orga@example.com", first_name="Orga", role=get_user_model().Role.ORGA
         )
         self.client.force_login(self.orga)
 
@@ -111,7 +111,7 @@ class AbsorptionUpdateViewTests(TestCase):
     def setUp(self):
         self.guest = get_user_model().objects.create(email="guest@example.com", first_name="Guest")
         self.orga = get_user_model().objects.create(
-            email="orga@example.com", first_name="Orga", role=get_user_model().Role.Orga
+            email="orga@example.com", first_name="Orga", role=get_user_model().Role.ORGA
         )
         self.client.force_login(self.orga)
 

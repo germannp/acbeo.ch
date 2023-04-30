@@ -82,8 +82,10 @@ class Training(models.Model):
 
 
 class Signup(models.Model):
-    Status = models.IntegerChoices("Status", "Selected Waiting Canceled")
-    Time = models.IntegerChoices("Time", "WholeDay ArriveLate LeaveEarly Individually")
+    Status = models.IntegerChoices("Status", "SELECTED WAITING CANCELED")
+    Duration = models.IntegerChoices(
+        "Duration", "ALL_DAY ARRIVING_LATE LEAVING_EARLY INDIVIDUALLY"
+    )
 
     pilot = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="signups"
@@ -91,10 +93,12 @@ class Signup(models.Model):
     training = models.ForeignKey(
         Training, on_delete=models.CASCADE, related_name="signups"
     )
-    status = models.SmallIntegerField(choices=Status.choices, default=Status.Waiting)
+    status = models.SmallIntegerField(choices=Status.choices, default=Status.WAITING)
     signed_up_on = models.DateTimeField(auto_now_add=True)
     is_certain = models.BooleanField(default=True)
-    for_time = models.SmallIntegerField(choices=Time.choices, default=Time.WholeDay)
+    duration = models.SmallIntegerField(
+        choices=Duration.choices, default=Duration.ALL_DAY
+    )
     for_sketchy_weather = models.BooleanField(default=True)
     comment = models.CharField(max_length=150, default="", blank=True)
 
@@ -108,9 +112,9 @@ class Signup(models.Model):
     @property
     def is_motivated(self):
         return (
-            self.status != self.Status.Canceled
+            self.status != self.Status.CANCELED
             and self.is_certain
-            and self.for_time == self.Time.WholeDay
+            and self.duration == self.Duration.ALL_DAY
         )
 
     @property
@@ -118,20 +122,20 @@ class Signup(models.Model):
         return (
             self.pilot.is_member
             and self.is_certain
-            and self.for_time == self.Time.WholeDay
+            and self.duration == self.Duration.ALL_DAY
         )
 
     @property
     def is_selected(self):
-        return self.status == self.Status.Selected
+        return self.status == self.Status.SELECTED
 
     @property
     def is_selected_orga(self):
-        return self.status == self.Status.Selected and self.pilot.is_orga
+        return self.status == self.Status.SELECTED and self.pilot.is_orga
 
     @property
     def is_waiting_orga(self):
-        return self.status == self.Status.Waiting and self.pilot.is_orga
+        return self.status == self.Status.WAITING and self.pilot.is_orga
 
     @property
     def is_cancelable(self):
@@ -192,20 +196,20 @@ class Signup(models.Model):
         return hasattr(self, "bill")
 
     def select(self):
-        if self.status != self.Status.Waiting:
+        if self.status != self.Status.WAITING:
             return
-        self.status = self.Status.Selected
+        self.status = self.Status.SELECTED
         self.save()
 
     def cancel(self):
         assert self.is_cancelable, f"Trying to cancel {self} relevant for billing!"
         self.signed_up_on = make_aware(datetime.now())
-        self.status = self.Status.Canceled
+        self.status = self.Status.CANCELED
         # Not saving, because called before saving updates from form
 
     def resignup(self):
         self.signed_up_on = make_aware(datetime.now())
-        self.status = self.Status.Waiting
+        self.status = self.Status.WAITING
         # Not saving, because called before saving updates from form
 
     def update_is_certain(self, new_is_certain):
@@ -215,17 +219,17 @@ class Signup(models.Model):
         if new_is_certain:
             return
         self.signed_up_on = make_aware(datetime.now())
-        self.status = self.Status.Waiting
+        self.status = self.Status.WAITING
         # Not saving, because called before saving updates from form
 
-    def update_for_time(self, new_for_time):
-        if self.for_time == new_for_time:
+    def update_duration(self, new_duration):
+        if self.duration == new_duration:
             return
-        old_for_time, self.for_time = self.for_time, new_for_time
-        if new_for_time == self.Time.WholeDay:
+        old_duration, self.duration = self.duration, new_duration
+        if new_duration == self.Duration.ALL_DAY:
             return
-        if old_for_time != self.Time.WholeDay:
+        if old_duration != self.Duration.ALL_DAY:
             return
         self.signed_up_on = make_aware(datetime.now())
-        self.status = self.Status.Waiting
+        self.status = self.Status.WAITING
         # Not saving, because called before saving updates from form

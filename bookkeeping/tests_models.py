@@ -96,10 +96,10 @@ class RunTests(SimpleTestCase):
 
     def test_is_relevant_for_bill(self):
         for kind, is_relevant_for_bill in [
-            (Run.Kind.Flight, True),
-            (Run.Kind.Bus, True),
-            (Run.Kind.Boat, True),
-            (Run.Kind.Break, False),
+            (Run.Kind.FLIGHT, True),
+            (Run.Kind.BUS, True),
+            (Run.Kind.BOAT, True),
+            (Run.Kind.BREAK, False),
         ]:
             with self.subTest(kind=kind, is_relevant_for_bill=is_relevant_for_bill):
                 run = Run(
@@ -112,10 +112,10 @@ class RunTests(SimpleTestCase):
 
     def test_is_flight(self):
         for kind, is_flight in [
-            (Run.Kind.Flight, True),
-            (Run.Kind.Bus, False),
-            (Run.Kind.Boat, False),
-            (Run.Kind.Break, False),
+            (Run.Kind.FLIGHT, True),
+            (Run.Kind.BUS, False),
+            (Run.Kind.BOAT, False),
+            (Run.Kind.BREAK, False),
         ]:
             with self.subTest(kind=kind, is_flight=is_flight):
                 run = Run(
@@ -128,10 +128,10 @@ class RunTests(SimpleTestCase):
 
     def test_is_service(self):
         for kind, is_service in [
-            (Run.Kind.Flight, False),
-            (Run.Kind.Bus, True),
-            (Run.Kind.Boat, True),
-            (Run.Kind.Break, False),
+            (Run.Kind.FLIGHT, False),
+            (Run.Kind.BUS, True),
+            (Run.Kind.BOAT, True),
+            (Run.Kind.BREAK, False),
         ]:
             with self.subTest(kind=kind, is_service=is_service):
                 run = Run(
@@ -149,7 +149,7 @@ class RunTests(SimpleTestCase):
             Run(
                 signup=self.signup,
                 report=self.report,
-                kind=Run.Kind.Flight,
+                kind=Run.Kind.FLIGHT,
                 created_on=timezone.now(),
             ).save()
 
@@ -195,7 +195,7 @@ class BillTests(TestCase):
                     Run(
                         signup=signup,
                         report=self.report,
-                        kind=Run.Kind.Flight,
+                        kind=Run.Kind.FLIGHT,
                         created_on=now,
                     ).save()
                 for _ in range(num_buses):
@@ -203,7 +203,7 @@ class BillTests(TestCase):
                     Run(
                         signup=signup,
                         report=self.report,
-                        kind=Run.Kind.Bus,
+                        kind=Run.Kind.BUS,
                         created_on=now,
                     ).save()
                 for _ in range(num_boats):
@@ -211,7 +211,7 @@ class BillTests(TestCase):
                     Run(
                         signup=signup,
                         report=self.report,
-                        kind=Run.Kind.Boat,
+                        kind=Run.Kind.BOAT,
                         created_on=now,
                     ).save()
                 for _ in range(num_breaks):
@@ -219,7 +219,7 @@ class BillTests(TestCase):
                     Run(
                         signup=signup,
                         report=self.report,
-                        kind=Run.Kind.Break,
+                        kind=Run.Kind.BREAK,
                         created_on=now,
                     ).save()
 

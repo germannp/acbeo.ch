@@ -16,21 +16,21 @@ class PilotTests(TestCase):
         for role in Pilot.Role:
             with self.subTest(role=role):
                 pilot = Pilot(email="pilot@example.com", role=role)
-                self.assertEqual(pilot.is_member, role != Pilot.Role.Guest)
+                self.assertEqual(pilot.is_member, role != Pilot.Role.GUEST)
 
     def test_is_orga(self):
         for role in Pilot.Role:
             with self.subTest(role=role):
                 pilot = Pilot(email="pilot@example.com", role=role)
                 self.assertEqual(
-                    pilot.is_orga, role in (Pilot.Role.Orga, Pilot.Role.Staff)
+                    pilot.is_orga, role in (Pilot.Role.ORGA, Pilot.Role.STAFF)
                 )
 
     def test_is_staff(self):
         for role in Pilot.Role:
             with self.subTest(role=role):
                 pilot = Pilot(email="pilot@example.com", role=role)
-                self.assertEqual(pilot.is_staff, role == Pilot.Role.Staff)
+                self.assertEqual(pilot.is_staff, role == Pilot.Role.STAFF)
 
     def test_day_passes(self):
         pilot = Pilot.objects.create(email="pilot@example.com")
@@ -378,12 +378,12 @@ class MembershipFormViewTests(TestCase):
         self.guest = Pilot.objects.create(
             email="guest@example.com",
             first_name="Guest",
-            role=Pilot.Role.Guest,
+            role=Pilot.Role.GUEST,
             phone=123,
         )
         self.client.force_login(self.guest)
         self.member = Pilot.objects.create(
-            email="member@example.com", role=Pilot.Role.Member
+            email="member@example.com", role=Pilot.Role.MEMBER
         )
 
     def test_required_fields_and_form_is_prefilled(self):
@@ -406,7 +406,7 @@ class MembershipFormViewTests(TestCase):
                 self.assertContains(response, value)
             self.assertEqual(0, len(mail.outbox))
             self.guest.refresh_from_db()
-            self.assertEqual(self.guest.role, Pilot.Role.Guest)
+            self.assertEqual(self.guest.role, Pilot.Role.GUEST)
 
     def test_membership_must_be_requested(self):
         self.membership_data["request_membership"] = False
@@ -419,7 +419,7 @@ class MembershipFormViewTests(TestCase):
         self.assertTemplateUsed(response, "news/membership.html")
         self.assertContains(response, "Du musst Mitglied werden wollen.")
         self.guest.refresh_from_db()
-        self.assertEqual(self.guest.role, Pilot.Role.Guest)
+        self.assertEqual(self.guest.role, Pilot.Role.GUEST)
 
     def test_statutes_must_be_accepted(self):
         self.membership_data["accept_statutes"] = False
@@ -434,7 +434,7 @@ class MembershipFormViewTests(TestCase):
             response, "Du musst mit unseren Statuten einverstanden sein."
         )
         self.guest.refresh_from_db()
-        self.assertEqual(self.guest.role, Pilot.Role.Guest)
+        self.assertEqual(self.guest.role, Pilot.Role.GUEST)
 
     def test_becoming_member(self):
         for i in range(2):
@@ -452,7 +452,7 @@ class MembershipFormViewTests(TestCase):
         self.assertTemplateUsed(response, "news/post_list.html")
 
         self.guest.refresh_from_db()
-        self.assertEqual(self.guest.role, Pilot.Role.Member)
+        self.assertEqual(self.guest.role, Pilot.Role.MEMBER)
 
         self.assertEqual(1, len(mail.outbox))
         self.assertEqual(mail.outbox[0].from_email, "dev@example.com")
@@ -484,10 +484,10 @@ class MembershipFormViewTests(TestCase):
 
 class PilotAdminTests(TestCase):
     def setUp(self):
-        staff = Pilot.objects.create(email="staff@example.com", role=Pilot.Role.Staff)
+        staff = Pilot.objects.create(email="staff@example.com", role=Pilot.Role.STAFF)
         self.client.force_login(staff)
         self.pilot = Pilot.objects.create(
-            email="guest@example.com", role=Pilot.Role.Guest
+            email="guest@example.com", role=Pilot.Role.GUEST
         )
 
     def test_make_member(self):

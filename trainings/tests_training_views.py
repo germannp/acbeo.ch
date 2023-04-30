@@ -20,7 +20,7 @@ TOMORROW = TODAY + timedelta(days=1)
 class TrainingListViewTests(TestCase):
     def setUp(self):
         self.orga = get_user_model().objects.create(
-            email="orga@example.com", role=get_user_model().Role.Orga
+            email="orga@example.com", role=get_user_model().Role.ORGA
         )
         self.pilot_b = get_user_model().objects.create(email="pilot_b@example.com")
         self.client.force_login(self.orga)
@@ -55,7 +55,7 @@ class TrainingListViewTests(TestCase):
 
     def test_list_trainings_selects_signups(self):
         self.signup.refresh_from_db()
-        self.assertEqual(self.signup.status, Signup.Status.Waiting)
+        self.assertEqual(self.signup.status, Signup.Status.WAITING)
 
         with self.assertNumQueries(12):
             response = self.client.get(reverse("trainings"))
@@ -63,7 +63,7 @@ class TrainingListViewTests(TestCase):
         self.assertTemplateUsed(response, "trainings/training_list.html")
 
         self.signup.refresh_from_db()
-        self.assertEqual(self.signup.status, Signup.Status.Selected)
+        self.assertEqual(self.signup.status, Signup.Status.SELECTED)
 
     def test_freshly_selected_signups_are_listed_first(self):
         now = datetime.now()
@@ -79,7 +79,7 @@ class TrainingListViewTests(TestCase):
         )
         for signup in [low_priority_signup, normal_signup]:
             signup.refresh_from_db()
-            self.assertEqual(signup.status, Signup.Status.Waiting)
+            self.assertEqual(signup.status, Signup.Status.WAITING)
 
         with self.assertNumQueries(13):
             response = self.client.get(reverse("trainings"))
@@ -90,8 +90,8 @@ class TrainingListViewTests(TestCase):
 
         for signup in [low_priority_signup, normal_signup]:
             signup.refresh_from_db()
-        self.assertEqual(low_priority_signup.status, Signup.Status.Waiting)
-        self.assertEqual(normal_signup.status, Signup.Status.Selected)
+        self.assertEqual(low_priority_signup.status, Signup.Status.WAITING)
+        self.assertEqual(normal_signup.status, Signup.Status.SELECTED)
 
     def test_past_trainings_not_listed(self):
         with self.assertNumQueries(12):
@@ -127,20 +127,20 @@ class TrainingListViewTests(TestCase):
         self.assertNotContains(response, reverse("signup", kwargs={"date": TOMORROW}))
 
     def test_text_color(self):
-        for i, (is_certain, for_time, warning) in enumerate(
+        for i, (is_certain, duration, warning) in enumerate(
             [
-                (True, Signup.Time.WholeDay, False),
-                (False, Signup.Time.WholeDay, True),
-                (True, Signup.Time.ArriveLate, True),
-                (True, Signup.Time.LeaveEarly, True),
-                (True, Signup.Time.Individually, True),
+                (True, Signup.Duration.ALL_DAY, False),
+                (False, Signup.Duration.ALL_DAY, True),
+                (True, Signup.Duration.ARRIVING_LATE, True),
+                (True, Signup.Duration.LEAVING_EARLY, True),
+                (True, Signup.Duration.INDIVIDUALLY, True),
             ]
         ):
             with self.subTest(
-                is_certain=is_certain, for_time=for_time, warning=warning
+                is_certain=is_certain, duration=duration, warning=warning
             ):
                 self.signup.is_certain = is_certain
-                self.signup.for_time = for_time
+                self.signup.duration = duration
                 self.signup.save()
                 with self.assertNumQueries(11 + (i == 0)):
                     response = self.client.get(reverse("trainings"))
@@ -153,8 +153,8 @@ class TrainingListViewTests(TestCase):
                     self.assertNotContains(response, "text-warning")
 
         for status, muted in [
-            (Signup.Status.Selected, False),
-            (Signup.Status.Canceled, True),
+            (Signup.Status.SELECTED, False),
+            (Signup.Status.CANCELED, True),
         ]:
             with self.subTest(status=status, muted=muted):
                 self.signup.status = status
@@ -227,10 +227,10 @@ class TrainingListViewTests(TestCase):
 class TrainingCreateViewTests(TestCase):
     def setUp(self):
         self.orga = get_user_model().objects.create(
-            email="orga@example.com", role=get_user_model().Role.Orga
+            email="orga@example.com", role=get_user_model().Role.ORGA
         )
         self.staff = get_user_model().objects.create(
-            email="staff@example.com", role=get_user_model().Role.Staff
+            email="staff@example.com", role=get_user_model().Role.STAFF
         )
         self.client.force_login(self.staff)
 
@@ -297,7 +297,7 @@ class TrainingCreateViewTests(TestCase):
         signup = Signup.objects.create(pilot=self.orga, training=training)
         training.select_signups()
         signup.refresh_from_db()
-        self.assertEqual(signup.status, Signup.Status.Selected)
+        self.assertEqual(signup.status, Signup.Status.SELECTED)
 
         with self.assertNumQueries(15):
             response = self.client.post(
@@ -316,7 +316,7 @@ class TrainingCreateViewTests(TestCase):
         training.refresh_from_db()
         self.assertEqual(training.info, "New info")
         signup.refresh_from_db()
-        self.assertEqual(signup.status, Signup.Status.Selected)
+        self.assertEqual(signup.status, Signup.Status.SELECTED)
 
     def test_cannot_create_trainings_in_the_past(self):
         with self.assertNumQueries(3):
@@ -444,7 +444,7 @@ class TrainingCreateViewTests(TestCase):
 class TrainingUpdateViewTests(TestCase):
     def setUp(self):
         self.orga = get_user_model().objects.create(
-            email="orga@example.com", role=get_user_model().Role.Orga
+            email="orga@example.com", role=get_user_model().Role.ORGA
         )
         self.client.force_login(self.orga)
         self.training = Training.objects.create(date=TODAY)
@@ -593,7 +593,7 @@ class EmergencyMailViewTests(TestCase):
         self.orga = get_user_model().objects.create(
             email="sender@example.com",
             first_name="Name A",
-            role=get_user_model().Role.Orga,
+            role=get_user_model().Role.ORGA,
         )
         self.client.force_login(self.orga)
         self.pilot_b = get_user_model().objects.create(

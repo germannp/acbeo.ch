@@ -19,7 +19,7 @@ YESTERDAY = TODAY - timedelta(days=1)
 class ReportListViewTests(TestCase):
     def setUp(self):
         orga = get_user_model().objects.create(
-            email="orga@example.com", role=get_user_model().Role.Orga
+            email="orga@example.com", role=get_user_model().Role.ORGA
         )
         self.client.force_login(orga)
 
@@ -223,7 +223,7 @@ class ReportListViewTests(TestCase):
 class BalanceViewTests(TestCase):
     def setUp(self):
         self.orga = get_user_model().objects.create(
-            email="orga@example.com", first_name="Orga", role=get_user_model().Role.Orga
+            email="orga@example.com", first_name="Orga", role=get_user_model().Role.ORGA
         )
         self.client.force_login(self.orga)
 
@@ -470,7 +470,7 @@ class BalanceViewTests(TestCase):
 class ReportCreateViewTests(TestCase):
     def setUp(self):
         self.orga = get_user_model().objects.create(
-            email="orga@example.com", role=get_user_model().Role.Orga
+            email="orga@example.com", role=get_user_model().Role.ORGA
         )
         self.client.force_login(self.orga)
 
@@ -552,7 +552,7 @@ class ReportCreateViewTests(TestCase):
 class ReportUpdateViewTests(TestCase):
     def setUp(self):
         orga = get_user_model().objects.create(
-            first_name="Orga", email="orga@example.com", role=get_user_model().Role.Orga
+            first_name="Orga", email="orga@example.com", role=get_user_model().Role.ORGA
         )
         self.client.force_login(orga)
         self.guest = get_user_model().objects.create(
@@ -575,7 +575,7 @@ class ReportUpdateViewTests(TestCase):
         Run(
             signup=self.guest_signup,
             report=self.report,
-            kind=Run.Kind.Flight,
+            kind=Run.Kind.FLIGHT,
             created_on=timezone.now() - timedelta(minutes=10),
         ).save()
 
@@ -588,14 +588,14 @@ class ReportUpdateViewTests(TestCase):
 
     def test_get_update_report_selects_signups(self):
         for signup in Signup.objects.all():
-            self.assertEqual(signup.status, Signup.Status.Waiting)
+            self.assertEqual(signup.status, Signup.Status.WAITING)
 
         with self.assertNumQueries(19):
             response = self.client.get(reverse("update_report", kwargs={"date": TODAY}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
         for signup in Signup.objects.all():
-            self.assertEqual(signup.status, Signup.Status.Selected)
+            self.assertEqual(signup.status, Signup.Status.SELECTED)
 
     def test_form_is_prefilled(self):
         with self.assertNumQueries(19):
@@ -716,7 +716,7 @@ class ReportUpdateViewTests(TestCase):
         Run(
             signup=self.guest_signup,
             report=report,
-            kind=Run.Kind.Flight,
+            kind=Run.Kind.FLIGHT,
             created_on=timezone.now() - timedelta(minutes=20),
         ).save()
         with self.assertNumQueries(12):
@@ -765,7 +765,7 @@ class ReportUpdateViewTests(TestCase):
         Run(
             signup=self.orga_signup,
             report=self.report,
-            kind=Run.Kind.Flight,
+            kind=Run.Kind.FLIGHT,
             created_on=timezone.now(),
         ).save()
 

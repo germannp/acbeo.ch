@@ -384,7 +384,7 @@ class AbsorptionCreateView(OrgaRequiredMixin, generic.CreateView):
         context = super().get_context_data(**kwargs)
         training = get_object_or_404(Training, date=self.kwargs["date"])
         selected_signups = training.signups.filter(
-            status=Signup.Status.Selected
+            status=Signup.Status.SELECTED
         ).select_related("pilot")
         context["form"].fields["signup"].queryset = selected_signups
         if user_signup := next(
@@ -429,7 +429,7 @@ class AbsorptionUpdateView(OrgaRequiredMixin, generic.UpdateView):
         context = super().get_context_data(**kwargs)
         training = get_object_or_404(Training, date=self.kwargs["date"])
         context["form"].fields["signup"].queryset = training.signups.filter(
-            status=Signup.Status.Selected
+            status=Signup.Status.SELECTED
         ).select_related("pilot")
         get_object_or_404(Report, training=training)
         return context
@@ -480,7 +480,7 @@ class RunCreateView(OrgaRequiredMixin, generic.TemplateView):
                 "form-INITIAL_FORMS": 0,
             }
             data.update(
-                {f"form-{i}-kind": Run.Kind.Flight for i in range(len(active_signups))}
+                {f"form-{i}-kind": Run.Kind.FLIGHT for i in range(len(active_signups))}
             )
             formset = forms.RunFormset(data)
         for form, signup in zip(formset, active_signups):

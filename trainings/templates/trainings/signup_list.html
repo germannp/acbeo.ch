@@ -61,10 +61,10 @@
                                     {% endif %}
                                 </td>
                                 <td class="text-nowrap">
-                                    {% if signup.for_time == signup.Time.WholeDay %}Ganzer Tag{% endif %}
-                                    {% if signup.for_time == signup.Time.ArriveLate %}<span class="text-warning">Komme später</span>{% endif %}
-                                    {% if signup.for_time == signup.Time.LeaveEarly %}<span class="text-warning">Gehe früher</span>{% endif %}
-                                    {% if signup.for_time == signup.Time.Individually %}<span class="text-warning">Individuell</span>{% endif %}
+                                    {% if signup.duration == signup.Duration.ALL_DAY %}Ganzer Tag{% endif %}
+                                    {% if signup.duration == signup.Duration.ARRIVING_LATE %}<span class="text-warning">Komme später</span>{% endif %}
+                                    {% if signup.duration == signup.Duration.LEAVING_EARLY %}<span class="text-warning">Gehe früher</span>{% endif %}
+                                    {% if signup.duration == signup.Duration.INDIVIDUALLY %}<span class="text-warning">Individuell</span>{% endif %}
                                 </td>
                                 <td>
                                     {% if signup.get_status_display != 'Canceled' %}

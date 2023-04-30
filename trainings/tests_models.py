@@ -17,10 +17,10 @@ TOMORROW = TODAY + timedelta(days=1)
 class TrainingTests(TestCase):
     def setUp(self):
         pilot_a = get_user_model().objects.create(
-            email="pilot_a@example.com", role=get_user_model().Role.Member
+            email="pilot_a@example.com", role=get_user_model().Role.MEMBER
         )
         pilot_b = get_user_model().objects.create(
-            email="pilot_b@example.com", role=get_user_model().Role.Member
+            email="pilot_b@example.com", role=get_user_model().Role.MEMBER
         )
         self.training = Training.objects.create(date=TOMORROW, max_pilots=3)
         now = datetime.now()
@@ -34,19 +34,19 @@ class TrainingTests(TestCase):
 
     def test_two_and_only_two_spots_are_reserved_for_orgas(self):
         for signup in [self.signup_a, self.signup_b]:
-            self.assertEqual(signup.status, Signup.Status.Waiting)
+            self.assertEqual(signup.status, Signup.Status.WAITING)
 
         self.training.select_signups()
         for signup in [self.signup_a, self.signup_b]:
             signup.refresh_from_db()
-        self.assertEqual(self.signup_a.status, Signup.Status.Selected)
-        self.assertEqual(self.signup_b.status, Signup.Status.Waiting)
+        self.assertEqual(self.signup_a.status, Signup.Status.SELECTED)
+        self.assertEqual(self.signup_b.status, Signup.Status.WAITING)
 
         orga_1 = get_user_model().objects.create(
-            email="orga_1@example.com", role=get_user_model().Role.Orga
+            email="orga_1@example.com", role=get_user_model().Role.ORGA
         )
         orga_2 = get_user_model().objects.create(
-            email="orga_2@example.com", role=get_user_model().Role.Orga
+            email="orga_2@example.com", role=get_user_model().Role.ORGA
         )
         now = datetime.now() + timedelta(hours=1)
         signup_1 = Signup.objects.create(
@@ -59,25 +59,25 @@ class TrainingTests(TestCase):
         self.training.select_signups()
         for signup in [self.signup_a, self.signup_b, signup_1, signup_2]:
             signup.refresh_from_db()
-        self.assertEqual(self.signup_a.status, Signup.Status.Selected)
-        self.assertEqual(self.signup_b.status, Signup.Status.Waiting)
-        self.assertEqual(signup_1.status, Signup.Status.Selected)
-        self.assertEqual(signup_2.status, Signup.Status.Selected)
+        self.assertEqual(self.signup_a.status, Signup.Status.SELECTED)
+        self.assertEqual(self.signup_b.status, Signup.Status.WAITING)
+        self.assertEqual(signup_1.status, Signup.Status.SELECTED)
+        self.assertEqual(signup_2.status, Signup.Status.SELECTED)
 
         signup_1.cancel()
         signup_1.save()
         self.training.select_signups()
         for signup in [self.signup_a, self.signup_b, signup_1, signup_2]:
             signup.refresh_from_db()
-        self.assertEqual(self.signup_a.status, Signup.Status.Selected)
-        self.assertEqual(self.signup_b.status, Signup.Status.Waiting)
-        self.assertEqual(signup_1.status, Signup.Status.Canceled)
-        self.assertEqual(signup_2.status, Signup.Status.Selected)
+        self.assertEqual(self.signup_a.status, Signup.Status.SELECTED)
+        self.assertEqual(self.signup_b.status, Signup.Status.WAITING)
+        self.assertEqual(signup_1.status, Signup.Status.CANCELED)
+        self.assertEqual(signup_2.status, Signup.Status.SELECTED)
 
         signup_1.resignup()
         signup_1.save()
         orga_3 = get_user_model().objects.create(
-            email="orga_3@example.com", role=get_user_model().Role.Orga
+            email="orga_3@example.com", role=get_user_model().Role.ORGA
         )
         now += timedelta(seconds=10)
         signup_3 = Signup.objects.create(
@@ -87,33 +87,33 @@ class TrainingTests(TestCase):
         self.training.select_signups()
         for signup in [self.signup_a, self.signup_b, signup_1, signup_2, signup_3]:
             signup.refresh_from_db()
-        self.assertEqual(self.signup_a.status, Signup.Status.Selected)
-        self.assertEqual(self.signup_b.status, Signup.Status.Selected)
-        self.assertEqual(signup_1.status, Signup.Status.Selected)
-        self.assertEqual(signup_2.status, Signup.Status.Selected)
-        self.assertEqual(signup_3.status, Signup.Status.Waiting)
+        self.assertEqual(self.signup_a.status, Signup.Status.SELECTED)
+        self.assertEqual(self.signup_b.status, Signup.Status.SELECTED)
+        self.assertEqual(signup_1.status, Signup.Status.SELECTED)
+        self.assertEqual(signup_2.status, Signup.Status.SELECTED)
+        self.assertEqual(signup_3.status, Signup.Status.WAITING)
 
     def test_stay_selected_when_max_pilots_is_reduced(self):
         for signup in [self.signup_a, self.signup_b]:
-            self.assertEqual(signup.status, Signup.Status.Waiting)
+            self.assertEqual(signup.status, Signup.Status.WAITING)
 
         self.training.select_signups()
         for signup in [self.signup_a, self.signup_b]:
             signup.refresh_from_db()
-        self.assertEqual(self.signup_a.status, Signup.Status.Selected)
-        self.assertEqual(self.signup_b.status, Signup.Status.Waiting)
+        self.assertEqual(self.signup_a.status, Signup.Status.SELECTED)
+        self.assertEqual(self.signup_b.status, Signup.Status.WAITING)
 
         self.training.max_pilots += 1
         self.training.select_signups()
         for signup in [self.signup_a, self.signup_b]:
             signup.refresh_from_db()
-            self.assertEqual(signup.status, Signup.Status.Selected)
+            self.assertEqual(signup.status, Signup.Status.SELECTED)
 
         self.training.max_pilots -= 1
         self.training.select_signups()
         for signup in [self.signup_a, self.signup_b]:
             signup.refresh_from_db()
-            self.assertEqual(signup.status, Signup.Status.Selected)
+            self.assertEqual(signup.status, Signup.Status.SELECTED)
 
     def test_only_with_priority_selected_before_priority_date(self):
         self.signup_b.update_is_certain(False)
@@ -126,21 +126,21 @@ class TrainingTests(TestCase):
         self.training.select_signups()
         for signup in [self.signup_a, self.signup_b]:
             signup.refresh_from_db()
-        self.assertEqual(self.signup_a.status, Signup.Status.Selected)
-        self.assertEqual(self.signup_b.status, Signup.Status.Waiting)
+        self.assertEqual(self.signup_a.status, Signup.Status.SELECTED)
+        self.assertEqual(self.signup_b.status, Signup.Status.WAITING)
 
         self.training.priority_date = TODAY
         self.training.select_signups()
         for signup in [self.signup_a, self.signup_b]:
             signup.refresh_from_db()
-        self.assertEqual(self.signup_a.status, Signup.Status.Selected)
-        self.assertEqual(self.signup_b.status, Signup.Status.Waiting)
+        self.assertEqual(self.signup_a.status, Signup.Status.SELECTED)
+        self.assertEqual(self.signup_b.status, Signup.Status.WAITING)
 
         self.training.priority_date = YESTERDAY
         self.training.select_signups()
         for signup in [self.signup_a, self.signup_b]:
             signup.refresh_from_db()
-            self.assertEqual(signup.status, Signup.Status.Selected)
+            self.assertEqual(signup.status, Signup.Status.SELECTED)
 
     def test_stay_selected_when_priority_date_is_moved(self):
         self.signup_b.update_is_certain(False)
@@ -153,28 +153,28 @@ class TrainingTests(TestCase):
         self.training.select_signups()
         for signup in [self.signup_a, self.signup_b]:
             signup.refresh_from_db()
-            self.assertEqual(signup.status, Signup.Status.Selected)
+            self.assertEqual(signup.status, Signup.Status.SELECTED)
 
         self.training.priority_date = TOMORROW
         self.training.select_signups()
         for signup in [self.signup_a, self.signup_b]:
             signup.refresh_from_db()
-            self.assertEqual(signup.status, Signup.Status.Selected)
+            self.assertEqual(signup.status, Signup.Status.SELECTED)
 
 
 class SignupTests(TestCase):
     def setUp(self):
         self.pilot = get_user_model().objects.create(
-            email="pilot@example.com", role=get_user_model().Role.Member
+            email="pilot@example.com", role=get_user_model().Role.MEMBER
         )
         self.training = Training.objects.create(date=TOMORROW, priority_date=TOMORROW)
         self.signup = Signup.objects.create(
-            pilot=self.pilot, training=self.training, status=Signup.Status.Selected
+            pilot=self.pilot, training=self.training, status=Signup.Status.SELECTED
         )
         self.time_selected = self.signup.signed_up_on
 
         self.guest = get_user_model().objects.create(
-            email="guest@example.com", role=get_user_model().Role.Guest
+            email="guest@example.com", role=get_user_model().Role.GUEST
         )
         self.guest_signup = Signup.objects.create(
             pilot=self.guest, training=self.training
@@ -187,113 +187,113 @@ class SignupTests(TestCase):
     @mock.patch("trainings.models.datetime")
     def test_resignup_sets_to_waiting_list(self, mocked_datetime):
         mocked_datetime.now.return_value = datetime.now()
-        self.assertEqual(self.signup.status, Signup.Status.Selected)
+        self.assertEqual(self.signup.status, Signup.Status.SELECTED)
 
         mocked_datetime.now.return_value += timedelta(seconds=10)
         self.signup.cancel()
         time_of_cancelation = self.signup.signed_up_on
         self.assertLess(self.time_selected, time_of_cancelation)
-        self.assertEqual(self.signup.status, Signup.Status.Canceled)
+        self.assertEqual(self.signup.status, Signup.Status.CANCELED)
 
         mocked_datetime.now.return_value += timedelta(seconds=10)
         self.signup.resignup()
         self.assertLess(time_of_cancelation, self.signup.signed_up_on)
-        self.assertEqual(self.signup.status, Signup.Status.Waiting)
+        self.assertEqual(self.signup.status, Signup.Status.WAITING)
 
     @mock.patch("trainings.models.datetime")
     def test_update_is_certain_sets_to_waiting_list_and_removes_priority(
         self, mocked_datetime
     ):
         mocked_datetime.now.return_value = datetime.now()
-        self.assertEqual(self.signup.status, Signup.Status.Selected)
+        self.assertEqual(self.signup.status, Signup.Status.SELECTED)
         self.assertTrue(self.signup.has_priority)
 
         mocked_datetime.now.return_value += timedelta(seconds=10)
         self.signup.update_is_certain(False)
         time_of_update_to_uncertain = self.signup.signed_up_on
         self.assertLess(self.time_selected, time_of_update_to_uncertain)
-        self.assertEqual(self.signup.status, Signup.Status.Waiting)
+        self.assertEqual(self.signup.status, Signup.Status.WAITING)
         self.assertFalse(self.signup.has_priority)
 
         mocked_datetime.now.return_value += timedelta(seconds=10)
         self.signup.update_is_certain(True)
         self.assertEqual(time_of_update_to_uncertain, self.signup.signed_up_on)
-        self.assertEqual(self.signup.status, Signup.Status.Waiting)
+        self.assertEqual(self.signup.status, Signup.Status.WAITING)
         self.assertTrue(self.signup.has_priority)
 
     @mock.patch("trainings.models.datetime")
-    def test_update_for_time_sets_to_waiting_list_and_removes_priority(
+    def test_update_duration_sets_to_waiting_list_and_removes_priority(
         self, mocked_datetime
     ):
         mocked_datetime.now.return_value = datetime.now()
-        self.assertEqual(self.signup.status, Signup.Status.Selected)
+        self.assertEqual(self.signup.status, Signup.Status.SELECTED)
         self.assertTrue(self.signup.has_priority)
 
         mocked_datetime.now.return_value += timedelta(seconds=10)
-        self.signup.update_for_time(Signup.Time.ArriveLate)
+        self.signup.update_duration(Signup.Duration.ARRIVING_LATE)
         time_of_update_to_arrive_late = self.signup.signed_up_on
         self.assertLess(self.time_selected, time_of_update_to_arrive_late)
-        self.assertEqual(self.signup.status, Signup.Status.Waiting)
+        self.assertEqual(self.signup.status, Signup.Status.WAITING)
         self.assertFalse(self.signup.has_priority)
 
         mocked_datetime.now.return_value += timedelta(seconds=10)
-        self.signup.update_for_time(Signup.Time.LeaveEarly)
+        self.signup.update_duration(Signup.Duration.LEAVING_EARLY)
         self.assertEqual(time_of_update_to_arrive_late, self.signup.signed_up_on)
-        self.assertEqual(self.signup.status, Signup.Status.Waiting)
+        self.assertEqual(self.signup.status, Signup.Status.WAITING)
         self.assertFalse(self.signup.has_priority)
 
         mocked_datetime.now.return_value += timedelta(seconds=10)
-        self.signup.update_for_time(Signup.Time.Individually)
+        self.signup.update_duration(Signup.Duration.INDIVIDUALLY)
         self.assertEqual(time_of_update_to_arrive_late, self.signup.signed_up_on)
-        self.assertEqual(self.signup.status, Signup.Status.Waiting)
+        self.assertEqual(self.signup.status, Signup.Status.WAITING)
         self.assertFalse(self.signup.has_priority)
 
         mocked_datetime.now.return_value += timedelta(seconds=10)
-        self.signup.update_for_time(Signup.Time.WholeDay)
+        self.signup.update_duration(Signup.Duration.ALL_DAY)
         self.assertEqual(time_of_update_to_arrive_late, self.signup.signed_up_on)
-        self.assertEqual(self.signup.status, Signup.Status.Waiting)
+        self.assertEqual(self.signup.status, Signup.Status.WAITING)
         self.assertTrue(self.signup.has_priority)
 
     def test_for_sketchy_weather_does_not_affect_status_and_priority(self):
         self.assertTrue(self.signup.for_sketchy_weather)
-        self.assertEqual(self.signup.status, Signup.Status.Selected)
+        self.assertEqual(self.signup.status, Signup.Status.SELECTED)
         self.assertTrue(self.signup.has_priority)
 
         self.signup.for_sketchy_weather = False
-        self.assertEqual(self.signup.status, Signup.Status.Selected)
+        self.assertEqual(self.signup.status, Signup.Status.SELECTED)
         self.assertTrue(self.signup.has_priority)
 
     def test_is_motivated(self):
-        for status, is_certain, for_time, is_motivated in [
-            # Cannot be Canceled
-            (Signup.Status.Waiting, True, Signup.Time.WholeDay, True),
-            (Signup.Status.Selected, True, Signup.Time.WholeDay, True),
-            (Signup.Status.Canceled, True, Signup.Time.WholeDay, False),
+        for status, is_certain, duration, is_motivated in [
+            # Cannot be CANCELED
+            (Signup.Status.WAITING, True, Signup.Duration.ALL_DAY, True),
+            (Signup.Status.SELECTED, True, Signup.Duration.ALL_DAY, True),
+            (Signup.Status.CANCELED, True, Signup.Duration.ALL_DAY, False),
             # Must be certain
-            (Signup.Status.Waiting, False, Signup.Time.WholeDay, False),
+            (Signup.Status.WAITING, False, Signup.Duration.ALL_DAY, False),
             # Must be for whole day
-            (Signup.Status.Waiting, True, Signup.Time.ArriveLate, False),
-            (Signup.Status.Waiting, True, Signup.Time.LeaveEarly, False),
-            (Signup.Status.Waiting, True, Signup.Time.Individually, False),
+            (Signup.Status.WAITING, True, Signup.Duration.ARRIVING_LATE, False),
+            (Signup.Status.WAITING, True, Signup.Duration.LEAVING_EARLY, False),
+            (Signup.Status.WAITING, True, Signup.Duration.INDIVIDUALLY, False),
         ]:
             with self.subTest(
                 status=status,
                 is_certain=is_certain,
-                for_time=for_time,
+                duration=duration,
                 is_motivated=is_motivated,
             ):
                 self.signup.status = status
                 self.signup.is_certain = is_certain
-                self.signup.for_time = for_time
+                self.signup.duration = duration
                 self.assertEqual(self.signup.is_motivated, is_motivated)
 
     def test_is_cancelable(self):
         report = Report.objects.create(training=self.training, cash_at_start=1337)
         for kind, is_cancelable in [
-            (Run.Kind.Flight, False),
-            (Run.Kind.Bus, False),
-            (Run.Kind.Boat, False),
-            (Run.Kind.Break, True),
+            (Run.Kind.FLIGHT, False),
+            (Run.Kind.BUS, False),
+            (Run.Kind.BOAT, False),
+            (Run.Kind.BREAK, True),
         ]:
             with self.subTest(kind=kind, is_cancelable=is_cancelable):
                 Run.objects.all().delete()
@@ -310,10 +310,10 @@ class SignupTests(TestCase):
         self.assertFalse(self.signup.is_cancelable)
 
     def test_is_active(self):
-        self.signup.status = Signup.Status.Waiting
+        self.signup.status = Signup.Status.WAITING
         self.assertFalse(self.signup.is_active)
 
-        self.signup.status = Signup.Status.Selected
+        self.signup.status = Signup.Status.SELECTED
         self.assertTrue(self.signup.is_active)
 
         report = Report.objects.create(training=self.training, cash_at_start=1337)
@@ -330,10 +330,10 @@ class SignupTests(TestCase):
         self.assertFalse(self.signup.must_be_paid)
         report = Report.objects.create(training=self.training, cash_at_start=1337)
         for kind, must_be_paid in [
-            (Run.Kind.Flight, True),
-            (Run.Kind.Bus, True),
-            (Run.Kind.Boat, True),
-            (Run.Kind.Break, False),
+            (Run.Kind.FLIGHT, True),
+            (Run.Kind.BUS, True),
+            (Run.Kind.BOAT, True),
+            (Run.Kind.BREAK, False),
         ]:
             with self.subTest(kind=kind, must_be_amount=must_be_paid):
                 Run.objects.all().delete()
@@ -369,7 +369,7 @@ class SignupTests(TestCase):
             Run(
                 signup=signup,
                 report=report,
-                kind=Run.Kind.Flight,
+                kind=Run.Kind.FLIGHT,
                 created_on=now,
             ).save()
             now += timedelta(minutes=5)
@@ -378,7 +378,7 @@ class SignupTests(TestCase):
         Run(
             signup=signup,
             report=report,
-            kind=Run.Kind.Boat,
+            kind=Run.Kind.BOAT,
             created_on=now,
         ).save()
         self.assertTrue(signup.needs_day_pass)

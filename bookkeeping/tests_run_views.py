@@ -19,7 +19,7 @@ YESTERDAY = TODAY - timedelta(days=1)
 class RunCreateViewTests(TestCase):
     def setUp(self):
         orga = get_user_model().objects.create(
-            first_name="Orga", email="orga@example.com", role=get_user_model().Role.Orga
+            first_name="Orga", email="orga@example.com", role=get_user_model().Role.ORGA
         )
         self.client.force_login(orga)
         self.guest = get_user_model().objects.create(
@@ -59,7 +59,7 @@ class RunCreateViewTests(TestCase):
 
     def test_get_create_run_selects_signups(self):
         for signup in Signup.objects.all():
-            self.assertEqual(signup.status, Signup.Status.Waiting)
+            self.assertEqual(signup.status, Signup.Status.WAITING)
 
         with self.assertNumQueries(18):
             response = self.client.get(reverse("create_run"))
@@ -67,15 +67,15 @@ class RunCreateViewTests(TestCase):
         self.assertTemplateUsed(response, "bookkeeping/run_create.html")
 
         for signup in Signup.objects.all():
-            self.assertEqual(signup.status, Signup.Status.Selected)
+            self.assertEqual(signup.status, Signup.Status.SELECTED)
 
     def test_forms_are_prefilled(self):
         with self.assertNumQueries(18):
             response = self.client.get(reverse("create_run"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/run_create.html")
-        self.assertContains(response, f'value="{Run.Kind.Flight}" checked')
-        self.assertNotContains(response, f'value="{Run.Kind.Flight}" \\n')
+        self.assertContains(response, f'value="{Run.Kind.FLIGHT}" checked')
+        self.assertNotContains(response, f'value="{Run.Kind.FLIGHT}" \\n')
 
     def test_pilots_listed_alphabetically(self):
         with self.assertNumQueries(18):
@@ -120,9 +120,9 @@ class RunCreateViewTests(TestCase):
                 data={
                     "form-TOTAL_FORMS": 3,
                     "form-INITIAL_FORMS": 0,
-                    "form-0-kind": Run.Kind.Bus,
-                    "form-1-kind": Run.Kind.Boat,
-                    "form-2-kind": Run.Kind.Flight,
+                    "form-0-kind": Run.Kind.BUS,
+                    "form-1-kind": Run.Kind.BOAT,
+                    "form-2-kind": Run.Kind.FLIGHT,
                 },
                 follow=True,
             )
@@ -141,19 +141,19 @@ class RunCreateViewTests(TestCase):
                 data={
                     "form-TOTAL_FORMS": 3,
                     "form-INITIAL_FORMS": 0,
-                    "form-0-kind": Run.Kind.Bus,
-                    "form-1-kind": Run.Kind.Bus,
-                    "form-2-kind": Run.Kind.Flight,
+                    "form-0-kind": Run.Kind.BUS,
+                    "form-1-kind": Run.Kind.BUS,
+                    "form-2-kind": Run.Kind.FLIGHT,
                 },
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/run_create.html")
         self.assertContains(response, "Höchstens eine Person kann Bus fahren.")
-        self.assertContains(response, f'value="{Run.Kind.Flight}" checked')
-        self.assertContains(response, f'value="{Run.Kind.Bus}" checked')
-        self.assertNotContains(response, f'value="{Run.Kind.Boat}" checked')
-        self.assertNotContains(response, f'value="{Run.Kind.Break}" checked')
+        self.assertContains(response, f'value="{Run.Kind.FLIGHT}" checked')
+        self.assertContains(response, f'value="{Run.Kind.BUS}" checked')
+        self.assertNotContains(response, f'value="{Run.Kind.BOAT}" checked')
+        self.assertNotContains(response, f'value="{Run.Kind.BREAK}" checked')
         self.assertEqual(0, len(Run.objects.all()))
 
     def test_at_most_two_boats_per_run_allowed(self):
@@ -163,19 +163,19 @@ class RunCreateViewTests(TestCase):
                 data={
                     "form-TOTAL_FORMS": 3,
                     "form-INITIAL_FORMS": 0,
-                    "form-0-kind": Run.Kind.Boat,
-                    "form-1-kind": Run.Kind.Boat,
-                    "form-2-kind": Run.Kind.Boat,
+                    "form-0-kind": Run.Kind.BOAT,
+                    "form-1-kind": Run.Kind.BOAT,
+                    "form-2-kind": Run.Kind.BOAT,
                 },
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/run_create.html")
         self.assertContains(response, "Höchstens zwei Personen können Boot machen.")
-        self.assertContains(response, f'value="{Run.Kind.Boat}" checked')
-        self.assertNotContains(response, f'value="{Run.Kind.Flight}" checked')
-        self.assertNotContains(response, f'value="{Run.Kind.Bus}" checked')
-        self.assertNotContains(response, f'value="{Run.Kind.Break}" checked')
+        self.assertContains(response, f'value="{Run.Kind.BOAT}" checked')
+        self.assertNotContains(response, f'value="{Run.Kind.FLIGHT}" checked')
+        self.assertNotContains(response, f'value="{Run.Kind.BUS}" checked')
+        self.assertNotContains(response, f'value="{Run.Kind.BREAK}" checked')
         self.assertEqual(0, len(Run.objects.all()))
 
     def test_number_of_selected_signups_changed(self):
@@ -185,8 +185,8 @@ class RunCreateViewTests(TestCase):
                 data={
                     "form-TOTAL_FORMS": 2,
                     "form-INITIAL_FORMS": 0,
-                    "form-0-kind": Run.Kind.Flight,
-                    "form-1-kind": Run.Kind.Flight,
+                    "form-0-kind": Run.Kind.FLIGHT,
+                    "form-1-kind": Run.Kind.FLIGHT,
                 },
                 follow=True,
             )
@@ -204,9 +204,9 @@ class RunCreateViewTests(TestCase):
                 data={
                     "form-TOTAL_FORMS": 3,
                     "form-INITIAL_FORMS": 0,
-                    "form-0-kind": Run.Kind.Bus,
-                    "form-1-kind": Run.Kind.Flight,
-                    "form-2-kind": Run.Kind.Boat,
+                    "form-0-kind": Run.Kind.BUS,
+                    "form-1-kind": Run.Kind.FLIGHT,
+                    "form-2-kind": Run.Kind.BOAT,
                 },
                 follow=True,
             )
@@ -222,7 +222,7 @@ class RunCreateViewTests(TestCase):
         Run(
             signup=self.guest_signup,
             report=self.report,
-            kind=Run.Kind.Flight,
+            kind=Run.Kind.FLIGHT,
             created_on=timezone.now() - timedelta(minutes=2),
         ).save()
 
@@ -232,9 +232,9 @@ class RunCreateViewTests(TestCase):
                 data={
                     "form-TOTAL_FORMS": 3,
                     "form-INITIAL_FORMS": 0,
-                    "form-0-kind": Run.Kind.Bus,
-                    "form-1-kind": Run.Kind.Flight,
-                    "form-2-kind": Run.Kind.Boat,
+                    "form-0-kind": Run.Kind.BUS,
+                    "form-1-kind": Run.Kind.FLIGHT,
+                    "form-2-kind": Run.Kind.BOAT,
                 },
                 follow=True,
             )
@@ -250,7 +250,7 @@ class RunCreateViewTests(TestCase):
 class RunUpdateViewTests(TestCase):
     def setUp(self):
         orga = get_user_model().objects.create(
-            first_name="Orga", email="orga@example.com", role=get_user_model().Role.Orga
+            first_name="Orga", email="orga@example.com", role=get_user_model().Role.ORGA
         )
         self.client.force_login(orga)
         self.guest = get_user_model().objects.create(
@@ -279,19 +279,19 @@ class RunUpdateViewTests(TestCase):
         self.orga_run = Run.objects.create(
             signup=self.orga_signup,
             report=self.report,
-            kind=Run.Kind.Flight,
+            kind=Run.Kind.FLIGHT,
             created_on=now,
         )
         self.guest_run = Run.objects.create(
             signup=self.guest_signup,
             report=self.report,
-            kind=Run.Kind.Flight,
+            kind=Run.Kind.FLIGHT,
             created_on=now,
         )
         self.guest_2_run = Run.objects.create(
             signup=self.guest_2_signup,
             report=self.report,
-            kind=Run.Kind.Flight,
+            kind=Run.Kind.FLIGHT,
             created_on=now,
         )
 
@@ -313,9 +313,9 @@ class RunUpdateViewTests(TestCase):
             response = self.client.get(reverse("update_run", kwargs={"run": 1}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/run_update.html")
-        self.assertContains(response, f'value="{Run.Kind.Flight}" checked')
-        self.assertNotContains(response, f'value="{Run.Kind.Flight}" \n')
-        self.assertContains(response, f'value="{Run.Kind.Boat}" \n')
+        self.assertContains(response, f'value="{Run.Kind.FLIGHT}" checked')
+        self.assertNotContains(response, f'value="{Run.Kind.FLIGHT}" \n')
+        self.assertContains(response, f'value="{Run.Kind.BOAT}" \n')
 
     def test_pilots_listed_alphabetically(self):
         with self.assertNumQueries(13):
@@ -344,9 +344,9 @@ class RunUpdateViewTests(TestCase):
                 data={
                     "form-TOTAL_FORMS": 3,
                     "form-INITIAL_FORMS": 0,
-                    "form-0-kind": Run.Kind.Bus,
-                    "form-1-kind": Run.Kind.Boat,
-                    "form-2-kind": Run.Kind.Break,
+                    "form-0-kind": Run.Kind.BUS,
+                    "form-1-kind": Run.Kind.BOAT,
+                    "form-2-kind": Run.Kind.BREAK,
                     "form-0-id": self.guest_run.pk,
                     "form-1-id": self.guest_2_run.pk,
                     "form-2-id": self.orga_run.pk,
@@ -365,9 +365,9 @@ class RunUpdateViewTests(TestCase):
                 data={
                     "form-TOTAL_FORMS": 3,
                     "form-INITIAL_FORMS": 0,
-                    "form-0-kind": Run.Kind.Bus,
-                    "form-1-kind": Run.Kind.Boat,
-                    "form-2-kind": Run.Kind.Break,
+                    "form-0-kind": Run.Kind.BUS,
+                    "form-1-kind": Run.Kind.BOAT,
+                    "form-2-kind": Run.Kind.BREAK,
                     "form-0-id": self.guest_run.pk,
                     "form-1-id": self.guest_2_run.pk,
                     "form-2-id": self.orga_run.pk,
@@ -381,11 +381,11 @@ class RunUpdateViewTests(TestCase):
 
         self.assertEqual(3, len(Run.objects.all()))
         self.guest_run.refresh_from_db()
-        self.assertEqual(Run.Kind.Bus, self.guest_run.kind)
+        self.assertEqual(Run.Kind.BUS, self.guest_run.kind)
         self.guest_2_run.refresh_from_db()
-        self.assertEqual(Run.Kind.Boat, self.guest_2_run.kind)
+        self.assertEqual(Run.Kind.BOAT, self.guest_2_run.kind)
         self.orga_run.refresh_from_db()
-        self.assertEqual(Run.Kind.Break, self.orga_run.kind)
+        self.assertEqual(Run.Kind.BREAK, self.orga_run.kind)
 
     def test_run_with_changed_number_of_pilots_cannot_be_deleted(self):
         with self.assertNumQueries(35):
@@ -394,8 +394,8 @@ class RunUpdateViewTests(TestCase):
                 data={
                     "form-TOTAL_FORMS": 2,
                     "form-INITIAL_FORMS": 0,
-                    "form-0-kind": Run.Kind.Bus,
-                    "form-1-kind": Run.Kind.Flight,
+                    "form-0-kind": Run.Kind.BUS,
+                    "form-1-kind": Run.Kind.FLIGHT,
                     "delete": "",
                 },
                 follow=True,
@@ -414,9 +414,9 @@ class RunUpdateViewTests(TestCase):
                 data={
                     "form-TOTAL_FORMS": 3,
                     "form-INITIAL_FORMS": 0,
-                    "form-0-kind": Run.Kind.Bus,
-                    "form-1-kind": Run.Kind.Flight,
-                    "form-2-kind": Run.Kind.Flight,
+                    "form-0-kind": Run.Kind.BUS,
+                    "form-1-kind": Run.Kind.FLIGHT,
+                    "form-2-kind": Run.Kind.FLIGHT,
                     "delete": "",
                 },
                 follow=True,
@@ -445,9 +445,9 @@ class RunUpdateViewTests(TestCase):
                 data={
                     "form-TOTAL_FORMS": 3,
                     "form-INITIAL_FORMS": 0,
-                    "form-0-kind": Run.Kind.Flight,
-                    "form-1-kind": Run.Kind.Flight,
-                    "form-2-kind": Run.Kind.Flight,
+                    "form-0-kind": Run.Kind.FLIGHT,
+                    "form-1-kind": Run.Kind.FLIGHT,
+                    "form-2-kind": Run.Kind.FLIGHT,
                     "delete": "",
                 },
                 follow=True,
@@ -466,9 +466,9 @@ class RunUpdateViewTests(TestCase):
                 data={
                     "form-TOTAL_FORMS": 3,
                     "form-INITIAL_FORMS": 0,
-                    "form-0-kind": Run.Kind.Flight,
-                    "form-1-kind": Run.Kind.Flight,
-                    "form-2-kind": Run.Kind.Flight,
+                    "form-0-kind": Run.Kind.FLIGHT,
+                    "form-1-kind": Run.Kind.FLIGHT,
+                    "form-2-kind": Run.Kind.FLIGHT,
                     "delete": "",
                 },
                 follow=True,

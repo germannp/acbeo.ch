@@ -16,12 +16,12 @@ admin.site.register(Post, PostAdmin)
 
 @admin.action(description="Ausgewählte zu Mitgliedern machen")
 def make_member(modeladmin, request, queryset):
-    queryset.update(role=Pilot.Role.Member)
+    queryset.update(role=Pilot.Role.MEMBER)
 
 
 @admin.action(description="Ausgewählte zu Leiter·innen machen")
 def make_orga(modeladmin, request, queryset):
-    queryset.update(role=Pilot.Role.Orga)
+    queryset.update(role=Pilot.Role.ORGA)
 
 
 class PilotAdmin(BaseUserAdmin):
