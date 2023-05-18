@@ -1,4 +1,4 @@
-import datetime
+from datetime import date, timedelta
 import locale
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
@@ -9,34 +9,32 @@ from django.urls import reverse_lazy
 from django.views import generic
 
 from . import forms
-from .models import Training, Signup
-
+from .models import Signup, Training
 
 locale.setlocale(locale.LC_TIME, "de_CH")
 
 
 class TrainingListView(LoginRequiredMixin, generic.ListView):
-    context_object_name = "trainings"
     paginate_by = 4
-    template_name = "trainings/list_trainings.html"
 
     def get_queryset(self):
-        trainings = Training.objects.filter(
-            date__gte=datetime.date.today()
-        ).prefetch_related("signups__pilot")
+        trainings = Training.objects.filter(date__gte=date.today()).prefetch_related(
+            "signups__pilot"
+        )
         for training in trainings:
             training.select_signups()
         # Selecting signups can alter their order, but Signup instances cannot be sorted.
         # Refreshing them from the DB is the best solution I found 🤷
-        trainings = Training.objects.filter(
-            date__gte=datetime.date.today()
-        ).prefetch_related("signups__pilot")
+        trainings = Training.objects.filter(date__gte=date.today()).prefetch_related(
+            "signups__pilot"
+        )
         return trainings
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        today = datetime.date.today()
-        context["day_after_tomorrow"] = today + datetime.timedelta(days=2)
+        today = date.today()
+        context["day_after_tomorrow"] = today + timedelta(days=2)
+        context["today"] = today
         return context
 
 
@@ -47,7 +45,7 @@ class StaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
 
 class TrainingCreateView(StaffRequiredMixin, generic.FormView):
     form_class = forms.TrainingCreateForm
-    template_name = "trainings/create_trainings.html"
+    template_name = "trainings/training_create.html"
     success_url = reverse_lazy("trainings")
 
     def form_valid(self, form):
@@ -62,10 +60,10 @@ class OrgaRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
 
 class TrainingUpdateView(OrgaRequiredMixin, generic.UpdateView):
     form_class = forms.TrainingUpdateForm
-    template_name = "trainings/update_training.html"
+    template_name = "trainings/training_update.html"
 
     def get_object(self):
-        if self.kwargs["date"] < datetime.date.today():
+        if self.kwargs["date"] < date.today():
             raise Http404("Vergangene Trainings können nicht bearbeitet werden.")
         return get_object_or_404(Training, date=self.kwargs["date"])
 
@@ -85,12 +83,12 @@ class EmergencyMailView(OrgaRequiredMixin, SuccessMessageMixin, generic.UpdateVi
     success_message = "Seepolizeimail abgesendet."
 
     def get_object(self):
-        today = datetime.date.today()
+        today = date.today()
         if self.kwargs["date"] < today:
             raise Http404(
                 "Seepolizeimail kann nicht für vergangene Trainings versandt werden."
             )
-        if self.kwargs["date"] > today + datetime.timedelta(days=2):
+        if self.kwargs["date"] > today + timedelta(days=2):
             raise Http404(
                 "Seepolizeimail kann höchstens drei Tage im Voraus versandt werden."
             )
@@ -103,64 +101,56 @@ class EmergencyMailView(OrgaRequiredMixin, SuccessMessageMixin, generic.UpdateVi
 
 
 class SignupListView(LoginRequiredMixin, generic.ListView):
-    context_object_name = "future_and_past_signups"
-    template_name = "trainings/list_my_signups.html"
+    model = Signup
 
     def get_queryset(self):
-        today = datetime.date.today()
-        future_signups = (
-            Signup.objects.filter(pilot=self.request.user)
-            .filter(training__date__gte=today)
+        today = date.today()
+        queryset = (
+            Signup.objects.filter(pilot=self.request.user, training__date__gte=today)
             .select_related("training")
             .prefetch_related("training__signups__pilot")
         )
-        for signup in future_signups:
+        for signup in queryset:
             signup.training.select_signups()
         # After selecting signups, they have to be refreshed from the DB
-        signups = (
-            Signup.objects.filter(pilot=self.request.user)
+        queryset = (
+            Signup.objects.filter(pilot=self.request.user, training__date__gte=today)
             .order_by("training__date")
             .select_related("training")
             .prefetch_related("training__signups")
         )
-        future_signups = [signup for signup in signups if signup.training.date >= today]
-        past_signups = [signup for signup in signups if signup.training.date < today][::-1]
-        return {"future": future_signups, "past": past_signups}
+        return queryset
 
 
 class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateView):
     form_class = forms.SignupCreateForm
-    template_name = "trainings/signup.html"
+    template_name = "trainings/signup_create.html"
 
-    def get_context_data(self, **kwargs):
+    def get_initial(self):
         """Set default date based on url pattern"""
-        context = super().get_context_data(**kwargs)
         if "date" in self.kwargs:
-            context["date"] = self.kwargs["date"]
-            return context
+            return {"date": self.kwargs["date"].isoformat()}
 
-        today = datetime.date.today()
+        today = date.today()
         if today.weekday() >= 5:  # Saturdays and Sundays
-            context["date"] = today
-            return context
+            return {"date": today.isoformat()}
 
-        next_saturday = today + datetime.timedelta(days=(5 - today.weekday()) % 7)
-        context["date"] = next_saturday
-        return context
+        next_saturday = today + timedelta(days=(5 - today.weekday()) % 7)
+        return {"date": next_saturday.isoformat()}
 
     def form_valid(self, form):
-        """Fill in training and pilot"""
+        """Fill in pilot and training"""
+        pilot = self.request.user
         self.date = form.cleaned_data["date"]
         if Training.objects.filter(date=self.date).exists():
             training = Training.objects.get(date=self.date)
         else:
-            wednesday_before = self.date + datetime.timedelta(
+            wednesday_before = self.date + timedelta(
                 days=(2 - self.date.weekday()) % 7 - 7
             )
             training = Training.objects.create(
                 date=self.date, priority_date=wednesday_before
             )
-        pilot = self.request.user
         if Signup.objects.filter(pilot=pilot, training=training).exists():
             form.add_error(
                 None,
@@ -168,6 +158,7 @@ class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateVi
                 f"{self.date.strftime(' %d. %B %Y').replace (' 0', ' ')}, bereits eingeschrieben.",
             )
             return super().form_invalid(form)
+
         form.instance.pilot = pilot
         form.instance.training = training
         return super().form_valid(form)
@@ -185,7 +176,7 @@ class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateVi
             f"Eingeschrieben für <b>{self.date.strftime('%A')}</b>, "
             f"den {self.date.strftime('%d. %B %Y')}.".replace(" 0", " ")
         )
-        next_day = self.date + datetime.timedelta(days=1)
+        next_day = self.date + timedelta(days=1)
         success_url = reverse_lazy("signup", kwargs={"date": next_day})
         if page := self.request.GET.get("page"):
             success_url += f"?page={page}"
@@ -196,10 +187,10 @@ class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateVi
 
 class SignupUpdateView(LoginRequiredMixin, generic.UpdateView):
     form_class = forms.SignupUpdateForm
-    template_name = "trainings/update_signup.html"
+    template_name = "trainings/signup_update.html"
 
     def get_object(self):
-        if self.kwargs["date"] < datetime.date.today():
+        if self.kwargs["date"] < date.today():
             raise Http404("Vergangene Anmeldungen können nicht bearbeitet werden.")
         pilot = self.request.user
         training = get_object_or_404(Training, date=self.kwargs["date"])
@@ -211,7 +202,7 @@ class SignupUpdateView(LoginRequiredMixin, generic.UpdateView):
         return signup
 
     def get_success_url(self):
-        if (success_url := self.request.GET.get("next")) == reverse_lazy("my_signups"):
+        if (success_url := self.request.GET.get("next")) == reverse_lazy("signups"):
             return success_url
 
         success_url = reverse_lazy("trainings")

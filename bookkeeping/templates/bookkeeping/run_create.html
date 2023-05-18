@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Run erstellen{% endblock title %}
+
+{% block headline %}Run erstellen{% endblock headline %}
+
+{% block content %}
+
+<div class="row mt-2">
+    <div class="col-xl-4 col-lg-5">
+        <div class="card mb-4">
+            <div class="card-body">
+                <main class="form">
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ formset.management_form }}
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">#</th>
+                                        <th scope="col">Pilot·in</th>
+                                        <th scope="col">🪂</th>
+                                        <th scope="col">🚌</th>
+                                        <th scope="col">🚢</th>
+                                        <th scope="col">❌</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="table-group-divider">
+                                    {% for form in formset %}
+                                    <tr>
+                                        <td>{{ forloop.counter }}</td>
+                                        <td class="text-nowrap">
+                                            {{ form.signup.pilot }}
+                                        </td>
+                                        <td>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="radio"
+                                                    name="form-{{ forloop.counter0 }}-kind"
+                                                    id="id_form-{{ forloop.counter0 }}-kind"
+                                                    value="{{ Kind.FLIGHT }}" {% if form.instance.kind == Kind.FLIGHT %}checked{% endif %}
+                                                    required>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="radio"
+                                                    name="form-{{ forloop.counter0 }}-kind"
+                                                    id="id_form-{{ forloop.counter0 }}-kind"
+                                                    value="{{ Kind.BUS }}" {% if form.instance.kind == Kind.BUS %}checked{% endif %}
+                                                    required>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="radio"
+                                                    name="form-{{ forloop.counter0 }}-kind"
+                                                    id="id_form-{{ forloop.counter0 }}-kind"
+                                                    value="{{ Kind.BOAT }}" {% if form.instance.kind == Kind.BOAT %}checked{% endif %}
+                                                    required>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="radio"
+                                                    name="form-{{ forloop.counter0 }}-kind"
+                                                    id="id_form-{{ forloop.counter0 }}-kind"
+                                                    value="{{ Kind.BREAK }}" {% if form.instance.kind == Kind.BREAK %}checked{% endif %}
+                                                    required>
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    {% for hidden in form.hidden_fields %}
+                                    {{ hidden }}
+                                    {% endfor %}
+
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <button class="btn btn-primary" type="submit">Speichern</button>
+                        <a href="{% url 'create_report' %}" class="btn btn-outline-dark">Abbrechen</a>
+                    </form>
+                </main>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}

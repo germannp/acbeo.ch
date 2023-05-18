@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Abrechnen{% endblock title %}
+
+{% block headline %}Abrechnen{% endblock headline %}
+
+{% block content %}
+
+<div class="row mt-2">
+    <div class="col-xl-6">
+        <div class="card mb-4">
+            <h5 class="card-header">{{ bill.signup.pilot }} für {{ bill.report.training.date | date:"D., j. M." }}</h5>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead>
+                            <tr>
+                                <th scope="col"></th>
+                                <th scope="col">Anzahl</th>
+                                <th scope="col">Betrag</th>
+                            </tr>
+                        </thead>
+                        <tbody class="table-group-divider">
+                            <tr>
+                                <td>Flüge</td>
+                                <td>{{ bill.num_flights }}</td>
+                                <td>{{ bill.costs_flights }}</td>
+                            </tr>
+                            <tr>
+                                <td>Dienste</td>
+                                <td>{{ bill.num_services }}</td>
+                                <td>-{{ bill.revenue_services }}</td>
+                            </tr>
+                            {% if 0 < bill.num_prepaid_flights %}
+                            <tr>
+                                <td>Mit Abo bezahlt</td>
+                                <td>{{ bill.num_prepaid_flights }}</td>
+                                <td>-{{ bill.costs_prepaid_flights }}</td>
+                            </tr>
+                            {% elif bill.num_prepaid_flights < 0 %}
+                            <tr>
+                                <td>Flüge gutgeschrieben</td>
+                                <td>{{ bill.num_prepaid_flights | stringformat:"+d"|slice:"1:" }}</td>
+                                <td>{{ bill.costs_prepaid_flights | stringformat:"+d"|slice:"1:" }}</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                        {% if bill.signup.purchases.all %}
+                        <tbody class="table-group-divider">
+                            {% for purchase in bill.signup.purchases.all %}
+                            <tr>
+                                <td>{{ purchase.description }} <a
+                                    href="{% url 'delete_purchase' date=bill.signup.training.date.isoformat pk=purchase.pk %}"
+                                    class="ba bi-trash text-danger"></a></td>
+                                    <td></td>
+                                    <td>{{ purchase.price }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            {% endif %}
+                        <tfoot class="table-group-divider">
+                            <td>Zu bezahlen</td>
+                            <td></td>
+                            <td>{{ bill.to_pay }}</td>
+                        </tfoot>
+                    </table>
+                </div>
+                <main class="form">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="prepaid_flights" value="{{ bill.num_prepaid_flights }}">
+                        <div class="mb-3">
+                            <label>Zahlungsart</label>
+                            {% for method in form.method %}
+                            <div class="form-check">
+                                {{ method.tag }}
+                                <label class="form-check-label" for="{{ method.id_for_label }}">
+                                    {{ method.choice_label }}
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="form-floating mb-3">
+                            <input type="number" min="{{ bill.to_pay }}" name="amount" class="form-control"
+                                placeholder="text"
+                                value="{% if form.amount.value %}{{ form.amount.value }}{% else %}{{ bill.to_pay }}{% endif %}">
+                            <label>Betrag</label>
+                        </div>
+                        <div class="d-grid gap-2 d-sm-block">
+                            <a href="{% url 'create_purchase' date=bill.signup.training.date.isoformat signup=bill.signup.pk %}"
+                                class="btn btn-primary">Einkauf erfassen</a>
+                            {% if not bill.signup.is_training_orga %}
+                            <button class="btn btn-primary" type="submit" name="make-orga">Tagesleiter·in</button>
+                            {% else %}
+                            <button class="btn btn-danger" type="submit" name="undo-orga">TL löschen</button>
+                            {% endif %}
+                            <button class="btn btn-primary" type="submit">Bezahlen</button>
+                            <a href="{{ view.get_success_url }}" class="btn btn-outline-dark">Abbrechen</a>
+                        </div>
+                    </form>
+                </main>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}

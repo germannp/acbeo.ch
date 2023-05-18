@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Ausgabe erfassen{% endblock title %}
+
+{% block headline %}Ausgabe erfassen{% endblock headline %}
+
+{% block content %}
+
+<div class="col-xl-4 col-lg-5">
+    <div class="card my-4">
+        <h5 class="card-header">Für {{ view.kwargs.date | date:"l, j. E" }}</h5>
+        <div class="card-body">
+            <main class="form">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        {% for reason in form.reason %}
+                        <div class="form-check">
+                            {{ reason.tag }}
+                            <label class="form-check-label" for="{{ reason.id_for_label }}">
+                                {{ reason.choice_label }}
+                            </label>
+                            {% if reason.choice_label == form.instance.Reasons.OTHER.label %}
+                            <div class="form-floating mb-3">
+                                <textarea type="text" name="other_reason" id="other_reason" class="form-control" placeholder="text"
+                                    onclick="checkOtherRadio()">{% if form.other_reason.value %}{{ form.other_reason.value }}{% endif %}</textarea>
+                                <label for="other_reason">Grund</label>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="row mb-3">
+                        <label class="col-6 col-form-label">Betrag</label>
+                        <div class="col-6">
+                            <input type="number" class="form-control" name="amount" value={{ form.amount.value }}>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" type="submit">Speichern</button>
+                    <a href="{{ view.get_success_url }}" class="btn btn-outline-dark">Abbrechen</a>
+                </form>
+            </main>
+        </div>
+    </div>
+</div>
+
+<script>
+    function checkOtherRadio() {
+        document.getElementById("id_reason_{{ form.instance.Reasons.OTHER }}").checked = "true";
+    }
+</script>
+
+{% endblock content %}

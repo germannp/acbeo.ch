@@ -1,4 +1,4 @@
-import datetime
+from datetime import date, timedelta
 
 from django import forms
 from django.conf import settings
@@ -12,9 +12,9 @@ from .models import Training, Signup
 
 
 def date_relative_to_next_august(month, day):
-    today = datetime.date.today()
+    today = date.today()
     year_of_next_august = today.year + (8 <= today.month)
-    return datetime.date(year_of_next_august, month, day)
+    return date(year_of_next_august, month, day)
 
 
 class TrainingCreateForm(forms.Form):
@@ -28,7 +28,7 @@ class TrainingCreateForm(forms.Form):
 
     def clean_first_day(self):
         first_day = self.cleaned_data["first_day"]
-        if first_day < datetime.date.today():
+        if first_day < date.today():
             raise ValidationError(
                 "Es können keine Trainings in der Vergangenheit erstellt werden."
             )
@@ -36,7 +36,7 @@ class TrainingCreateForm(forms.Form):
 
     def clean_last_day(self):
         last_day = self.cleaned_data["last_day"]
-        if last_day > datetime.date.today() + datetime.timedelta(days=365):
+        if last_day > date.today() + timedelta(days=365):
             raise ValidationError(
                 "Trainings können höchstens ein Jahr im Voraus erstellt werden."
             )
@@ -52,7 +52,7 @@ class TrainingCreateForm(forms.Form):
         if first_day > last_day:
             raise ValidationError("Der erste Tag muss vor dem Letzten liegen.")
 
-        if last_day - first_day > datetime.timedelta(days=31):
+        if last_day - first_day > timedelta(days=31):
             raise ValidationError(
                 "Es können höchstens 31 Trainings auf einmal erstellt werden."
             )
@@ -77,13 +77,13 @@ class TrainingCreateForm(forms.Form):
             training.max_pilots = self.cleaned_data["max_pilots"]
             training.priority_date = self.cleaned_data["priority_date"]
             training.save()
-            day += datetime.timedelta(days=1)
+            day += timedelta(days=1)
 
 
 class TrainingUpdateForm(forms.ModelForm):
     class Meta:
         model = Training
-        exclude = ["date", "emergency_mail_sender"]
+        exclude = ("date", "emergency_mail_sender")
 
     def clean(self):
         cleaned_data = super().clean()
@@ -113,18 +113,18 @@ class EmergencyMailForm(forms.ModelForm):
 
     class Meta:
         model = Training
-        fields = []
+        fields = tuple()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["emergency_contacts"].queryset = self.instance.signups.filter(
-            status=Signup.Status.Selected
+            status=Signup.Status.SELECTED
         ).select_related("pilot")
 
     def clean_emergency_contacts(self):
         emergency_contacts = self.cleaned_data["emergency_contacts"]
         if len(emergency_contacts) != 2:
-            raise ValidationError("Bitte genau zwei Notfallkontakte ausgewählen.")
+            raise ValidationError("Bitte genau zwei Notfallkontakte auswählen.")
         return emergency_contacts
 
     def send_mail(self):
@@ -177,28 +177,28 @@ class SignupCreateForm(forms.ModelForm):
 
     class Meta:
         model = Signup
-        exclude = ["pilot", "training", "status"]
+        exclude = ("pilot", "training", "status")
 
     def clean_date(self):
-        date = self.cleaned_data["date"]
-        today = datetime.date.today()
-        if date < today:
+        training_date = self.cleaned_data["date"]
+        today = date.today()
+        if training_date < today:
             raise ValidationError(
                 "Einschreiben ist nur für kommende Trainings möglich."
             )
-        if date > today + datetime.timedelta(days=365):
+        if training_date > today + timedelta(days=365):
             raise ValidationError(
                 "Einschreiben ist höchstens ein Jahr im Voraus möglich."
             )
-        return date
+        return training_date
 
 
 class SignupUpdateForm(forms.ModelForm):
     class Meta:
         model = Signup
-        exclude = ["pilot", "training", "status"]
+        exclude = ("pilot", "training", "status")
 
     def clean(self):
         cleaned_data = super().clean()
         self.instance.update_is_certain(cleaned_data["is_certain"])
-        self.instance.update_for_time(cleaned_data["for_time"])
+        self.instance.update_duration(cleaned_data["duration"])

@@ -24,12 +24,12 @@ class SignupAdmin(admin.ModelAdmin):
         "status",
         "signed_up_on",
         "is_certain",
-        "for_time",
+        "duration",
         "for_sketchy_weather",
         "comment",
     )
     ordering = ("-training", "status", "signed_up_on")
-    search_fields = ["training", "pilot"]
+    search_fields = ("training", "pilot")
 
 
 admin.site.register(Signup, SignupAdmin)

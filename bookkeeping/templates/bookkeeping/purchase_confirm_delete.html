@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Einkauf entfernen{% endblock title %}
+
+{% block headline %}Einkauf entfernen{% endblock headline %}
+
+{% block content %}
+
+<div class="col-xl-4 col-lg-5">
+    <div class="card my-4">
+        <h5 class="card-header">Entfernen bestätigen</h5>
+        <div class="card-body">
+            <main class="form">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">Bist du sicher, dass du "{{ object.description }}" für {{ object.signup.pilot }}
+                        löschen willst?</div>
+                    <button class="btn btn-danger" type="Confirm">Löschen</button>
+                    <a href="{{ view.get_success_url }}" class="btn btn-outline-dark">Abbrechen</a>
+                </form>
+            </main>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}

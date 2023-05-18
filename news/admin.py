@@ -7,7 +7,7 @@ from .models import Post, Pilot
 
 class PostAdmin(admin.ModelAdmin):
     list_display = ("title", "author", "created_on")
-    search_fields = ["author", "content"]
+    search_fields = ("author", "content")
     prepopulated_fields = {"slug": ("title",)}
 
 
@@ -16,12 +16,12 @@ admin.site.register(Post, PostAdmin)
 
 @admin.action(description="Ausgewählte zu Mitgliedern machen")
 def make_member(modeladmin, request, queryset):
-    queryset.update(role=Pilot.Role.Member)
+    queryset.update(role=Pilot.Role.MEMBER)
 
 
 @admin.action(description="Ausgewählte zu Leiter·innen machen")
 def make_orga(modeladmin, request, queryset):
-    queryset.update(role=Pilot.Role.Orga)
+    queryset.update(role=Pilot.Role.ORGA)
 
 
 class PilotAdmin(BaseUserAdmin):
@@ -31,6 +31,7 @@ class PilotAdmin(BaseUserAdmin):
         "last_name",
         "phone",
         "date_joined",
+        "prepaid_flights",
         "role",
         "is_active",
     )
@@ -38,7 +39,7 @@ class PilotAdmin(BaseUserAdmin):
     search_fields = ("first_name", "last_name", "email", "phone")
     list_filter = ("role", "is_active")
     filter_horizontal = ()
-    actions = [make_member, make_orga]
+    actions = (make_member, make_orga)
 
     # Fields for creating Pilot from admin site
     add_fieldsets = (
@@ -50,6 +51,7 @@ class PilotAdmin(BaseUserAdmin):
                     "last_name",
                     "email",
                     "phone",
+                    "prepaid_flights",
                     "role",
                     "is_active",
                     "password1",
@@ -69,6 +71,7 @@ class PilotAdmin(BaseUserAdmin):
                     "last_name",
                     "email",
                     "phone",
+                    "prepaid_flights",
                     "role",
                     "is_active",
                     "password",

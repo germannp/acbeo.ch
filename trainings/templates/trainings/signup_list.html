@@ -9,13 +9,11 @@
 <div class="row mt-2">
 
     <div class="col-md-12 left">
-        {% for time, signups in future_and_past_signups.items %}
-        {% if signups %}
+
+        {% if signup_list %}
+
         <div class="card mb-4">
-            <h5 class="card-header">
-                {% if time == "future" %}Kommende Trainings
-                {% else %}Vergangene Trainings{% endif %}
-            </h5>
+            <h5 class="card-header">Kommende Trainings</h5>
             <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-sm table-hover">
@@ -33,12 +31,12 @@
                             </tr>
                         </thead>
                         <tbody class="table-group-divider">
-                            {% for signup in signups %}
+                            {% for signup in signup_list %}
                             <tr {% if signup.get_status_display == 'Canceled' %}class="text-muted"{% endif %}>
                                 <td>{{ forloop.counter }}</td>
                                 <td class="text-nowrap">{{ signup.training.date | date:"D., j. M. Y" }}
                                     {% if time == "future" %}
-                                    <a href="{% url 'update_signup' date=signup.training.date.isoformat %}?next={% url 'my_signups' %}"
+                                    <a href="{% url 'update_signup' date=signup.training.date.isoformat %}?next={% url 'signups' %}"
                                         class="bi bi-pencil-square" /a>
                                         {% endif %}
                                 </td>
@@ -63,10 +61,10 @@
                                     {% endif %}
                                 </td>
                                 <td class="text-nowrap">
-                                    {% if signup.for_time == signup.Time.WholeDay %}Ganzer Tag{% endif %}
-                                    {% if signup.for_time == signup.Time.ArriveLate %}<span class="text-warning">Komme später</span>{% endif %}
-                                    {% if signup.for_time == signup.Time.LeaveEarly %}<span class="text-warning">Gehe früher</span>{% endif %}
-                                    {% if signup.for_time == signup.Time.Individually %}<span class="text-warning">Individuell</span>{% endif %}
+                                    {% if signup.duration == signup.Duration.ALL_DAY %}Ganzer Tag{% endif %}
+                                    {% if signup.duration == signup.Duration.ARRIVING_LATE %}<span class="text-warning">Komme später</span>{% endif %}
+                                    {% if signup.duration == signup.Duration.LEAVING_EARLY %}<span class="text-warning">Gehe früher</span>{% endif %}
+                                    {% if signup.duration == signup.Duration.INDIVIDUALLY %}<span class="text-warning">Individuell</span>{% endif %}
                                 </td>
                                 <td>
                                     {% if signup.get_status_display != 'Canceled' %}
@@ -86,9 +84,17 @@
                 </div>
             </div>
         </div>
+
+        {% else %}
+    
+        <p>Du bist für kein kommendes Training eingeschrieben.</p>
+        <a href="{% url 'signup' %}" class="btn btn-secondary">Einschreiben</a>
+    
         {% endif %}
-        {% endfor %}
+
     </div>
+
 </div>
+
 
 {% endblock content %}

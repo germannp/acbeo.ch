@@ -9,7 +9,7 @@
 <div class="row mt-2">
 
     <div class="col left">
-        {% for post in posts %}
+        {% for post in post_list %}
         <div class="card mb-4">
             <h5 class="card-header"><a href="{% url 'post' post.slug  %}">{{ post.title }}</a></h5>
             <div class="card-body">

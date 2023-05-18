@@ -8,35 +8,27 @@
 
 <div class="row mt-2">
     <div class="col-xl-4 col-lg-5">
-        {% if form.errors %}
-        {% for error_list in form.errors.values %}
-        {% for error in error_list %}
-        <div class="alert mb-4 alert-warning">{{ error | safe }}</div>
-        {% endfor %}
-        {% endfor %}
-        {% endif %}
-
         <div class="card mb-4">
             <div class="card-body">
                 <main class="form">
                     <form method="post">
                         {% csrf_token %}
                         <div class="form-floating mb-3">
-                            <input type="date" name="date" class="form-control" value="{{ date.isoformat }}" required>
+                            <input type="date" name="date" class="form-control" value="{{ form.date.value }}" required>
                             <label>Datum</label>
                         </div>
                         <div class="mb-3">
                             <label>Verbindlichkeit</label>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="is_certain" id="certain" value="True"
-                                    required checked>
+                                <input class="form-check-input" type="radio" name="is_certain" id="certain"
+                                    value="True" required {% if form.instance.is_certain %}checked{% endif %}>
                                 <label class="form-check-label" for="certain">
                                     Ich komme sicher (100%)
                                 </label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="is_certain" id="uncertain" value="False"
-                                    required>
+                                <input class="form-check-input" type="radio" name="is_certain" id="uncertain"
+                                    value="False" required {% if not form.instance.is_certain %}checked{% endif %}>
                                 <label class="form-check-label" for="uncertain">
                                     Ich habe vor zu kommen (75%)
                                 </label>
@@ -45,30 +37,34 @@
                         <div class="mb-3">
                             <label>Zeitplan</label>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="for_time" id="whole-day"
-                                    value="{{ form.instance.Time.WholeDay }}" required checked>
+                                <input class="form-check-input" type="radio" name="duration" id="whole-day"
+                                    value="{{ form.instance.Duration.ALL_DAY }}" required 
+                                    {% if form.instance.duration == form.instance.Duration.ALL_DAY %}checked{% endif %}>
                                 <label class="form-check-label" for="whole-day">
                                     Ich komme den ganzen Tag
                                 </label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="for_time" id="arrive-late"
-                                    value="{{ form.instance.Time.ArriveLate }}" required>
+                                <input class="form-check-input" type="radio" name="duration" id="arrive-late"
+                                    value="{{ form.instance.Duration.ARRIVING_LATE }}" required
+                                    {% if form.instance.duration == form.instance.Duration.ARRIVING_LATE %}checked{% endif %}>
                                 <label class="form-check-label" for="arrive-late">
                                     Ich komme später
                                 </label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="for_time" id="leave-early"
-                                    value="{{ form.instance.Time.LeaveEarly }}" required>
+                                <input class="form-check-input" type="radio" name="duration" id="leave-early"
+                                    value="{{ form.instance.Duration.LEAVING_EARLY }}" required
+                                    {% if form.instance.duration == form.instance.Duration.LEAVING_EARLY %}checked{% endif %}>
                                 <label class="form-check-label" for="leave-early">
                                     Ich gehe früher
                                 </label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="for_time" id="individually"
-                                    value="{{ form.instance.Time.Individually }}" required>
-                                <label class="form-check-label" for="individually">
+                                <input class="form-check-input" type="radio" name="duration" id="INDIVIDUALLY"
+                                    value="{{ form.instance.Duration.INDIVIDUALLY }}" required
+                                    {% if form.instance.duration == form.instance.Duration.INDIVIDUALLY %}checked{% endif %}>
+                                <label class="form-check-label" for="INDIVIDUALLY">
                                     Ich komme und gehe individuell
                                 </label>
                             </div>
@@ -76,22 +72,23 @@
                         <div class="mb-3">
                             <label>Wetterwunsch</label>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="for_sketchy_weather"
-                                    id="sketchy-weather-too" value="True" required checked>
+                                <input class="form-check-input" type="radio" name="for_sketchy_weather" id="sketchy-weather-too" value="True"
+                                    required {% if form.instance.for_sketchy_weather %}checked{% endif %}>
                                 <label class="form-check-label" for="sketchy-weather-too">
                                     Auch bei kleiner Chance <i class="bi bi-cloud-haze2-fill"></i>
                                 </label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="for_sketchy_weather"
-                                    id="good-weather-only" value="False" required>
+                                <input class="form-check-input" type="radio" name="for_sketchy_weather" id="good-weather-only" value="False"
+                                    required {% if not form.instance.for_sketchy_weather %}checked{% endif %}>
                                 <label class="form-check-label" for="good-weather-only">
                                     Nur bei sicher gutem Wetter <i class="bi bi-sun"></i>
                                 </label>
                             </div>
                         </div>
                         <div class="form-floating mb-3">
-                            <input type="text" name="comment" class="form-control" placeholder="text">
+                            <input type="text" name="comment" class="form-control" placeholder="text"
+                                value="{{ form.comment.value }}">
                             <label>Kommentar</label>
                         </div>
                         <button class="btn btn-primary" type="submit">Einschreiben</button>

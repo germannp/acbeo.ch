@@ -1,5 +1,7 @@
 {% load static %}
 
+{% load training_extras %}
+
 <!doctype html>
 <html lang="en">
 
@@ -32,7 +34,33 @@
 
         {% if messages %}
         <div class="col">
-            {% for message in messages %}<div class="alert my-4 alert-success">{{ message | safe }}</div>{% endfor %}
+            {% for message in messages %}
+                {% if message.level == DEFAULT_MESSAGE_LEVELS.DEBUG %}<div class="alert my-4 alert-success">{% endif %}
+                {% if message.level == DEFAULT_MESSAGE_LEVELS.INFO %}<div class="alert my-4 alert-success">{% endif %}
+                {% if message.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}<div class="alert my-4 alert-success">{% endif %}
+                {% if message.level == DEFAULT_MESSAGE_LEVELS.WARNING %}<div class="alert my-4 alert-warning">{% endif %}
+                {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}<div class="alert my-4 alert-error">{% endif %}
+                {{ message | safe }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if form.errors %}
+        <div class="col">
+            {% for error_list in form.errors.values %}
+                {% for error in error_list %}
+                <div class="alert mb-4 alert-warning">{{ error | safe }}</div>
+                {% endfor %}
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if formset.non_form_errors %}
+        <div class="col">
+            {% for error in formset.non_form_errors %}
+            <div class="alert mb-4 alert-warning">{{ error | safe }}</div>
+            {% endfor %}
         </div>
         {% endif %}
 
@@ -54,24 +82,37 @@
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="{% url 'signup' %}">Einschreiben</a></li>
                             <li><a class="dropdown-item" href="{% url 'trainings' %}">Nächste Trainings</a></li>
-                            <li><a class="dropdown-item" href="{% url 'my_signups' %}">Meine Trainings</a></li>
+                            <li><a class="dropdown-item" href="{% url 'signups' %}">Meine Trainings</a></li>
                             {% if request.user.is_staff %}
                             <li><a class="dropdown-item" href="{% url 'create_trainings' %}">Trainings erstellen</a></li>
                             {% endif %}
                             <li><a class="dropdown-item" href="{% url 'about_trainings' %}">Praktische Infos</a></li>
                         </ul>
                     </li>
-                    <li class="nav-item">
-                        {% if request.user.is_staff %}
-                        <a class="nav-link" href="/admin/">Admin</a>
-                        {% endif %}
+                    {% if request.user.is_orga %}
+                    <li class="nav-item dropup">
+                        <a class="nav-link dropdown-toggle" href="#" id="dropdown04" data-bs-toggle="dropdown"
+                            aria-expanded="false">Berichte</a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            {% training_today as show_create_report %}
+                            {% if show_create_report %}
+                                <li><a class="dropdown-item" href="{% url 'create_report' %}">Heutiger Bericht</a></li>
+                            {% endif %}
+                            <li><a class="dropdown-item" href="{% url 'reports' %}">Berichte</a></li>
+                            <li><a class="dropdown-item" href="{% url 'balance' %}">Bilanz</a></li>
+                        </ul>
                     </li>
+                    {% endif %}
+                    {% if request.user.is_staff %}
+                    <a class="nav-link" href="/admin/">Admin</a>
+                    {% endif %}
                     <li class="nav-item">
                     {% if request.user.is_authenticated %}
                     <li class="nav-item dropup">
                         <a class="nav-link dropdown-toggle" href="#" id="dropdown04" data-bs-toggle="dropdown"
                             aria-expanded="false">Konto</a>
                         <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{% url 'bills' %}">Rechnungen</a></li>
                             <li><a class="dropdown-item" href="{% url 'update_pilot' %}?next={{ request.path }}">Bearbeiten</a></li>
                             {% if not request.user.is_member %}
                             <li><a class="dropdown-item" href="{% url 'membership' %}">Mitglied werden</a></li>

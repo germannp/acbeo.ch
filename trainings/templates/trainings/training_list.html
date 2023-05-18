@@ -10,21 +10,27 @@
 
     <div class="col left">
 
-        {% for training in trainings %}
+        {% for training in training_list %}
         <div class="card mb-4" id="training_{{ forloop.counter }}">
-            <h5 class="card-header">{{ training.date | date:"l, j. E" }} 
+            <h5 class="card-header">{{ training.date | date:"l, j. M." }} 
                 {% if request.user.is_orga %}
                 <a href="{% url 'update_training' date=training.date.isoformat %}?page={{ page_obj.number }}&training={{ forloop.counter }}"
-                    class="btn btn-primary btn-sm bi bi-pencil-square"></a>
+                    class="bi bi-pencil-square"></a>
                     {% if training.date <= day_after_tomorrow %}
-                    <a href="{% url 'emergency_mail' date=training.date.isoformat %}"
-                        class="btn btn-danger btn-sm bi bi-envelope-exclamation {% if training.emergency_mail_sender %}disabled{% endif %}"></a>
+                        {% if not training.emergency_mail_sender %}
+                        <a href="{% url 'emergency_mail' date=training.date.isoformat %}" class="text-danger bi bi-envelope-exclamation"></a>
+                        {% else %}
+                        <i class="text-muted bi bi-envelope-exclamation"></i>
+                        {% endif %}
+                    {% endif %}
+                    {% if training.date == today %}
+                    <a href="{% url 'create_report' %}" class="bi bi-clipboard"></a>
                     {% endif %}
                 {% endif %}
             </h5>
             <div class="card-body">
                 {% if training.info %}
-                {{ training.info }}
+                <p class="card-text">{{ training.info }}</p>
                 {% endif %}
                 <div class="table-responsive">
                     <table class="table table-sm table-hover">
@@ -77,10 +83,10 @@
                                 </td>
                                 <td class="text-nowrap">
                                     {% if signup.get_status_display != 'Canceled' %}
-                                        {% if signup.for_time == signup.Time.WholeDay %}Ganzer Tag{% endif %}
-                                        {% if signup.for_time == signup.Time.ArriveLate %}<span class="text-warning">Kommt später</span>{% endif %}
-                                        {% if signup.for_time == signup.Time.LeaveEarly %}<span class="text-warning">Geht früher</span>{% endif %}
-                                        {% if signup.for_time == signup.Time.Individually %}<span class="text-warning">Individuell</span>{% endif %}
+                                        {% if signup.duration == signup.Duration.ALL_DAY %}Ganzer Tag{% endif %}
+                                        {% if signup.duration == signup.Duration.ARRIVING_LATE %}<span class="text-warning">Kommt später</span>{% endif %}
+                                        {% if signup.duration == signup.Duration.LEAVING_EARLY %}<span class="text-warning">Geht früher</span>{% endif %}
+                                        {% if signup.duration == signup.Duration.INDIVIDUALLY %}<span class="text-warning">Individuell</span>{% endif %}
                                     {% endif %}
                                 </td>
                                 <td>
@@ -106,7 +112,7 @@
         </div>
         {% endfor %}
 
-        {% if not trainings %}
+        {% if not training_list %}
         <p>Im Moment ist niemand für ein kommendes Training eingeschrieben.</p>
         <a href="{% url 'signup' %}" class="btn btn-secondary">Einschreiben</a>
         {% else %}

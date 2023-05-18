@@ -1,3 +1,4 @@
+from datetime import date, datetime, timedelta
 from http import HTTPStatus
 
 from django.core import mail
@@ -6,6 +7,41 @@ from django.urls import reverse
 
 from .models import Pilot, Post
 from .middleware import RedirectToNonWwwMiddleware
+from trainings.models import Signup, Training
+from bookkeeping.models import Purchase, Report
+
+
+class PilotTests(TestCase):
+    def test_is_member(self):
+        for role in Pilot.Role:
+            with self.subTest(role=role):
+                pilot = Pilot(email="pilot@example.com", role=role)
+                self.assertEqual(pilot.is_member, role != Pilot.Role.GUEST)
+
+    def test_is_orga(self):
+        for role in Pilot.Role:
+            with self.subTest(role=role):
+                pilot = Pilot(email="pilot@example.com", role=role)
+                self.assertEqual(
+                    pilot.is_orga, role in (Pilot.Role.ORGA, Pilot.Role.STAFF)
+                )
+
+    def test_is_staff(self):
+        for role in Pilot.Role:
+            with self.subTest(role=role):
+                pilot = Pilot(email="pilot@example.com", role=role)
+                self.assertEqual(pilot.is_staff, role == Pilot.Role.STAFF)
+
+    def test_day_passes(self):
+        pilot = Pilot.objects.create(email="pilot@example.com")
+        for i in [366, 1, 2, 3]:
+            training = Training.objects.create(date=date.today() - timedelta(days=i))
+            report = Report.objects.create(training=training, cash_at_start=1337)
+            signup = Signup.objects.create(
+                pilot=pilot, training=training, signed_up_on=datetime.now()
+            )
+            Purchase.save_day_pass(signup, report)
+        self.assertEqual(3, len(pilot.day_passes_of_this_season))
 
 
 class RedirectToNonWwwMiddlewareTests(SimpleTestCase):
@@ -36,7 +72,7 @@ class PostListViewTests(TestCase):
     def test_author_name_shown(self):
         response = self.client.get(reverse("home"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "news/index.html")
+        self.assertTemplateUsed(response, "news/post_list.html")
         self.assertContains(response, "Author")
         self.assertNotContains(response, "author@example.com")
 
@@ -49,11 +85,11 @@ class PostDetailViewTests(TestCase):
     def test_author_name_shown(self):
         response = self.client.get(reverse("post", kwargs={"slug": "test-news"}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "news/post.html")
+        self.assertTemplateUsed(response, "news/post_detail.html")
         self.assertContains(response, "Author")
         self.assertNotContains(response, "author@example.com")
 
-    def test_post_not_found_404(self):
+    def test_post_not_found(self):
         response = self.client.get(reverse("post", kwargs={"slug": "missing"}))
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.assertTemplateUsed(response, "404.html")
@@ -75,7 +111,7 @@ class ContactFormViewTests(TestCase):
             reverse("contact"), data=self.email_data, follow=True
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "news/index.html")
+        self.assertTemplateUsed(response, "news/post_list.html")
         self.assertContains(response, "Nachricht abgesendet.")
         self.assertEqual(1, len(mail.outbox))
         self.assertEqual(
@@ -104,7 +140,7 @@ class ContactFormViewTests(TestCase):
                 self.assertContains(response, value)
             self.assertEqual(0, len(mail.outbox))
 
-    def test_pilot_email_prefilled(self):
+    def test_pilot_email_is_prefilled(self):
         response = self.client.get(reverse("contact"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "news/contact.html")
@@ -128,7 +164,7 @@ class ContactFormViewTests(TestCase):
         self.assertEqual(0, len(mail.outbox))
 
 
-class PilotCreationViewTests(TestCase):
+class PilotCreateViewTests(TestCase):
     pilot_data = {
         "email": "test@mail.com",
         "first_name": "John",
@@ -164,7 +200,7 @@ class PilotCreationViewTests(TestCase):
                 reverse("register"), data=partial_data, follow=True
             )
             self.assertEqual(response.status_code, HTTPStatus.OK)
-            self.assertTemplateUsed(response, "news/register.html")
+            self.assertTemplateUsed(response, "news/pilot_create.html")
             for key, value in partial_data.items():
                 if "password" in key or key == "accept_safety_concept":
                     continue
@@ -176,7 +212,7 @@ class PilotCreationViewTests(TestCase):
         invalid_data["phone"] = "pilot@example.com"
         response = self.client.post(reverse("register"), data=invalid_data, follow=True)
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "news/register.html")
+        self.assertTemplateUsed(response, "news/pilot_create.html")
         self.assertEqual(0, len(Pilot.objects.all()))
 
     def test_safety_concept_must_be_accepted(self):
@@ -184,7 +220,7 @@ class PilotCreationViewTests(TestCase):
         invalid_data["accept_safety_concept"] = False
         response = self.client.post(reverse("register"), data=invalid_data, follow=True)
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "news/register.html")
+        self.assertTemplateUsed(response, "news/pilot_create.html")
         self.assertEqual(0, len(Pilot.objects.all()))
 
     def test_email_must_be_unique(self):
@@ -200,7 +236,7 @@ class PilotCreationViewTests(TestCase):
             reverse("register"), data=self.pilot_data, follow=True
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "news/register.html")
+        self.assertTemplateUsed(response, "news/pilot_create.html")
         self.assertContains(response, "Pilot mit diesem Email existiert bereits.")
         self.assertEqual(1, len(Pilot.objects.all()))
 
@@ -210,7 +246,7 @@ class PilotCreationViewTests(TestCase):
             reverse("register"), data=self.pilot_data, follow=True
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "news/register.html")
+        self.assertTemplateUsed(response, "news/pilot_create.html")
         self.assertContains(response, "Konto konnte nicht angelegt werden.")
         self.assertEqual(0, len(Pilot.objects.all()))
 
@@ -243,7 +279,7 @@ class PilotUpdateViewTests(TestCase):
     def test_form_is_prefilled(self):
         response = self.client.get(reverse("update_pilot"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "news/update_pilot.html")
+        self.assertTemplateUsed(response, "news/pilot_update.html")
         for value in self.pilot_data.values():
             self.assertContains(response, value)
 
@@ -266,7 +302,7 @@ class PilotUpdateViewTests(TestCase):
                 reverse("update_pilot"), data=partial_data, follow=True
             )
             self.assertEqual(response.status_code, HTTPStatus.OK)
-            self.assertTemplateUsed(response, "news/update_pilot.html")
+            self.assertTemplateUsed(response, "news/pilot_update.html")
 
     def test_phone_number_validation(self):
         invalid_data = self.pilot_data.copy()
@@ -275,7 +311,7 @@ class PilotUpdateViewTests(TestCase):
             reverse("update_pilot"), data=invalid_data, follow=True
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "news/update_pilot.html")
+        self.assertTemplateUsed(response, "news/pilot_update.html")
 
     def test_update_member_sends_notification_email(self):
         response = self.client.post(
@@ -288,7 +324,7 @@ class PilotUpdateViewTests(TestCase):
             reverse("update_pilot"), data=self.pilot_data, follow=True
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "news/index.html")
+        self.assertTemplateUsed(response, "news/post_list.html")
         self.assertContains(response, "Änderungen gespeichert.")
         self.pilot.refresh_from_db()
         self.assertEqual(self.pilot.phone, "666")
@@ -300,7 +336,7 @@ class PilotUpdateViewTests(TestCase):
             reverse("update_pilot"), data=self.pilot_data, follow=True
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "news/index.html")
+        self.assertTemplateUsed(response, "news/post_list.html")
         self.assertContains(response, "Änderungen gespeichert.")
         self.pilot.refresh_from_db()
         self.assertEqual(self.pilot.phone, "1337")
@@ -319,7 +355,7 @@ class PilotUpdateViewTests(TestCase):
             follow=True,
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertTemplateUsed(response, "trainings/training_list.html")
 
         response = self.client.post(
             reverse("update_pilot") + "?next=http://danger.com",
@@ -340,11 +376,14 @@ class MembershipFormViewTests(TestCase):
             "comment": "Kommentar",
         }
         self.guest = Pilot.objects.create(
-            email="guest@example.com", first_name="Guest", role=Pilot.Role.Guest
+            email="guest@example.com",
+            first_name="Guest",
+            role=Pilot.Role.GUEST,
+            phone=123,
         )
         self.client.force_login(self.guest)
         self.member = Pilot.objects.create(
-            email="member@example.com", role=Pilot.Role.Member
+            email="member@example.com", role=Pilot.Role.MEMBER
         )
 
     def test_required_fields_and_form_is_prefilled(self):
@@ -367,7 +406,7 @@ class MembershipFormViewTests(TestCase):
                 self.assertContains(response, value)
             self.assertEqual(0, len(mail.outbox))
             self.guest.refresh_from_db()
-            self.assertEqual(self.guest.role, Pilot.Role.Guest)
+            self.assertEqual(self.guest.role, Pilot.Role.GUEST)
 
     def test_membership_must_be_requested(self):
         self.membership_data["request_membership"] = False
@@ -380,7 +419,7 @@ class MembershipFormViewTests(TestCase):
         self.assertTemplateUsed(response, "news/membership.html")
         self.assertContains(response, "Du musst Mitglied werden wollen.")
         self.guest.refresh_from_db()
-        self.assertEqual(self.guest.role, Pilot.Role.Guest)
+        self.assertEqual(self.guest.role, Pilot.Role.GUEST)
 
     def test_statutes_must_be_accepted(self):
         self.membership_data["accept_statutes"] = False
@@ -395,16 +434,30 @@ class MembershipFormViewTests(TestCase):
             response, "Du musst mit unseren Statuten einverstanden sein."
         )
         self.guest.refresh_from_db()
-        self.assertEqual(self.guest.role, Pilot.Role.Guest)
+        self.assertEqual(self.guest.role, Pilot.Role.GUEST)
 
     def test_becoming_member(self):
-        response = self.client.post(
-            reverse("membership"), data=self.membership_data, follow=True
-        )
+        for i in range(2):
+            training = Training.objects.create(date=date.today() - timedelta(days=i))
+            report = Report.objects.create(training=training, cash_at_start=1337)
+            signup = Signup.objects.create(
+                pilot=self.guest, training=training, signed_up_on=datetime.now()
+            )
+            Purchase.save_day_pass(signup, report)
+        with self.assertNumQueries(8):
+            response = self.client.post(
+                reverse("membership"), data=self.membership_data, follow=True
+            )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "news/index.html")
+        self.assertTemplateUsed(response, "news/post_list.html")
+
         self.guest.refresh_from_db()
-        self.assertEqual(self.guest.role, Pilot.Role.Member)
+        self.assertEqual(self.guest.role, Pilot.Role.MEMBER)
+
+        self.assertEqual(1, len(mail.outbox))
+        self.assertEqual(mail.outbox[0].from_email, "dev@example.com")
+        self.assertEqual(mail.outbox[0].to, ["info@example.com", "guest@example.com"])
+        self.assertTrue("2 Tagesmitgliedschaft(en) bezahlt" in mail.outbox[0].body)
 
     def test_button_and_menu_hidden_from_members(self):
         response = self.client.get(reverse("home"))
@@ -431,10 +484,10 @@ class MembershipFormViewTests(TestCase):
 
 class PilotAdminTests(TestCase):
     def setUp(self):
-        staff = Pilot.objects.create(email="staff@example.com", role=Pilot.Role.Staff)
+        staff = Pilot.objects.create(email="staff@example.com", role=Pilot.Role.STAFF)
         self.client.force_login(staff)
         self.pilot = Pilot.objects.create(
-            email="guest@example.com", role=Pilot.Role.Guest
+            email="guest@example.com", role=Pilot.Role.GUEST
         )
 
     def test_make_member(self):

@@ -20,7 +20,7 @@ TOMORROW = TODAY + timedelta(days=1)
 class TrainingListViewTests(TestCase):
     def setUp(self):
         self.orga = get_user_model().objects.create(
-            email="orga@example.com", role=get_user_model().Role.Orga
+            email="orga@example.com", role=get_user_model().Role.ORGA
         )
         self.pilot_b = get_user_model().objects.create(email="pilot_b@example.com")
         self.client.force_login(self.orga)
@@ -40,30 +40,30 @@ class TrainingListViewTests(TestCase):
 
     def test_signup_button_when_no_trainings_listed(self):
         Training.objects.all().exclude(date=TODAY).delete()
-        with self.assertNumQueries(10):
+        with self.assertNumQueries(11):
             response = self.client.get(reverse("trainings"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertTemplateUsed(response, "trainings/training_list.html")
         self.assertNotContains(response, "btn-secondary")
 
         self.todays_training.delete()
-        with self.assertNumQueries(4):
+        with self.assertNumQueries(5):
             response = self.client.get(reverse("trainings"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertTemplateUsed(response, "trainings/training_list.html")
         self.assertContains(response, "btn-secondary")
 
     def test_list_trainings_selects_signups(self):
         self.signup.refresh_from_db()
-        self.assertEqual(self.signup.status, Signup.Status.Waiting)
+        self.assertEqual(self.signup.status, Signup.Status.WAITING)
 
-        with self.assertNumQueries(11):
+        with self.assertNumQueries(12):
             response = self.client.get(reverse("trainings"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertTemplateUsed(response, "trainings/training_list.html")
 
         self.signup.refresh_from_db()
-        self.assertEqual(self.signup.status, Signup.Status.Selected)
+        self.assertEqual(self.signup.status, Signup.Status.SELECTED)
 
     def test_freshly_selected_signups_are_listed_first(self):
         now = datetime.now()
@@ -79,38 +79,38 @@ class TrainingListViewTests(TestCase):
         )
         for signup in [low_priority_signup, normal_signup]:
             signup.refresh_from_db()
-            self.assertEqual(signup.status, Signup.Status.Waiting)
+            self.assertEqual(signup.status, Signup.Status.WAITING)
 
-        with self.assertNumQueries(12):
+        with self.assertNumQueries(13):
             response = self.client.get(reverse("trainings"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertTemplateUsed(response, "trainings/training_list.html")
         table = str(response.content).split('<div class="card mb-4"')[-1]
         self.assertTrue("bi-cloud-check" not in table.split("bi-hourglass-split")[-1])
 
         for signup in [low_priority_signup, normal_signup]:
             signup.refresh_from_db()
-        self.assertEqual(low_priority_signup.status, Signup.Status.Waiting)
-        self.assertEqual(normal_signup.status, Signup.Status.Selected)
+        self.assertEqual(low_priority_signup.status, Signup.Status.WAITING)
+        self.assertEqual(normal_signup.status, Signup.Status.SELECTED)
 
     def test_past_trainings_not_listed(self):
-        with self.assertNumQueries(11):
+        with self.assertNumQueries(12):
             response = self.client.get(reverse("trainings"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertTemplateUsed(response, "trainings/training_list.html")
         self.assertNotContains(
-            response, YESTERDAY.strftime("%A, %d. %B").replace(" 0", " ")
+            response, YESTERDAY.strftime("%A, %d. %b").replace(" 0", " ")
         )
-        self.assertContains(response, TODAY.strftime("%A, %d. %B").replace(" 0", " "))
+        self.assertContains(response, TODAY.strftime("%A, %d. %b").replace(" 0", " "))
         self.assertContains(
-            response, TOMORROW.strftime("%A, %d. %B").replace(" 0", " ")
+            response, TOMORROW.strftime("%A, %d. %b").replace(" 0", " ")
         )
 
     def test_showing_either_signup_or_update_button(self):
-        with self.assertNumQueries(11):
+        with self.assertNumQueries(12):
             response = self.client.get(reverse("trainings"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertTemplateUsed(response, "trainings/training_list.html")
         self.assertContains(response, reverse("update_signup", kwargs={"date": TODAY}))
         self.assertNotContains(response, reverse("signup", kwargs={"date": TODAY}))
         self.assertContains(response, reverse("signup", kwargs={"date": TOMORROW}))
@@ -119,7 +119,7 @@ class TrainingListViewTests(TestCase):
         with self.assertNumQueries(9):
             response = self.client.get(reverse("trainings"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertTemplateUsed(response, "trainings/training_list.html")
         self.assertContains(response, reverse("signup", kwargs={"date": TODAY}))
         self.assertContains(
             response, reverse("update_signup", kwargs={"date": TOMORROW})
@@ -127,25 +127,25 @@ class TrainingListViewTests(TestCase):
         self.assertNotContains(response, reverse("signup", kwargs={"date": TOMORROW}))
 
     def test_text_color(self):
-        for i, (is_certain, for_time, warning) in enumerate(
+        for i, (is_certain, duration, warning) in enumerate(
             [
-                (True, Signup.Time.WholeDay, False),
-                (False, Signup.Time.WholeDay, True),
-                (True, Signup.Time.ArriveLate, True),
-                (True, Signup.Time.LeaveEarly, True),
-                (True, Signup.Time.Individually, True),
+                (True, Signup.Duration.ALL_DAY, False),
+                (False, Signup.Duration.ALL_DAY, True),
+                (True, Signup.Duration.ARRIVING_LATE, True),
+                (True, Signup.Duration.LEAVING_EARLY, True),
+                (True, Signup.Duration.INDIVIDUALLY, True),
             ]
         ):
             with self.subTest(
-                is_certain=is_certain, for_time=for_time, warning=warning
+                is_certain=is_certain, duration=duration, warning=warning
             ):
                 self.signup.is_certain = is_certain
-                self.signup.for_time = for_time
+                self.signup.duration = duration
                 self.signup.save()
-                with self.assertNumQueries(10 + (i == 0)):
+                with self.assertNumQueries(11 + (i == 0)):
                     response = self.client.get(reverse("trainings"))
                 self.assertEqual(response.status_code, HTTPStatus.OK)
-                self.assertTemplateUsed(response, "trainings/list_trainings.html")
+                self.assertTemplateUsed(response, "trainings/training_list.html")
                 self.assertNotContains(response, "bi-hourglass-split")
                 if warning:
                     self.assertContains(response, "text-warning")
@@ -153,100 +153,115 @@ class TrainingListViewTests(TestCase):
                     self.assertNotContains(response, "text-warning")
 
         for status, muted in [
-            (Signup.Status.Selected, False),
-            (Signup.Status.Canceled, True),
+            (Signup.Status.SELECTED, False),
+            (Signup.Status.CANCELED, True),
         ]:
             with self.subTest(status=status, muted=muted):
                 self.signup.status = status
                 self.signup.save()
-                with self.assertNumQueries(9):
+                with self.assertNumQueries(10):
                     response = self.client.get(reverse("trainings"))
                 self.assertEqual(response.status_code, HTTPStatus.OK)
-                self.assertTemplateUsed(response, "trainings/list_trainings.html")
+                self.assertTemplateUsed(response, "trainings/training_list.html")
                 self.assertNotContains(response, "bi-hourglass-split")
                 if muted:
                     self.assertContains(response, "text-muted")
                 else:
                     self.assertNotContains(response, "text-muted")
 
-    def test_update_info_and_emergency_mail_buttons_shown_and_disabled(self):
-        with self.assertNumQueries(11):
+    def test_update_info_button(self):
+        with self.assertNumQueries(12):
             response = self.client.get(reverse("trainings"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_trainings.html")
-        for i in range(3):
+        self.assertTemplateUsed(response, "trainings/training_list.html")
+        for i in range(4):
             date = TODAY + timedelta(days=i)
-            self.assertContains(
-                response, reverse("emergency_mail", kwargs={"date": date})
-            )
             self.assertContains(
                 response,
                 reverse("update_training", kwargs={"date": date}),
             )
-        date = TODAY + timedelta(days=3)
-        self.assertNotContains(
-            response, reverse("emergency_mail", kwargs={"date": date})
-        )
-        self.assertContains(response, reverse("update_training", kwargs={"date": date}))
-
-        self.assertNotContains(response, "disabled")
-        self.todays_training.emergency_mail_sender = self.orga
-        self.todays_training.save()
-        with self.assertNumQueries(10):
-            response = self.client.get(reverse("trainings"))
-        self.assertContains(response, "disabled")
 
     def test_page_and_training_are_in_next_urls_of_update_buttons(self):
         for i in range(3, 10):
             training = Training.objects.create(date=TOMORROW + timedelta(days=i))
             Signup(pilot=self.orga, training=training).save()
 
-        with self.assertNumQueries(18):
+        with self.assertNumQueries(19):
             response = self.client.get(reverse("trainings") + "?page=2")
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertTemplateUsed(response, "trainings/training_list.html")
         self.assertContains(response, "trainings/&page=2&training=1")
         self.assertContains(response, "ansagen/?page=2&training=1")
+
+    def test_emergency_mail_button(self):
+        with self.assertNumQueries(12):
+            response = self.client.get(reverse("trainings"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "trainings/training_list.html")
+        for i in range(3):
+            date = TODAY + timedelta(days=i)
+            self.assertContains(
+                response,
+                reverse("emergency_mail", kwargs={"date": date}),
+            )
+        date = TODAY + timedelta(days=3)
+        self.assertNotContains(
+            response, reverse("emergency_mail", kwargs={"date": date})
+        )
+
+        self.assertNotContains(response, "text-muted")
+        self.todays_training.emergency_mail_sender = self.orga
+        self.todays_training.save()
+        with self.assertNumQueries(11):
+            response = self.client.get(reverse("trainings"))
+        self.assertContains(response, "text-muted")
+
+    def test_report_button(self):
+        with self.assertNumQueries(12):
+            response = self.client.get(reverse("trainings"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "trainings/training_list.html")
+        self.assertEquals(2, str(response.content).count(reverse("create_report")))
 
 
 class TrainingCreateViewTests(TestCase):
     def setUp(self):
         self.orga = get_user_model().objects.create(
-            email="orga@example.com", role=get_user_model().Role.Orga
+            email="orga@example.com", role=get_user_model().Role.ORGA
         )
         self.staff = get_user_model().objects.create(
-            email="staff@example.com", role=get_user_model().Role.Staff
+            email="staff@example.com", role=get_user_model().Role.STAFF
         )
         self.client.force_login(self.staff)
 
     def test_staff_required(self):
         self.client.force_login(self.orga)
-        with self.assertNumQueries(2):
+        with self.assertNumQueries(3):
             response = self.client.get(reverse("create_trainings"))
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
         self.assertTemplateUsed(response, "403.html")
 
     def test_only_staff_sees_menu_entry(self):
-        with self.assertNumQueries(3):
+        with self.assertNumQueries(4):
             response = self.client.get(reverse("home"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "base.html")
         self.assertContains(response, reverse("create_trainings"))
 
         self.client.force_login(self.orga)
-        with self.assertNumQueries(3):
+        with self.assertNumQueries(4):
             response = self.client.get(reverse("home"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "base.html")
         self.assertNotContains(response, reverse("create_trainings"))
 
-    @mock.patch("trainings.forms.datetime.date", wraps=date)
+    @mock.patch("trainings.forms.date", wraps=date)
     def test_prefilled_default_is_next_august(self, mocked_date):
         mocked_date.today.return_value = date(1984, 1, 1)
-        with self.assertNumQueries(2):
+        with self.assertNumQueries(3):
             response = self.client.get(reverse("create_trainings"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/create_trainings.html")
+        self.assertTemplateUsed(response, "trainings/training_create.html")
         self.assertContains(response, 'value="1984-08-01"')
         self.assertContains(response, 'value="1984-08-31"')
         self.assertContains(response, 'value="1984-04-15"')
@@ -254,14 +269,14 @@ class TrainingCreateViewTests(TestCase):
         self.assertContains(response, 'name="max_pilots" value=10')
 
         mocked_date.today.return_value = date(1984, 8, 1)
-        with self.assertNumQueries(2):
+        with self.assertNumQueries(3):
             response = self.client.get(reverse("create_trainings"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/create_trainings.html")
+        self.assertTemplateUsed(response, "trainings/training_create.html")
         self.assertContains(response, 'value="1985-08-01"')
 
     def test_create_trainings(self):
-        with self.assertNumQueries(17):
+        with self.assertNumQueries(18):
             response = self.client.post(
                 reverse("create_trainings"),
                 data={
@@ -274,7 +289,7 @@ class TrainingCreateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertTemplateUsed(response, "trainings/training_list.html")
         self.assertEqual(4, len(Training.objects.all()))
 
     def test_creating_training_does_not_delete_signups(self):
@@ -282,9 +297,9 @@ class TrainingCreateViewTests(TestCase):
         signup = Signup.objects.create(pilot=self.orga, training=training)
         training.select_signups()
         signup.refresh_from_db()
-        self.assertEqual(signup.status, Signup.Status.Selected)
+        self.assertEqual(signup.status, Signup.Status.SELECTED)
 
-        with self.assertNumQueries(14):
+        with self.assertNumQueries(15):
             response = self.client.post(
                 reverse("create_trainings"),
                 data={
@@ -297,14 +312,14 @@ class TrainingCreateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertTemplateUsed(response, "trainings/training_list.html")
         training.refresh_from_db()
         self.assertEqual(training.info, "New info")
         signup.refresh_from_db()
-        self.assertEqual(signup.status, Signup.Status.Selected)
+        self.assertEqual(signup.status, Signup.Status.SELECTED)
 
     def test_cannot_create_trainings_in_the_past(self):
-        with self.assertNumQueries(2):
+        with self.assertNumQueries(3):
             response = self.client.post(
                 reverse("create_trainings"),
                 data={
@@ -317,12 +332,12 @@ class TrainingCreateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/create_trainings.html")
+        self.assertTemplateUsed(response, "trainings/training_create.html")
         self.assertContains(response, "alert-warning")
         self.assertEqual(0, len(Training.objects.all()))
 
     def test_cannot_create_trainings_more_than_a_year_ahead(self):
-        with self.assertNumQueries(2):
+        with self.assertNumQueries(3):
             response = self.client.post(
                 reverse("create_trainings"),
                 data={
@@ -335,12 +350,12 @@ class TrainingCreateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/create_trainings.html")
+        self.assertTemplateUsed(response, "trainings/training_create.html")
         self.assertContains(response, "alert-warning")
         self.assertEqual(0, len(Training.objects.all()))
 
     def test_cannot_create_more_than_31_trainings(self):
-        with self.assertNumQueries(2):
+        with self.assertNumQueries(3):
             response = self.client.post(
                 reverse("create_trainings"),
                 data={
@@ -353,12 +368,12 @@ class TrainingCreateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/create_trainings.html")
+        self.assertTemplateUsed(response, "trainings/training_create.html")
         self.assertContains(response, "alert-warning")
         self.assertEqual(0, len(Training.objects.all()))
 
     def test_last_day_must_be_after_first_day(self):
-        with self.assertNumQueries(2):
+        with self.assertNumQueries(3):
             response = self.client.post(
                 reverse("create_trainings"),
                 data={
@@ -371,12 +386,12 @@ class TrainingCreateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/create_trainings.html")
+        self.assertTemplateUsed(response, "trainings/training_create.html")
         self.assertContains(response, "alert-warning")
         self.assertEqual(0, len(Training.objects.all()))
 
     def test_priority_date_cannot_be_after_last_day(self):
-        with self.assertNumQueries(2):
+        with self.assertNumQueries(3):
             response = self.client.post(
                 reverse("create_trainings"),
                 data={
@@ -389,52 +404,52 @@ class TrainingCreateViewTests(TestCase):
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/create_trainings.html")
+        self.assertTemplateUsed(response, "trainings/training_create.html")
         self.assertContains(response, "alert-warning")
         self.assertEqual(0, len(Training.objects.all()))
 
     def test_max_pilots_range(self):
-        with self.assertNumQueries(2):
+        with self.assertNumQueries(3):
             response = self.client.post(
                 reverse("create_trainings"),
                 data={"max_pilots": 5},
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/create_trainings.html")
+        self.assertTemplateUsed(response, "trainings/training_create.html")
         self.assertContains(response, "alert-warning")
 
-        with self.assertNumQueries(2):
+        with self.assertNumQueries(3):
             response = self.client.post(
                 reverse("create_trainings"),
                 data={"max_pilots": 22},
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/create_trainings.html")
+        self.assertTemplateUsed(response, "trainings/training_create.html")
         self.assertContains(response, "alert-warning")
 
     def test_cannot_create_trainings_for_non_existent_date(self):
-        with self.assertNumQueries(2):
+        with self.assertNumQueries(3):
             response = self.client.post(
                 reverse("create_trainings"),
                 data={"first_day": "2022-13-13"},
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/create_trainings.html")
+        self.assertTemplateUsed(response, "trainings/training_create.html")
         self.assertContains(response, "alert-warning")
 
 
 class TrainingUpdateViewTests(TestCase):
     def setUp(self):
         self.orga = get_user_model().objects.create(
-            email="orga@example.com", role=get_user_model().Role.Orga
+            email="orga@example.com", role=get_user_model().Role.ORGA
         )
         self.client.force_login(self.orga)
         self.training = Training.objects.create(date=TODAY)
 
-    def test_orga_required(self):
+    def test_orga_required_to_see(self):
         guest = get_user_model().objects.create(email="guest@example.com")
         self.client.force_login(guest)
         with self.assertNumQueries(2):
@@ -445,10 +460,10 @@ class TrainingUpdateViewTests(TestCase):
         self.assertTemplateUsed(response, "403.html")
 
     def test_only_orga_sees_button(self):
-        with self.assertNumQueries(7):
+        with self.assertNumQueries(8):
             response = self.client.get(reverse("trainings"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertTemplateUsed(response, "trainings/training_list.html")
         self.assertContains(
             response, reverse("update_training", kwargs={"date": TODAY})
         )
@@ -458,7 +473,7 @@ class TrainingUpdateViewTests(TestCase):
         with self.assertNumQueries(7):
             response = self.client.get(reverse("trainings"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertTemplateUsed(response, "trainings/training_list.html")
         self.assertNotContains(
             response, reverse("update_training", kwargs={"date": TODAY})
         )
@@ -466,12 +481,12 @@ class TrainingUpdateViewTests(TestCase):
     def test_form_is_prefilled(self):
         self.training.info = "Stored Info"
         self.training.save()
-        with self.assertNumQueries(3):
+        with self.assertNumQueries(4):
             response = self.client.get(
                 reverse("update_training", kwargs={"date": TODAY})
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/update_training.html")
+        self.assertTemplateUsed(response, "trainings/training_update.html")
         self.assertContains(response, "Stored Info")
         self.assertContains(response, self.training.max_pilots)
         self.assertContains(response, self.training.priority_date.isoformat())
@@ -480,16 +495,16 @@ class TrainingUpdateViewTests(TestCase):
         first_info = "Default Info"
         new_info = "New Info"
 
-        with self.assertNumQueries(7):
+        with self.assertNumQueries(8):
             response = self.client.get(reverse("trainings"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertTemplateUsed(response, "trainings/training_list.html")
         self.assertNotContains(response, first_info)
         self.assertNotContains(response, new_info)
 
         new_max_pilots = self.training.max_pilots - 1
         new_priority_date = self.training.priority_date - timedelta(days=1)
-        with self.assertNumQueries(11):
+        with self.assertNumQueries(12):
             response = self.client.post(
                 reverse("update_training", kwargs={"date": TODAY}),
                 data={
@@ -504,59 +519,59 @@ class TrainingUpdateViewTests(TestCase):
         self.assertEqual(self.training.max_pilots, new_max_pilots)
         self.assertEqual(self.training.priority_date, new_priority_date)
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertTemplateUsed(response, "trainings/training_list.html")
         self.assertNotContains(response, first_info)
         self.assertContains(response, new_info)
 
     def test_max_pilots_range(self):
-        with self.assertNumQueries(3):
+        with self.assertNumQueries(4):
             response = self.client.post(
                 reverse("update_training", kwargs={"date": TODAY}),
                 data={"max_pilots": 5},
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/update_training.html")
+        self.assertTemplateUsed(response, "trainings/training_update.html")
         self.assertContains(response, "alert-warning")
 
-        with self.assertNumQueries(3):
+        with self.assertNumQueries(4):
             response = self.client.post(
                 reverse("update_training", kwargs={"date": TODAY}),
                 data={"max_pilots": 22},
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/update_training.html")
+        self.assertTemplateUsed(response, "trainings/training_update.html")
         self.assertContains(response, "alert-warning")
 
     def test_priority_date_cannot_be_after_last_day(self):
-        with self.assertNumQueries(3):
+        with self.assertNumQueries(4):
             response = self.client.post(
                 reverse("update_training", kwargs={"date": TODAY}),
                 data={"priority_date": TOMORROW},
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/update_training.html")
+        self.assertTemplateUsed(response, "trainings/training_update.html")
         self.assertContains(response, "alert-warning")
 
-    def test_cannot_update_past_or_non_existing_trainings_404(self):
+    def test_cannot_update_past_or_non_existing_trainings(self):
         Training(date=YESTERDAY).save()
-        with self.assertNumQueries(2):
+        with self.assertNumQueries(3):
             response = self.client.get(
                 reverse("update_training", kwargs={"date": YESTERDAY}),
             )
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.assertTemplateUsed(response, "404.html")
 
-        with self.assertNumQueries(2):
+        with self.assertNumQueries(3):
             response = self.client.get(
                 reverse("update_training", kwargs={"date": "2022-13-13"}),
             )
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.assertTemplateUsed(response, "404.html")
 
-        with self.assertNumQueries(3):
+        with self.assertNumQueries(4):
             response = self.client.get(
                 reverse("update_training", kwargs={"date": TOMORROW}),
             )
@@ -569,7 +584,7 @@ class TrainingUpdateViewTests(TestCase):
             + f"?next={reverse('trainings')}&page=2&training=3"
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/update_training.html")
+        self.assertTemplateUsed(response, "trainings/training_update.html")
         self.assertContains(response, reverse("trainings") + "?page=2#training_3")
 
 
@@ -578,7 +593,7 @@ class EmergencyMailViewTests(TestCase):
         self.orga = get_user_model().objects.create(
             email="sender@example.com",
             first_name="Name A",
-            role=get_user_model().Role.Orga,
+            role=get_user_model().Role.ORGA,
         )
         self.client.force_login(self.orga)
         self.pilot_b = get_user_model().objects.create(
@@ -607,7 +622,7 @@ class EmergencyMailViewTests(TestCase):
         Signup(pilot=self.pilot_b, training=training_in_a_week).save()
         training_in_a_week.select_signups()
 
-    def test_orga_required(self):
+    def test_orga_required_to_see(self):
         guest = get_user_model().objects.create(email="guest@example.com")
         self.client.force_login(guest)
         with self.assertNumQueries(2):
@@ -618,10 +633,10 @@ class EmergencyMailViewTests(TestCase):
         self.assertTemplateUsed(response, "403.html")
 
     def test_only_orga_sees_button(self):
-        with self.assertNumQueries(9):
+        with self.assertNumQueries(10):
             response = self.client.get(reverse("trainings"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertTemplateUsed(response, "trainings/training_list.html")
         self.assertContains(response, reverse("emergency_mail", kwargs={"date": TODAY}))
 
         guest = get_user_model().objects.create(email="guest@example.com")
@@ -629,20 +644,20 @@ class EmergencyMailViewTests(TestCase):
         with self.assertNumQueries(9):
             response = self.client.get(reverse("trainings"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertTemplateUsed(response, "trainings/training_list.html")
         self.assertNotContains(
             response, reverse("emergency_mail", kwargs={"date": TODAY})
         )
 
     def test_sending_emergency_mail(self):
-        with self.assertNumQueries(15):
+        with self.assertNumQueries(16):
             response = self.client.post(
                 reverse("emergency_mail", kwargs={"date": TODAY}),
                 data={"start": "2", "end": "5", "emergency_contacts": ["1", "2"]},
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/list_trainings.html")
+        self.assertTemplateUsed(response, "trainings/training_list.html")
         self.assertContains(response, "Seepolizeimail abgesendet.")
         self.assertEqual(1, len(mail.outbox))
         self.assertTrue(
@@ -662,7 +677,7 @@ class EmergencyMailViewTests(TestCase):
         self.assertTrue(self.todays_training.emergency_mail_sender == self.orga)
 
     def test_only_selected_signups_can_be_chosen(self):
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(6):
             response = self.client.get(
                 reverse("emergency_mail", kwargs={"date": TODAY})
             )
@@ -674,7 +689,7 @@ class EmergencyMailViewTests(TestCase):
 
         self.signup_a_today.cancel()
         self.signup_a_today.save()
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(6):
             response = self.client.get(
                 reverse("emergency_mail", kwargs={"date": TODAY})
             )
@@ -684,7 +699,7 @@ class EmergencyMailViewTests(TestCase):
         self.assertContains(response, self.pilot_b.first_name)
         self.assertContains(response, self.pilot_c.first_name)
 
-        with self.assertNumQueries(6):
+        with self.assertNumQueries(7):
             response = self.client.post(
                 reverse("emergency_mail", kwargs={"date": TODAY}),
                 data={"start": "2", "end": "5", "emergency_contacts": ["1", "2"]},
@@ -695,7 +710,7 @@ class EmergencyMailViewTests(TestCase):
         self.assertContains(response, "Bitte eine gültige Auswahl treffen.")
 
     def test_exactly_two_emergency_contacts_must_be_selected(self):
-        with self.assertNumQueries(6):
+        with self.assertNumQueries(7):
             response = self.client.post(
                 reverse("emergency_mail", kwargs={"date": TODAY}),
                 data={"start": "2", "end": "5", "emergency_contacts": ["1"]},
@@ -703,9 +718,9 @@ class EmergencyMailViewTests(TestCase):
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "trainings/emergency_mail.html")
-        self.assertContains(response, "Bitte genau zwei Notfallkontakte ausgewählen.")
+        self.assertContains(response, "Bitte genau zwei Notfallkontakte auswählen.")
 
-        with self.assertNumQueries(6):
+        with self.assertNumQueries(7):
             response = self.client.post(
                 reverse("emergency_mail", kwargs={"date": TODAY}),
                 data={"start": "2", "end": "5", "emergency_contacts": ["1", "2", "3"]},
@@ -713,10 +728,10 @@ class EmergencyMailViewTests(TestCase):
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "trainings/emergency_mail.html")
-        self.assertContains(response, "Bitte genau zwei Notfallkontakte ausgewählen.")
+        self.assertContains(response, "Bitte genau zwei Notfallkontakte auswählen.")
 
-    def test_cannot_send_emergency_mail_for_past_or_non_existing_trainings_404(self):
-        with self.assertNumQueries(2):
+    def test_cannot_send_emergency_mail_for_past_or_non_existing_trainings(self):
+        with self.assertNumQueries(3):
             response = self.client.post(
                 reverse("emergency_mail", kwargs={"date": YESTERDAY}),
                 data={"start": "2", "end": "5", "emergency_contacts": ["4", "5"]},
@@ -725,22 +740,22 @@ class EmergencyMailViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.assertTemplateUsed(response, "404.html")
 
-        with self.assertNumQueries(2):
+        with self.assertNumQueries(3):
             response = self.client.get(
                 reverse("emergency_mail", kwargs={"date": "2022-13-13"})
             )
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.assertTemplateUsed(response, "404.html")
 
-        with self.assertNumQueries(3):
+        with self.assertNumQueries(4):
             response = self.client.get(
                 reverse("emergency_mail", kwargs={"date": TOMORROW})
             )
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.assertTemplateUsed(response, "404.html")
 
-    def test_cannot_send_emergency_mail_for_trainings_far_ahead_404(self):
-        with self.assertNumQueries(2):
+    def test_cannot_send_emergency_mail_for_trainings_far_ahead(self):
+        with self.assertNumQueries(3):
             response = self.client.post(
                 reverse("emergency_mail", kwargs={"date": self.in_a_week}),
                 data={"start": "2", "end": "5", "emergency_contacts": ["6", "7"]},

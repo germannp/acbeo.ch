@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Berichte {{ year }}{% endblock title %}
+
+{% block headline %}Berichte {{ year }}{% endblock headline %}
+
+{% block content %}
+
+<div class="row mt-2">
+
+    <div class="col-md-12 left">
+    
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Datum</th>
+                                <th scope="col">Offen</th>
+                                <th scope="col">Kasse Anfang</th>
+                                <th scope="col">Einnahmen</th>
+                                <th scope="col">Ausgaben</th>
+                                <th scope="col">Kasse Ende</th>
+                                <th scope="col">TWINT</th>
+                                <th scope="col" style="min-width: 300px">Bemerkungen</th>
+                            </tr>
+                        </thead>
+                        <tbody class="table-group-divider">
+                            {% for report in report_list %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td class="text-nowrap">{{ report.training.date | date:"D., j. M." }}
+                                    <a href="{% url 'update_report' date=report.training.date.isoformat %}"
+                                        class="bi bi-pencil-square" /a>
+                                </td>
+                                <td>{{ report.num_unpaid_signups }} / {{ report.training.selected_signups | length }}</td>
+                                <td>{{ report.cash_at_start }}{% if report.difference_between_reports %} ({{ report.difference_between_reports }}){% endif %}</td>
+                                <td>{{ report.cash_revenue }}</td>
+                                <td>{{ report.cash_expediture }}</td>
+                                <td>{{ report.cash_at_end }}{% if report.difference %} ({{ report.difference }}){% endif %}</td>
+                                <td>{{ report.other_revenue }}</td>
+                                <td>{{ report.remarks }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        {% if previous_year or next_year %}
+        <ul class="pagination justify-content-center">
+            <div class="btn-group">
+                {% if previous_year %}
+                <a href="{% url 'reports' year=previous_year %}" type="button" class="btn btn-primary"><i
+                        class="bi bi-chevron-double-left"></i></a>
+                {% endif %}
+                {% if next_year %}
+                <a href="{% url 'reports' %}" type="button" class="btn btn-primary">Aktuelles Jahr</a>
+                <a href="{% url 'reports' year=next_year %}" type="button" class="btn btn-primary"><i
+                        class="bi bi-chevron-double-right"></i></a>
+                {% endif %}
+            </div>
+        </ul>
+        {% endif %}
+
+    </div>
+</div>
+
+{% endblock content %}

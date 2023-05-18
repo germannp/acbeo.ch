@@ -7,14 +7,6 @@
 {% block content %}
 
 <div class="col-xl-4 col-md-6">
-    {% if form.errors %}
-    {% for error_list in form.errors.values %}
-    {% for error in error_list %}
-    <div class="alert my-4 alert-warning">{{ error }}</div>
-    {% endfor %}
-    {% endfor %}
-    {% endif %}
-
     <div class="card my-4">
         <h5 class="card-header">{{ form.instance.date|date:"l, j. E Y" }}</h5>
         <div class="card-body">
