@@ -24,7 +24,8 @@ SECRET_KEY = os.getenv(
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("ENVIRONMENT") != "PROD"
+# DEBUG = os.getenv("ENVIRONMENT") != "PROD"
+DEBUG = True
 
 LOGGING = {
     "version": 1,
