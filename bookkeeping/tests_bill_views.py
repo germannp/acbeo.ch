@@ -239,7 +239,10 @@ class BillCreateViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/bill_create.html")
         self.assertContains(response, self.guest)
-        self.assertContains(response, TODAY.strftime("%a, %d. %b.").replace(" 0", " "))
+        self.assertContains(
+            response,
+            TODAY.strftime("%a., %d. %b.").replace(" 0", " ").replace("..", "."),
+        )
 
     def test_prepaid_flights_shown(self):
         with self.assertNumQueries(11):
@@ -456,9 +459,9 @@ class BillCreateViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/bill_create.html")
         self.assertContains(
-            response, 
-                f"Nicht zu Tagesleiter·in gemacht, {self.orga} und "
-                f"{self.guest} sind bereits als Tagesleiter·innen gespeichert.",
+            response,
+            f"Nicht zu Tagesleiter·in gemacht, {self.orga} und "
+            f"{self.guest} sind bereits als Tagesleiter·innen gespeichert.",
         )
         signup.refresh_from_db()
         self.assertFalse(signup.is_training_orga)
@@ -665,7 +668,10 @@ class BillUpdateViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/bill_update.html")
         self.assertContains(response, self.orga)
-        self.assertContains(response, TODAY.strftime("%a, %d. %b.").replace(" 0", " "))
+        self.assertContains(
+            response,
+            TODAY.strftime("%a., %d. %b.").replace(" 0", " ").replace("..", "."),
+        )
 
     def test_prepaid_flights_shown(self):
         with self.assertNumQueries(11):

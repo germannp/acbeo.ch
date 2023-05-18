@@ -53,7 +53,10 @@ class PurchaseCreateViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/purchase_create.html")
         self.assertContains(response, self.orga)
-        self.assertContains(response, TODAY.strftime("%a, %d. %b.").replace(" 0", " "))
+        self.assertContains(
+            response,
+            TODAY.strftime("%a., %d. %b.").replace(" 0", " ").replace("..", "."),
+        )
         for item in Purchase.Items:
             self.assertContains(response, item.label)
 
