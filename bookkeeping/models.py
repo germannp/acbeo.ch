@@ -110,7 +110,7 @@ class Absorption(models.Model):
 
 
 class Run(models.Model):
-    Kind = models.IntegerChoices("Kind", "FLIGHT BUS BOAT BREAK")
+    Kind = models.IntegerChoices("Kind", "FLIGHT BREAK BUS BOAT")
 
     signup = models.ForeignKey(
         "trainings.Signup", on_delete=models.CASCADE, related_name="runs"
