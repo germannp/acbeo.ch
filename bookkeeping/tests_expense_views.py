@@ -28,7 +28,7 @@ class ExpenseCreateViewTests(TestCase):
     def test_orga_required_to_see(self):
         guest = get_user_model().objects.create(email="guest@example.com")
         self.client.force_login(guest)
-        with self.assertNumQueries(2):
+        with self.assertNumQueries(3):
             response = self.client.get(
                 reverse("create_expense", kwargs={"date": TODAY})
             )
@@ -36,7 +36,7 @@ class ExpenseCreateViewTests(TestCase):
         self.assertTemplateUsed(response, "403.html")
 
     def test_date_shown_and_reasons_listed(self):
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(6):
             response = self.client.get(
                 reverse("create_expense", kwargs={"date": TODAY})
             )
@@ -49,7 +49,7 @@ class ExpenseCreateViewTests(TestCase):
     def test_amount_cannot_be_negative_and_is_prefilled(self):
         other_reason = "Other reason"
         amount = -42
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(6):
             response = self.client.post(
                 reverse("create_expense", kwargs={"date": TODAY}),
                 data={
@@ -67,7 +67,7 @@ class ExpenseCreateViewTests(TestCase):
     def test_create_expense(self):
         reason = Expense.Reasons.GAS
         amount = 42
-        with self.assertNumQueries(16):
+        with self.assertNumQueries(17):
             response = self.client.post(
                 reverse("create_expense", kwargs={"date": TODAY}),
                 data={"reason": reason, "amount": amount},
@@ -87,7 +87,7 @@ class ExpenseCreateViewTests(TestCase):
     def test_create_expense_for_other_reason(self):
         other_reason = "Other reason"
         amount = 42
-        with self.assertNumQueries(16):
+        with self.assertNumQueries(17):
             response = self.client.post(
                 reverse("create_expense", kwargs={"date": TODAY}),
                 data={
@@ -108,7 +108,7 @@ class ExpenseCreateViewTests(TestCase):
         self.assertEqual(amount, created_expense.amount)
 
     def test_report_not_found_404(self):
-        with self.assertNumQueries(4):
+        with self.assertNumQueries(5):
             response = self.client.get(
                 reverse("create_expense", kwargs={"date": YESTERDAY})
             )
@@ -132,7 +132,7 @@ class ExpenseUpdateViewTests(TestCase):
     def test_orga_required_to_see(self):
         guest = get_user_model().objects.create(email="guest@example.com")
         self.client.force_login(guest)
-        with self.assertNumQueries(2):
+        with self.assertNumQueries(3):
             response = self.client.get(
                 reverse("update_expense", kwargs={"date": TODAY, "pk": self.expense.pk})
             )
@@ -140,7 +140,7 @@ class ExpenseUpdateViewTests(TestCase):
         self.assertTemplateUsed(response, "403.html")
 
     def test_date_shown_and_form_is_prefilled(self):
-        with self.assertNumQueries(4):
+        with self.assertNumQueries(5):
             response = self.client.get(
                 reverse("update_expense", kwargs={"date": TODAY, "pk": self.expense.pk})
             )
@@ -153,7 +153,7 @@ class ExpenseUpdateViewTests(TestCase):
     def test_amount_cannot_be_negative_and_is_prefilled(self):
         new_reason = "Petrol"
         new_amount = -42
-        with self.assertNumQueries(4):
+        with self.assertNumQueries(5):
             response = self.client.post(
                 reverse(
                     "update_expense", kwargs={"date": TODAY, "pk": self.expense.pk}
@@ -172,7 +172,7 @@ class ExpenseUpdateViewTests(TestCase):
     def test_update_expense(self):
         new_reason = "Petrol"
         new_amount = 23
-        with self.assertNumQueries(15):
+        with self.assertNumQueries(16):
             response = self.client.post(
                 reverse(
                     "update_expense", kwargs={"date": TODAY, "pk": self.expense.pk}
@@ -191,7 +191,7 @@ class ExpenseUpdateViewTests(TestCase):
         self.assertEqual(new_amount, self.expense.amount)
 
     def test_delete_expense(self):
-        with self.assertNumQueries(15):
+        with self.assertNumQueries(16):
             response = self.client.post(
                 reverse(
                     "update_expense", kwargs={"date": TODAY, "pk": self.expense.pk}
@@ -205,7 +205,7 @@ class ExpenseUpdateViewTests(TestCase):
         self.assertEqual(0, len(Expense.objects.all()))
 
     def test_wrong_date_does_not_404(self):
-        with self.assertNumQueries(4):
+        with self.assertNumQueries(5):
             response = self.client.get(
                 reverse(
                     "update_expense", kwargs={"date": YESTERDAY, "pk": self.expense.pk}

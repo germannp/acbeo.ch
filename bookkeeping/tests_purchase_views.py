@@ -34,7 +34,7 @@ class PurchaseCreateViewTests(TestCase):
     def test_orga_required_to_see(self):
         guest = get_user_model().objects.create(email="guest@example.com")
         self.client.force_login(guest)
-        with self.assertNumQueries(2):
+        with self.assertNumQueries(3):
             response = self.client.get(
                 reverse(
                     "create_purchase", kwargs={"date": TODAY, "signup": self.signup.pk}
@@ -44,7 +44,7 @@ class PurchaseCreateViewTests(TestCase):
         self.assertTemplateUsed(response, "403.html")
 
     def test_pilot_and_date_shown_and_items_listed(self):
-        with self.assertNumQueries(7):
+        with self.assertNumQueries(9):
             response = self.client.get(
                 reverse(
                     "create_purchase", kwargs={"date": TODAY, "signup": self.signup.pk}
@@ -61,7 +61,7 @@ class PurchaseCreateViewTests(TestCase):
             self.assertContains(response, item.label)
 
     def test_create_purchase(self):
-        with self.assertNumQueries(17):
+        with self.assertNumQueries(19):
             response = self.client.post(
                 reverse(
                     "create_purchase", kwargs={"date": TODAY, "signup": self.signup.pk}
@@ -88,7 +88,7 @@ class PurchaseCreateViewTests(TestCase):
             amount=42,
             method=PaymentMethods.CASH,
         ).save()
-        with self.assertNumQueries(23):
+        with self.assertNumQueries(25):
             response = self.client.post(
                 reverse(
                     "create_purchase", kwargs={"date": TODAY, "signup": self.signup.pk}
@@ -101,7 +101,7 @@ class PurchaseCreateViewTests(TestCase):
         self.assertContains(response, f"{self.orga} hat bereits bezahlt.")
 
     def test_signup_not_found_404(self):
-        with self.assertNumQueries(4):
+        with self.assertNumQueries(6):
             response = self.client.get(
                 reverse("create_purchase", kwargs={"date": TODAY, "signup": 666})
             )
@@ -110,7 +110,7 @@ class PurchaseCreateViewTests(TestCase):
 
     def test_report_not_found_404(self):
         Report.objects.all().delete()
-        with self.assertNumQueries(6):
+        with self.assertNumQueries(8):
             response = self.client.get(
                 reverse(
                     "create_purchase", kwargs={"date": TODAY, "signup": self.signup.pk}
@@ -140,7 +140,7 @@ class PurchaseDeleteViewTests(TestCase):
     def test_orga_required_to_see(self):
         guest = get_user_model().objects.create(email="guest@example.com")
         self.client.force_login(guest)
-        with self.assertNumQueries(2):
+        with self.assertNumQueries(3):
             response = self.client.get(
                 reverse(
                     "delete_purchase", kwargs={"date": TODAY, "pk": self.purchase.pk}
@@ -150,7 +150,7 @@ class PurchaseDeleteViewTests(TestCase):
         self.assertTemplateUsed(response, "403.html")
 
     def test_pilot_and_desciption_shown(self):
-        with self.assertNumQueries(6):
+        with self.assertNumQueries(8):
             response = self.client.get(
                 reverse(
                     "delete_purchase", kwargs={"date": TODAY, "pk": self.purchase.pk}
@@ -166,7 +166,7 @@ class PurchaseDeleteViewTests(TestCase):
         )
 
     def test_delete_purchase(self):
-        with self.assertNumQueries(17):
+        with self.assertNumQueries(19):
             response = self.client.post(
                 reverse(
                     "delete_purchase", kwargs={"date": TODAY, "pk": self.purchase.pk}
@@ -194,7 +194,7 @@ class PurchaseDeleteViewTests(TestCase):
         Purchase.save_day_pass(signup, self.report)
         day_pass = Purchase.objects.last()
         self.assertEqual(Purchase.DAY_PASS_DESCRIPTION, day_pass.description)
-        with self.assertNumQueries(18):
+        with self.assertNumQueries(20):
             response = self.client.post(
                 reverse("delete_purchase", kwargs={"date": TODAY, "pk": day_pass.pk}),
                 follow=True,
@@ -211,7 +211,7 @@ class PurchaseDeleteViewTests(TestCase):
             amount=42,
             method=PaymentMethods.CASH,
         ).save()
-        with self.assertNumQueries(25):
+        with self.assertNumQueries(27):
             response = self.client.post(
                 reverse(
                     "delete_purchase", kwargs={"date": TODAY, "pk": self.purchase.pk}
@@ -223,7 +223,7 @@ class PurchaseDeleteViewTests(TestCase):
         self.assertContains(response, f"{self.orga} hat bereits bezahlt.")
 
     def test_purchase_not_found_404(self):
-        with self.assertNumQueries(4):
+        with self.assertNumQueries(6):
             response = self.client.get(
                 reverse("delete_purchase", kwargs={"date": TODAY, "pk": 666})
             )

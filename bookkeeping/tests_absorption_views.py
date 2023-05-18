@@ -31,7 +31,7 @@ class AbsorptionCreateViewTests(TestCase):
 
     def test_orga_required_to_see(self):
         self.client.force_login(self.guest)
-        with self.assertNumQueries(2):
+        with self.assertNumQueries(4):
             response = self.client.get(
                 reverse("create_absorption", kwargs={"date": TODAY})
             )
@@ -39,7 +39,7 @@ class AbsorptionCreateViewTests(TestCase):
         self.assertTemplateUsed(response, "403.html")
 
     def test_date_shown_and_signups_listed(self):
-        with self.assertNumQueries(7):
+        with self.assertNumQueries(9):
             response = self.client.get(
                 reverse("create_absorption", kwargs={"date": TODAY})
             )
@@ -60,7 +60,7 @@ class AbsorptionCreateViewTests(TestCase):
 
     def test_amount_cannot_be_negative_and_is_prefilled(self):
         amount = -42
-        with self.assertNumQueries(9):
+        with self.assertNumQueries(11):
             response = self.client.post(
                 reverse("create_absorption", kwargs={"date": TODAY}),
                 data={
@@ -76,7 +76,7 @@ class AbsorptionCreateViewTests(TestCase):
 
     def test_create_absorption(self):
         amount = 42
-        with self.assertNumQueries(25):
+        with self.assertNumQueries(27):
             response = self.client.post(
                 reverse("create_absorption", kwargs={"date": TODAY}),
                 data={
@@ -99,7 +99,7 @@ class AbsorptionCreateViewTests(TestCase):
         self.assertEqual(PaymentMethods.BANK_TRANSFER, created_absorption.method)
 
     def test_report_not_found_404(self):
-        with self.assertNumQueries(4):
+        with self.assertNumQueries(6):
             response = self.client.get(
                 reverse("create_absorption", kwargs={"date": YESTERDAY})
             )
@@ -129,7 +129,7 @@ class AbsorptionUpdateViewTests(TestCase):
 
     def test_orga_required_to_see(self):
         self.client.force_login(self.guest)
-        with self.assertNumQueries(2):
+        with self.assertNumQueries(4):
             response = self.client.get(
                 reverse(
                     "update_absorption",
@@ -140,7 +140,7 @@ class AbsorptionUpdateViewTests(TestCase):
         self.assertTemplateUsed(response, "403.html")
 
     def test_date_shown_and_form_is_prefilled(self):
-        with self.assertNumQueries(7):
+        with self.assertNumQueries(9):
             response = self.client.get(
                 reverse(
                     "update_absorption",
@@ -164,7 +164,7 @@ class AbsorptionUpdateViewTests(TestCase):
     def test_amount_cannot_be_negative_and_is_prefilled(self):
         new_amount = -42
         new_method = PaymentMethods.TWINT
-        with self.assertNumQueries(9):
+        with self.assertNumQueries(11):
             response = self.client.post(
                 reverse(
                     "update_absorption",
@@ -194,7 +194,7 @@ class AbsorptionUpdateViewTests(TestCase):
     def test_update_absorption(self):
         new_amount = 23
         new_method = PaymentMethods.TWINT
-        with self.assertNumQueries(23):
+        with self.assertNumQueries(25):
             response = self.client.post(
                 reverse(
                     "update_absorption",
@@ -219,7 +219,7 @@ class AbsorptionUpdateViewTests(TestCase):
         self.assertEqual(new_method, self.absorption.method)
 
     def test_delete_absorption(self):
-        with self.assertNumQueries(20):
+        with self.assertNumQueries(22):
             response = self.client.post(
                 reverse(
                     "update_absorption",
@@ -234,7 +234,7 @@ class AbsorptionUpdateViewTests(TestCase):
         self.assertEqual(0, len(Absorption.objects.all()))
 
     def test_report_not_found_404(self):
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(7):
             response = self.client.get(
                 reverse(
                     "update_absorption",

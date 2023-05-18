@@ -444,7 +444,7 @@ class MembershipFormViewTests(TestCase):
                 pilot=self.guest, training=training, signed_up_on=datetime.now()
             )
             Purchase.save_day_pass(signup, report)
-        with self.assertNumQueries(8):
+        with self.assertNumQueries(10):
             response = self.client.post(
                 reverse("membership"), data=self.membership_data, follow=True
             )

@@ -112,3 +112,8 @@ class Pilot(AbstractBaseUser):
             for purchase in signup.purchases.all()
         ]
         return [purchase for purchase in purchases if purchase.is_day_pass]
+
+    @property
+    def has_bills(self):
+        signups = self.signups.prefetch_related("bill")
+        return any(signup.is_paid for signup in signups)

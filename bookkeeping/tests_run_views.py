@@ -45,14 +45,14 @@ class RunCreateViewTests(TestCase):
 
     def test_orga_required_to_see(self):
         self.client.force_login(self.guest)
-        with self.assertNumQueries(2):
+        with self.assertNumQueries(4):
             response = self.client.get(reverse("create_run"))
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
         self.assertTemplateUsed(response, "403.html")
 
     def test_redirect_to_create_report_if_no_report_exists(self):
         Report.objects.all().delete()
-        with self.assertNumQueries(9):
+        with self.assertNumQueries(11):
             response = self.client.get(reverse("create_run"), follow=True)
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/report_create.html")
@@ -61,7 +61,7 @@ class RunCreateViewTests(TestCase):
         for signup in Signup.objects.all():
             self.assertEqual(signup.status, Signup.Status.WAITING)
 
-        with self.assertNumQueries(18):
+        with self.assertNumQueries(20):
             response = self.client.get(reverse("create_run"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/run_create.html")
@@ -70,7 +70,7 @@ class RunCreateViewTests(TestCase):
             self.assertEqual(signup.status, Signup.Status.SELECTED)
 
     def test_forms_are_prefilled(self):
-        with self.assertNumQueries(18):
+        with self.assertNumQueries(20):
             response = self.client.get(reverse("create_run"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/run_create.html")
@@ -78,7 +78,7 @@ class RunCreateViewTests(TestCase):
         self.assertNotContains(response, f'value="{Run.Kind.FLIGHT}" \\n')
 
     def test_pilots_listed_alphabetically(self):
-        with self.assertNumQueries(18):
+        with self.assertNumQueries(20):
             response = self.client.get(reverse("create_run"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/run_create.html")
@@ -98,7 +98,7 @@ class RunCreateViewTests(TestCase):
         ).save()
         self.assertTrue(self.guest_2_signup.is_paid)
 
-        with self.assertNumQueries(17):
+        with self.assertNumQueries(19):
             response = self.client.get(reverse("create_run"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/run_create.html")
@@ -114,7 +114,7 @@ class RunCreateViewTests(TestCase):
         ).save()
         self.assertTrue(self.guest_2_signup.is_paid)
 
-        with self.assertNumQueries(26):
+        with self.assertNumQueries(28):
             response = self.client.post(
                 reverse("create_run"),
                 data={
@@ -135,7 +135,7 @@ class RunCreateViewTests(TestCase):
         self.assertEqual(0, len(Run.objects.all()))
 
     def test_only_one_bus_per_run_allowed(self):
-        with self.assertNumQueries(16):
+        with self.assertNumQueries(18):
             response = self.client.post(
                 reverse("create_run"),
                 data={
@@ -157,7 +157,7 @@ class RunCreateViewTests(TestCase):
         self.assertEqual(0, len(Run.objects.all()))
 
     def test_at_most_two_boats_per_run_allowed(self):
-        with self.assertNumQueries(16):
+        with self.assertNumQueries(18):
             response = self.client.post(
                 reverse("create_run"),
                 data={
@@ -179,7 +179,7 @@ class RunCreateViewTests(TestCase):
         self.assertEqual(0, len(Run.objects.all()))
 
     def test_number_of_selected_signups_changed(self):
-        with self.assertNumQueries(27):
+        with self.assertNumQueries(29):
             response = self.client.post(
                 reverse("create_run"),
                 data={
@@ -198,7 +198,7 @@ class RunCreateViewTests(TestCase):
         self.assertEqual(0, len(Run.objects.all()))
 
     def test_create_run(self):
-        with self.assertNumQueries(44):
+        with self.assertNumQueries(46):
             response = self.client.post(
                 reverse("create_run"),
                 data={
@@ -226,7 +226,7 @@ class RunCreateViewTests(TestCase):
             created_on=timezone.now() - timedelta(minutes=2),
         ).save()
 
-        with self.assertNumQueries(44):
+        with self.assertNumQueries(46):
             response = self.client.post(
                 reverse("create_run"),
                 data={
@@ -297,19 +297,19 @@ class RunUpdateViewTests(TestCase):
 
     def test_orga_required_to_see(self):
         self.client.force_login(self.guest)
-        with self.assertNumQueries(2):
+        with self.assertNumQueries(4):
             response = self.client.get(reverse("update_run", kwargs={"run": 1}))
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
         self.assertTemplateUsed(response, "403.html")
 
     def test_run_not_found(self):
-        with self.assertNumQueries(6):
+        with self.assertNumQueries(8):
             response = self.client.get(reverse("update_run", kwargs={"run": 2}))
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.assertTemplateUsed(response, "404.html")
 
     def test_forms_are_prefilled(self):
-        with self.assertNumQueries(13):
+        with self.assertNumQueries(15):
             response = self.client.get(reverse("update_run", kwargs={"run": 1}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/run_update.html")
@@ -318,7 +318,7 @@ class RunUpdateViewTests(TestCase):
         self.assertContains(response, f'value="{Run.Kind.BOAT}" \n')
 
     def test_pilots_listed_alphabetically(self):
-        with self.assertNumQueries(13):
+        with self.assertNumQueries(15):
             response = self.client.get(reverse("update_run", kwargs={"run": 1}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/run_update.html")
@@ -338,7 +338,7 @@ class RunUpdateViewTests(TestCase):
         ).save()
         self.assertTrue(self.guest_signup.is_paid)
 
-        with self.assertNumQueries(23):
+        with self.assertNumQueries(25):
             response = self.client.post(
                 reverse("update_run", kwargs={"run": 1}),
                 data={
@@ -359,7 +359,7 @@ class RunUpdateViewTests(TestCase):
         self.assertContains(response, f"{self.guest} hat bereits bezahlt.")
 
     def test_update_run(self):
-        with self.assertNumQueries(44):
+        with self.assertNumQueries(46):
             response = self.client.post(
                 reverse("update_run", kwargs={"run": 1}),
                 data={
@@ -388,7 +388,7 @@ class RunUpdateViewTests(TestCase):
         self.assertEqual(Run.Kind.BREAK, self.orga_run.kind)
 
     def test_run_with_changed_number_of_pilots_cannot_be_deleted(self):
-        with self.assertNumQueries(35):
+        with self.assertNumQueries(37):
             response = self.client.post(
                 reverse("update_run", kwargs={"run": 1}),
                 data={
@@ -408,7 +408,7 @@ class RunUpdateViewTests(TestCase):
         self.assertEqual(3, len(Run.objects.all()))
 
     def test_run_with_changed_kind_cannot_be_deleted(self):
-        with self.assertNumQueries(35):
+        with self.assertNumQueries(37):
             response = self.client.post(
                 reverse("update_run", kwargs={"run": 1}),
                 data={
@@ -439,7 +439,7 @@ class RunUpdateViewTests(TestCase):
         self.assertTrue(self.guest_signup.is_paid)
         self.assertEqual(3, len(Run.objects.all()))
 
-        with self.assertNumQueries(35):
+        with self.assertNumQueries(37):
             response = self.client.post(
                 reverse("update_run", kwargs={"run": 1}),
                 data={
@@ -460,7 +460,7 @@ class RunUpdateViewTests(TestCase):
         self.assertEqual(3, len(Run.objects.all()))
 
     def test_delete_run(self):
-        with self.assertNumQueries(35):
+        with self.assertNumQueries(37):
             response = self.client.post(
                 reverse("update_run", kwargs={"run": 1}),
                 data={
