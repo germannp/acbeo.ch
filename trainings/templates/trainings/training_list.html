@@ -20,7 +20,7 @@
                         {% if not training.emergency_mail_sender %}
                         <a href="{% url 'emergency_mail' date=training.date.isoformat %}" class="text-danger bi bi-envelope-exclamation"></a>
                         {% else %}
-                        <i class="text-muted bi bi-envelope-exclamation"></i>
+                        <a href="{% url 'emergency_mail' date=training.date.isoformat %}" class="text-muted bi bi-envelope-exclamation"></a>
                         {% endif %}
                     {% endif %}
                     {% if training.date == today %}

@@ -2,9 +2,10 @@ from datetime import date, timedelta
 import locale
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.http import Http404
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.views import generic
 
@@ -92,9 +93,17 @@ class EmergencyMailView(OrgaRequiredMixin, SuccessMessageMixin, generic.UpdateVi
             raise Http404(
                 "Seepolizeimail kann höchstens drei Tage im Voraus versandt werden."
             )
-        return get_object_or_404(Training, date=self.kwargs["date"])
+        training = get_object_or_404(Training, date=self.kwargs["date"])
+        if sender := training.emergency_mail_sender:
+            messages.info(
+                self.request, f"{sender} hat bereits ein Seepolizeimail versandt."
+            )
+        return training
 
     def form_valid(self, form):
+        if form.instance.emergency_mail_sender:
+            return redirect(self.success_url)
+
         form.sender = self.request.user
         form.send_mail()
         return super().form_valid(form)

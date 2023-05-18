@@ -649,33 +649,6 @@ class EmergencyMailViewTests(TestCase):
             response, reverse("emergency_mail", kwargs={"date": TODAY})
         )
 
-    def test_sending_emergency_mail(self):
-        with self.assertNumQueries(18):
-            response = self.client.post(
-                reverse("emergency_mail", kwargs={"date": TODAY}),
-                data={"start": "2", "end": "5", "emergency_contacts": ["1", "2"]},
-                follow=True,
-            )
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "trainings/training_list.html")
-        self.assertContains(response, "Seepolizeimail abgesendet.")
-        self.assertEqual(1, len(mail.outbox))
-        self.assertTrue(
-            TODAY.strftime("%A, %d. %B").replace(" 0", " ") in mail.outbox[0].subject
-        )
-        self.assertEqual(mail.outbox[0].from_email, "dev@example.com")
-        self.assertEqual(
-            mail.outbox[0].to,
-            ["emergency@example.com", "emergency2@example.com", self.orga.email],
-        )
-        self.assertTrue("8:30 bis 20:00" in mail.outbox[0].body)
-        self.assertTrue(self.orga.first_name in mail.outbox[0].body)
-        self.assertTrue(self.pilot_b.first_name in mail.outbox[0].body)
-        self.assertTrue(self.pilot_c.first_name not in mail.outbox[0].body)
-
-        self.todays_training.refresh_from_db()
-        self.assertTrue(self.todays_training.emergency_mail_sender == self.orga)
-
     def test_only_selected_signups_can_be_chosen(self):
         with self.assertNumQueries(8):
             response = self.client.get(
@@ -730,7 +703,62 @@ class EmergencyMailViewTests(TestCase):
         self.assertTemplateUsed(response, "trainings/emergency_mail.html")
         self.assertContains(response, "Bitte genau zwei Notfallkontakte auswählen.")
 
-    def test_cannot_send_emergency_mail_for_past_or_non_existing_trainings(self):
+    def test_sending_emergency_mail(self):
+        with self.assertNumQueries(18):
+            response = self.client.post(
+                reverse("emergency_mail", kwargs={"date": TODAY}),
+                data={"start": "2", "end": "5", "emergency_contacts": ["1", "2"]},
+                follow=True,
+            )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "trainings/training_list.html")
+        self.assertContains(response, "Seepolizeimail abgesendet.")
+        self.assertEqual(1, len(mail.outbox))
+        self.assertTrue(
+            TODAY.strftime("%A, %d. %B").replace(" 0", " ") in mail.outbox[0].subject
+        )
+        self.assertEqual(mail.outbox[0].from_email, "dev@example.com")
+        self.assertEqual(
+            mail.outbox[0].to,
+            ["emergency@example.com", "emergency2@example.com", self.orga.email],
+        )
+        self.assertTrue("8:30 bis 20:00" in mail.outbox[0].body)
+        self.assertTrue(self.orga.first_name in mail.outbox[0].body)
+        self.assertTrue(self.pilot_b.first_name in mail.outbox[0].body)
+        self.assertTrue(self.pilot_c.first_name not in mail.outbox[0].body)
+
+        self.todays_training.refresh_from_db()
+        self.assertTrue(self.todays_training.emergency_mail_sender == self.orga)
+
+    def test_cannot_send_emergency_mail_twice(self):
+        self.todays_training.emergency_mail_sender = self.orga
+        self.todays_training.save()
+
+        with self.assertNumQueries(9):
+            response = self.client.get(
+                reverse("emergency_mail", kwargs={"date": TODAY})
+            )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "trainings/emergency_mail.html")
+        self.assertContains(
+            response, f"{self.orga} hat bereits ein Seepolizeimail versandt."
+        )
+        self.assertContains(
+            response, '<button class="btn btn-primary mt-3" type="submit" disabled>'
+        )
+
+        with self.assertNumQueries(18):
+            response = self.client.post(
+                reverse("emergency_mail", kwargs={"date": TODAY}),
+                data={"start": "2", "end": "5", "emergency_contacts": ["1", "2"]},
+                follow=True,
+            )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertContains(
+            response, f"{self.orga} hat bereits ein Seepolizeimail versandt."
+        )
+
+    def test_cannot_send_emergency_mail_for_past_or_non_existing_trainings_404(self):
         with self.assertNumQueries(5):
             response = self.client.post(
                 reverse("emergency_mail", kwargs={"date": YESTERDAY}),
@@ -754,7 +782,7 @@ class EmergencyMailViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.assertTemplateUsed(response, "404.html")
 
-    def test_cannot_send_emergency_mail_for_trainings_far_ahead(self):
+    def test_cannot_send_emergency_mail_for_trainings_far_ahead_404(self):
         with self.assertNumQueries(5):
             response = self.client.post(
                 reverse("emergency_mail", kwargs={"date": self.in_a_week}),

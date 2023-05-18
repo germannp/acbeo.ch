@@ -39,7 +39,7 @@
                     </div>
                     {% endfor %}
 
-                    <button class="btn btn-primary mt-3" type="submit">Senden</button>
+                    <button class="btn btn-primary mt-3" type="submit" {% if form.instance.emergency_mail_sender %}disabled{% endif %}>Senden</button>
                     <a href="{% url 'trainings' %}" class="btn btn-outline-dark mt-3">Abbrechen</a>
                 </form>
             </main>
