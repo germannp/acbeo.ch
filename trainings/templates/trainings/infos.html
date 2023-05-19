@@ -1,5 +1,7 @@
 {% load static %}
 
+{% load bill_extras %}
+
 <div class="card mb-4">
     <h5 class="card-header">Praktische Infos</h5>
     <div class="card-body">
@@ -28,9 +30,9 @@
             Nahrungsmitteln zu versorgen. Wir machen auch keine Mittagspause, da sich im Bus und am Start- oder
             Landeplatz immer wieder kleinere Pausen ergeben.</p>
         <p class="card-text">
-            Ein Flug kostet Fr. 9, ein 10er Abo Fr. 72. Wer eine Runde Bus oder Boot macht, kriegt einen Flug
-            gutgeschrieben. Gäste müssen die ersten vier Trainings im Jahr eine Tagesmitgliedschaft für Fr. 30 lösen.
-            Bezahlen kann man in Bar oder mit Twint.</p>
+            Ein Flug kostet Fr. {% price_of_flight %}, ein 10er Abo Fr. {% price_of_10_prepaid_flights %}. Wer eine
+            Runde Bus oder Boot macht, kriegt einen Flug gutgeschrieben. Gäste müssen die ersten vier Trainings im Jahr
+            eine Tagesmitgliedschaft für Fr. {% price_of_day_pass %} lösen. Bezahlen kann man in Bar oder mit Twint.</p>
         <p class="card-text">
             In der Nähe vom Landeplatz gibt es drei Zeltplätze und selbst wenn diese Zeltplätze ausgebucht sind, ist
             wildes Campieren in der Gemeinde Brienz verboten. In den umliegenden Gemeinden ist im Auto schlafen kein

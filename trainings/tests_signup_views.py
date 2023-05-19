@@ -9,7 +9,7 @@ from django.utils import timezone
 from django.urls import reverse
 
 from .models import Training, Signup
-from bookkeeping.models import Report, Run
+from bookkeeping.models import Bill, Purchase, Report, Run
 
 
 locale.setlocale(locale.LC_TIME, "de_CH")
@@ -168,6 +168,24 @@ class SignupCreateViewTests(TestCase):
         self.assertEqual(self.next_monday.strftime("%A"), "Montag")
         self.next_saturday = date(2007, 1, 13)
         self.assertEqual(self.next_saturday.strftime("%A"), "Samstag")
+
+    def test_login_required(self):
+        self.client.logout()
+        with self.assertNumQueries(0):
+            response = self.client.get(reverse("signup"), follow=True)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "news/login.html")
+
+    def test_infos_and_prices_shown(self):
+        with self.assertNumQueries(3):
+            response = self.client.get(reverse("signup"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "trainings/infos.html")
+        self.assertContains(response, f"Fr. {Bill.PRICE_OF_FLIGHT}")
+        self.assertContains(response, f"Fr. {Purchase.DAY_PASS_PRICE}")
+        # I couldn't come up with a different simple way to get the price of prepaid
+        # flights, so I use the magic 72 for now 🤷
+        self.assertContains(response, f"Fr. 72")
 
     @mock.patch("trainings.views.timezone")
     @mock.patch("trainings.views.reverse_lazy")
