@@ -262,8 +262,8 @@ class BillCreateViewTests(TestCase):
         bill = Bill(signup=self.guest_signup, report=self.report)
         self.assertContains(response, f'value="{bill.num_prepaid_flights}"')
         self.assertContains(response, f'value="{bill.to_pay}"')
-        self.assertNotContains(response, "Mit Abo bezahlt")
-        self.assertNotContains(response, "Flüge gutgeschrieben")
+        self.assertNotContains(response, "<td>Mit Abo bezahlt</td>")
+        self.assertNotContains(response, "<td>Flüge gutgeschrieben</td>")
 
         self.guest.prepaid_flights = 10
         self.guest.save()
@@ -279,7 +279,7 @@ class BillCreateViewTests(TestCase):
         bill = Bill(signup=self.guest_signup, report=self.report)
         self.assertContains(response, f'value="{bill.num_prepaid_flights}"')
         self.assertContains(response, f'value="{bill.to_pay}"')
-        self.assertContains(response, "Mit Abo bezahlt")
+        self.assertContains(response, "<td>Mit Abo bezahlt</td>")
 
         for run in Run.objects.all():
             if not run.is_service:
@@ -296,7 +296,7 @@ class BillCreateViewTests(TestCase):
         bill = Bill(signup=self.guest_signup, report=self.report)
         self.assertContains(response, f'value="{bill.num_prepaid_flights}"')
         self.assertContains(response, f'value="{bill.to_pay}"')
-        self.assertContains(response, "Flüge gutgeschrieben")
+        self.assertContains(response, "<td>Flüge gutgeschrieben</td>")
 
     def test_purchase_shown(self):
         purchase = Purchase.objects.create(
@@ -361,7 +361,7 @@ class BillCreateViewTests(TestCase):
         bill = Bill(signup=self.guest_signup, report=self.report)
         self.assertContains(response, f'value="{bill.num_prepaid_flights}"')
         self.assertContains(response, f'value="{bill.to_pay}"')
-        self.assertNotContains(response, "Mit Abo bezahlt")
+        self.assertNotContains(response, "<td>Mit Abo bezahlt</td>")
         self.assertContains(
             response,
             f'value="{PaymentMethods.CASH}" class="form-check-input" id="id_method_0" required checked',
@@ -686,8 +686,8 @@ class BillUpdateViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/bill_update.html")
         self.assertContains(response, f'value="{self.bill.num_prepaid_flights}"')
-        self.assertNotContains(response, "Mit Abo bezahlt")
-        self.assertNotContains(response, "Flüge gutgeschrieben")
+        self.assertNotContains(response, "<td>Mit Abo bezahlt</td>")
+        self.assertNotContains(response, "<td>Flüge gutgeschrieben</td>")
 
         self.orga.prepaid_flights = 10
         self.orga.save()
@@ -699,7 +699,7 @@ class BillUpdateViewTests(TestCase):
         self.assertTemplateUsed(response, "bookkeeping/bill_update.html")
         self.assertContains(response, f'value="{self.bill.num_prepaid_flights}"')
         self.assertContains(response, f'value="{self.bill.to_pay}"')
-        self.assertContains(response, "Mit Abo bezahlt")
+        self.assertContains(response, "<td>Mit Abo bezahlt</td>")
 
         for run in Run.objects.all():
             if not run.is_service:
@@ -712,7 +712,7 @@ class BillUpdateViewTests(TestCase):
         self.assertTemplateUsed(response, "bookkeeping/bill_update.html")
         self.assertContains(response, f'value="{self.bill.num_prepaid_flights}"')
         self.assertContains(response, f'value="{self.bill.to_pay}"')
-        self.assertContains(response, "Flüge gutgeschrieben")
+        self.assertContains(response, "<td>Flüge gutgeschrieben</td>")
 
     def test_purchase_shown(self):
         with self.assertNumQueries(13):
@@ -743,7 +743,7 @@ class BillUpdateViewTests(TestCase):
         self.assertTemplateUsed(response, "bookkeeping/bill_update.html")
         self.assertContains(response, f'value="{self.bill.num_prepaid_flights}"')
         self.assertContains(response, f'value="{self.bill.amount}"')
-        self.assertNotContains(response, "Mit Abo bezahlt")
+        self.assertNotContains(response, "<td>Mit Abo bezahlt</td>")
         self.assertContains(
             response,
             f'value="{self.bill.method}" class="form-check-input" id="id_method_0" required checked',

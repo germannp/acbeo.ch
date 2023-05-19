@@ -7,7 +7,7 @@
 {% block content %}
 
 <div class="row mt-2">
-    <div class="col-xl-6">
+    <div class="col-xl-4 col-lg-5">
         <div class="card mb-4">
             <h5 class="card-header">{{ bill.signup.pilot }} für {{ bill.report.training.date | date:"D., j. M." }}</h5>
             <div class="card-body">
@@ -86,7 +86,7 @@
                                 value="{% if form.amount.value %}{{ form.amount.value }}{% else %}{{ bill.to_pay }}{% endif %}">
                             <label>Betrag</label>
                         </div>
-                        <div class="d-grid gap-2 d-sm-block">
+                        <div class="d-grid gap-2 d-block">
                             <a href="{% url 'create_purchase' date=bill.signup.training.date.isoformat signup=bill.signup.pk %}"
                                 class="btn btn-primary">Einkauf erfassen</a>
                             {% if not bill.signup.is_training_orga %}
@@ -102,6 +102,11 @@
             </div>
         </div>
     </div>
+
+    <div class="col float-right">
+        {% include 'bookkeeping/explanations.html' %}
+    </div>
+
 </div>
 
 {% endblock content %}
