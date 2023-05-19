@@ -233,11 +233,11 @@ class ReportCreateView(OrgaRequiredMixin, generic.CreateView):
     model = Report
     fields = ("cash_at_start",)
     template_name = "bookkeeping/report_create.html"
-    success_url = reverse_lazy("update_report", kwargs={"date": date.today()})
+    success_url = reverse_lazy("update_report", kwargs={"date": timezone.now().date()})
 
     def get(self, *args, **kwargs):
         """Redirect to existing report"""
-        training = get_object_or_404(Training, date=date.today())
+        training = get_object_or_404(Training, date=timezone.now().date())
         if Report.objects.filter(training=training).exists():
             return redirect(self.success_url)
 
@@ -245,7 +245,7 @@ class ReportCreateView(OrgaRequiredMixin, generic.CreateView):
 
     def form_valid(self, form):
         """Fill in training or redirect to existing report"""
-        training = get_object_or_404(Training, date=date.today())
+        training = get_object_or_404(Training, date=timezone.now().date())
         if Report.objects.filter(training=training).exists():
             return redirect(self.success_url)
 
@@ -273,7 +273,7 @@ class ReportUpdateView(OrgaRequiredMixin, generic.UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["today"] = date.today()
+        context["today"] = timezone.now().date()
         runs = self.object.runs.all()
         times_of_runs = sorted(set(run.created_on for run in runs))
         context["times_of_runs"] = times_of_runs
@@ -459,7 +459,7 @@ class RunCreateView(OrgaRequiredMixin, generic.TemplateView):
 
     def get(self, *args, **kwargs):
         """Redirect to create_report if no report exists"""
-        training = get_object_or_404(Training, date=date.today())
+        training = get_object_or_404(Training, date=timezone.now().date())
         if not Report.objects.filter(training=training).exists():
             return redirect(self.success_url)
 
@@ -469,7 +469,8 @@ class RunCreateView(OrgaRequiredMixin, generic.TemplateView):
         context = super().get_context_data(**kwargs)
         context["Kind"] = Run.Kind
         training = get_object_or_404(
-            Training.objects.prefetch_related("signups__pilot"), date=date.today()
+            Training.objects.prefetch_related("signups__pilot"),
+            date=timezone.now().date(),
         )
         active_signups = training.active_signups
         if "formset" in context:
@@ -498,7 +499,7 @@ class RunCreateView(OrgaRequiredMixin, generic.TemplateView):
     def formset_valid(self, formset):
         training = get_object_or_404(
             Training.objects.prefetch_related("signups__pilot"),
-            date=date.today(),
+            date=timezone.now().date(),
         )
         if not len(training.active_signups) == len(formset):
             messages.warning(
@@ -531,7 +532,7 @@ class RunUpdateView(OrgaRequiredMixin, generic.TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["Kind"] = Run.Kind
-        training = get_object_or_404(Training, date=date.today())
+        training = get_object_or_404(Training, date=timezone.now().date())
         report = get_object_or_404(Report, training=training)
         times_of_runs = sorted(set(run.created_on for run in report.runs.all()))
         if (num_run := self.kwargs["run"] - 1) >= len(times_of_runs):
@@ -560,7 +561,7 @@ class RunUpdateView(OrgaRequiredMixin, generic.TemplateView):
         return self.render_to_response(self.get_context_data(formset=formset))
 
     def formset_valid(self, formset):
-        training = get_object_or_404(Training.objects, date=date.today())
+        training = get_object_or_404(Training.objects, date=timezone.now().date())
         report = get_object_or_404(Report, training=training)
         times_of_runs = sorted(set(run.created_on for run in report.runs.all()))
         num_run = self.kwargs["run"] - 1
@@ -581,7 +582,7 @@ class RunUpdateView(OrgaRequiredMixin, generic.TemplateView):
         return HttpResponseRedirect(self.success_url)
 
     def delete_run(self, formset):
-        training = get_object_or_404(Training, date=date.today())
+        training = get_object_or_404(Training, date=timezone.now().date())
         report = get_object_or_404(Report, training=training)
         times_of_runs = sorted(set(run.created_on for run in report.runs.all()))
         num_run = self.kwargs["run"] - 1

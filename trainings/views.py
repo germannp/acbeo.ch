@@ -1,5 +1,4 @@
-from datetime import date, timedelta
-import locale
+from datetime import timedelta
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
@@ -7,33 +6,32 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
+from django.utils import timezone
 from django.views import generic
 
 from . import forms
 from .models import Signup, Training
-
-locale.setlocale(locale.LC_TIME, "de_CH")
 
 
 class TrainingListView(LoginRequiredMixin, generic.ListView):
     paginate_by = 4
 
     def get_queryset(self):
-        trainings = Training.objects.filter(date__gte=date.today()).prefetch_related(
+        trainings = Training.objects.filter(date__gte=timezone.now().date()).prefetch_related(
             "signups__pilot"
         )
         for training in trainings:
             training.select_signups()
         # Selecting signups can alter their order, but Signup instances cannot be sorted.
         # Refreshing them from the DB is the best solution I found 🤷
-        trainings = Training.objects.filter(date__gte=date.today()).prefetch_related(
+        trainings = Training.objects.filter(date__gte=timezone.now().date()).prefetch_related(
             "signups__pilot"
         )
         return trainings
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        today = date.today()
+        today = timezone.now().date()
         context["day_after_tomorrow"] = today + timedelta(days=2)
         context["today"] = today
         return context
@@ -64,7 +62,7 @@ class TrainingUpdateView(OrgaRequiredMixin, generic.UpdateView):
     template_name = "trainings/training_update.html"
 
     def get_object(self):
-        if self.kwargs["date"] < date.today():
+        if self.kwargs["date"] < timezone.now().date():
             raise Http404("Vergangene Trainings können nicht bearbeitet werden.")
         return get_object_or_404(Training, date=self.kwargs["date"])
 
@@ -84,7 +82,7 @@ class EmergencyMailView(OrgaRequiredMixin, SuccessMessageMixin, generic.UpdateVi
     success_message = "Seepolizeimail abgesendet."
 
     def get_object(self):
-        today = date.today()
+        today = timezone.now().date()
         if self.kwargs["date"] < today:
             raise Http404(
                 "Seepolizeimail kann nicht für vergangene Trainings versandt werden."
@@ -113,7 +111,7 @@ class SignupListView(LoginRequiredMixin, generic.ListView):
     model = Signup
 
     def get_queryset(self):
-        today = date.today()
+        today = timezone.now().date()
         queryset = (
             Signup.objects.filter(pilot=self.request.user, training__date__gte=today)
             .select_related("training")
@@ -140,7 +138,7 @@ class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateVi
         if "date" in self.kwargs:
             return {"date": self.kwargs["date"].isoformat()}
 
-        today = date.today()
+        today = timezone.now().date()
         if today.weekday() >= 5:  # Saturdays and Sundays
             return {"date": today.isoformat()}
 
@@ -199,7 +197,7 @@ class SignupUpdateView(LoginRequiredMixin, generic.UpdateView):
     template_name = "trainings/signup_update.html"
 
     def get_object(self):
-        if self.kwargs["date"] < date.today():
+        if self.kwargs["date"] < timezone.now().date():
             raise Http404("Vergangene Anmeldungen können nicht bearbeitet werden.")
         pilot = self.request.user
         training = get_object_or_404(Training, date=self.kwargs["date"])

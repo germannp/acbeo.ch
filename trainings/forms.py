@@ -6,13 +6,13 @@ from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
+from django.utils import timezone
 from django.utils.html import strip_tags
-
 from .models import Training, Signup
 
 
 def date_relative_to_next_august(month, day):
-    today = date.today()
+    today = timezone.now().date()
     year_of_next_august = today.year + (8 <= today.month)
     return date(year_of_next_august, month, day)
 
@@ -28,7 +28,7 @@ class TrainingCreateForm(forms.Form):
 
     def clean_first_day(self):
         first_day = self.cleaned_data["first_day"]
-        if first_day < date.today():
+        if first_day < timezone.now().date():
             raise ValidationError(
                 "Es können keine Trainings in der Vergangenheit erstellt werden."
             )
@@ -36,7 +36,7 @@ class TrainingCreateForm(forms.Form):
 
     def clean_last_day(self):
         last_day = self.cleaned_data["last_day"]
-        if last_day > date.today() + timedelta(days=365):
+        if last_day > timezone.now().date() + timedelta(days=365):
             raise ValidationError(
                 "Trainings können höchstens ein Jahr im Voraus erstellt werden."
             )
@@ -181,7 +181,7 @@ class SignupCreateForm(forms.ModelForm):
 
     def clean_date(self):
         training_date = self.cleaned_data["date"]
-        today = date.today()
+        today = timezone.now().date()
         if training_date < today:
             raise ValidationError(
                 "Einschreiben ist nur für kommende Trainings möglich."

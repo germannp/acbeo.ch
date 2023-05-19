@@ -1,9 +1,10 @@
-from datetime import date, datetime, timedelta
+from datetime import timedelta
 from http import HTTPStatus
 
 from django.core import mail
 from django.test import RequestFactory, SimpleTestCase, TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from .models import Pilot, Post
 from .middleware import RedirectToNonWwwMiddleware
@@ -34,11 +35,12 @@ class PilotTests(TestCase):
 
     def test_day_passes(self):
         pilot = Pilot.objects.create(email="pilot@example.com")
+        today = timezone.now().date()
         for i in [366, 1, 2, 3]:
-            training = Training.objects.create(date=date.today() - timedelta(days=i))
+            training = Training.objects.create(date=today - timedelta(days=i))
             report = Report.objects.create(training=training, cash_at_start=1337)
             signup = Signup.objects.create(
-                pilot=pilot, training=training, signed_up_on=datetime.now()
+                pilot=pilot, training=training, signed_up_on=timezone.now()
             )
             Purchase.save_day_pass(signup, report)
         self.assertEqual(3, len(pilot.day_passes_of_this_season))
@@ -438,10 +440,12 @@ class MembershipFormViewTests(TestCase):
 
     def test_becoming_member(self):
         for i in range(2):
-            training = Training.objects.create(date=date.today() - timedelta(days=i))
+            training = Training.objects.create(
+                date=timezone.now().date() - timedelta(days=i)
+            )
             report = Report.objects.create(training=training, cash_at_start=1337)
             signup = Signup.objects.create(
-                pilot=self.guest, training=training, signed_up_on=datetime.now()
+                pilot=self.guest, training=training, signed_up_on=timezone.now()
             )
             Purchase.save_day_pass(signup, report)
         with self.assertNumQueries(10):

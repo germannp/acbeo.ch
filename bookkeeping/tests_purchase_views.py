@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import timedelta
 from http import HTTPStatus
 import locale
 
@@ -10,9 +10,10 @@ from django.utils import timezone
 from .models import Bill, PaymentMethods, Purchase, Report, Run
 from trainings.models import Signup, Training
 
+
 locale.setlocale(locale.LC_TIME, "de_CH")
 
-TODAY = date.today()
+TODAY = timezone.now().date()
 YESTERDAY = TODAY - timedelta(days=1)
 
 

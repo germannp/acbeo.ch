@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import timedelta
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -9,7 +9,7 @@ from .models import Bill, Expense, PaymentMethods, Purchase, Report, Run
 from trainings.models import Signup, Training
 
 
-TODAY = date.today()
+TODAY = timezone.now().date()
 YESTERDAY = TODAY - timedelta(days=1)
 
 

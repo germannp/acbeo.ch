@@ -11,9 +11,10 @@ from django.urls import reverse
 from .models import Training, Signup
 from bookkeeping.models import Report, Run
 
+
 locale.setlocale(locale.LC_TIME, "de_CH")
 
-TODAY = date.today()
+TODAY = timezone.now().date()
 YESTERDAY = TODAY - timedelta(days=1)
 TOMORROW = TODAY + timedelta(days=1)
 
@@ -168,11 +169,11 @@ class SignupCreateViewTests(TestCase):
         self.next_saturday = date(2007, 1, 13)
         self.assertEqual(self.next_saturday.strftime("%A"), "Samstag")
 
-    @mock.patch("trainings.views.date")
+    @mock.patch("trainings.views.timezone")
     @mock.patch("trainings.views.reverse_lazy")
-    def test_default_date_is_next_saturday(self, mocked_reverse, mocked_date):
+    def test_default_date_is_next_saturday(self, mocked_reverse, mocked_timezone):
         mocked_reverse.return_value = ""
-        for now, default_date in [
+        for current_date, default_date in [
             (self.monday, self.saturday),
             (self.wednesday, self.saturday),
             (self.friday, self.saturday),
@@ -181,22 +182,27 @@ class SignupCreateViewTests(TestCase):
             (self.next_monday, self.next_saturday),
         ]:
             with self.subTest(
-                now=now.isoformat(), default_date=default_date.isoformat()
+                current_date=current_date.isoformat(),
+                default_date=default_date.isoformat(),
             ):
-                mocked_date.today.return_value = now
+                mocked_now = mock.MagicMock()
+                mocked_now.date.return_value = current_date
+                mocked_timezone.now.return_value = mocked_now
                 with self.assertNumQueries(3):
                     response = self.client.get(reverse("signup"))
                 self.assertEqual(response.status_code, HTTPStatus.OK)
                 self.assertTemplateUsed(response, "trainings/signup_create.html")
                 self.assertContains(response, f'value="{default_date.isoformat()}"')
 
-    @mock.patch("trainings.forms.date", wraps=date)
-    @mock.patch("trainings.views.date", wraps=date)
+    @mock.patch("trainings.forms.timezone", wraps=timezone)
+    @mock.patch("trainings.views.timezone", wraps=timezone)
     def test_default_priority_date_is_wednesday_before_training(
-        self, views_date, forms_date
+        self, views_timezone, forms_timezone
     ):
-        views_date.today.return_value = self.monday
-        forms_date.today.return_value = self.monday
+        mocked_now = mock.MagicMock()
+        mocked_now.date.return_value = self.monday
+        views_timezone.now.return_value = mocked_now
+        forms_timezone.now.return_value = mocked_now
         dates = [
             self.wednesday,
             self.saturday,

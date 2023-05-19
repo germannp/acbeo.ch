@@ -1,9 +1,9 @@
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
-from django.utils.timezone import make_aware
+from django.utils import timezone
 
 from bookkeeping.models import Purchase
 
@@ -74,7 +74,7 @@ class Training(models.Model):
             ]
             spots_for_orgas -= len(orgas_to_select)
 
-        if date.today() <= self.priority_date:
+        if timezone.now().date() <= self.priority_date:
             signups = [signup for signup in signups if signup.has_priority]
 
         for signup in signups[: self.max_pilots - spots_for_orgas]:
@@ -203,12 +203,12 @@ class Signup(models.Model):
 
     def cancel(self):
         assert self.is_cancelable, f"Trying to cancel {self} relevant for billing!"
-        self.signed_up_on = make_aware(datetime.now())
+        self.signed_up_on = timezone.now()
         self.status = self.Status.CANCELED
         # Not saving, because called before saving updates from form
 
     def resignup(self):
-        self.signed_up_on = make_aware(datetime.now())
+        self.signed_up_on = timezone.now()
         self.status = self.Status.WAITING
         # Not saving, because called before saving updates from form
 
@@ -218,7 +218,7 @@ class Signup(models.Model):
         self.is_certain = new_is_certain
         if new_is_certain:
             return
-        self.signed_up_on = make_aware(datetime.now())
+        self.signed_up_on = timezone.now()
         self.status = self.Status.WAITING
         # Not saving, because called before saving updates from form
 
@@ -230,6 +230,6 @@ class Signup(models.Model):
             return
         if old_duration != self.Duration.ALL_DAY:
             return
-        self.signed_up_on = make_aware(datetime.now())
+        self.signed_up_on = timezone.now()
         self.status = self.Status.WAITING
         # Not saving, because called before saving updates from form

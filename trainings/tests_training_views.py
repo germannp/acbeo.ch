@@ -1,4 +1,4 @@
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from http import HTTPStatus
 import locale
 from unittest import mock
@@ -7,12 +7,14 @@ from django.contrib.auth import get_user_model
 from django.core import mail
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from .models import Training, Signup
 
+
 locale.setlocale(locale.LC_TIME, "de_CH")
 
-TODAY = date.today()
+TODAY = timezone.now().date()
 YESTERDAY = TODAY - timedelta(days=1)
 TOMORROW = TODAY + timedelta(days=1)
 
@@ -66,7 +68,7 @@ class TrainingListViewTests(TestCase):
         self.assertEqual(self.signup.status, Signup.Status.SELECTED)
 
     def test_freshly_selected_signups_are_listed_first(self):
-        now = datetime.now()
+        now = timezone.now()
         low_priority_signup = Signup.objects.create(
             pilot=self.pilot_b,
             training=self.last_training,
@@ -255,9 +257,11 @@ class TrainingCreateViewTests(TestCase):
         self.assertTemplateUsed(response, "base.html")
         self.assertNotContains(response, reverse("create_trainings"))
 
-    @mock.patch("trainings.forms.date", wraps=date)
-    def test_prefilled_default_is_next_august(self, mocked_date):
-        mocked_date.today.return_value = date(1984, 1, 1)
+    @mock.patch("trainings.forms.timezone", wraps=timezone)
+    def test_prefilled_default_is_next_august(self, mocked_timezone):
+        mocked_now = mock.MagicMock()
+        mocked_now.date.return_value = date(1984, 1, 1)
+        mocked_timezone.now.return_value = mocked_now
         with self.assertNumQueries(4):
             response = self.client.get(reverse("create_trainings"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
@@ -268,7 +272,7 @@ class TrainingCreateViewTests(TestCase):
         self.assertContains(response, 'value="Axalpwochen"')
         self.assertContains(response, 'name="max_pilots" value=10')
 
-        mocked_date.today.return_value = date(1984, 8, 1)
+        mocked_now.date.return_value = date(1984, 8, 1)
         with self.assertNumQueries(4):
             response = self.client.get(reverse("create_trainings"))
         self.assertEqual(response.status_code, HTTPStatus.OK)

@@ -1,17 +1,19 @@
-from datetime import date, timedelta
+from datetime import timedelta
 from http import HTTPStatus
 import locale
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from .models import Absorption, PaymentMethods, Report
 from trainings.models import Signup, Training
 
+
 locale.setlocale(locale.LC_TIME, "de_CH")
 
-TODAY = date.today()
+TODAY = timezone.now().date()
 YESTERDAY = TODAY - timedelta(days=1)
 
 

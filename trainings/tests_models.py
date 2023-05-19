@@ -1,4 +1,4 @@
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from unittest import mock
 
 from django.contrib.auth import get_user_model
@@ -9,7 +9,7 @@ from .models import Training, Signup
 from bookkeeping.models import Bill, PaymentMethods, Purchase, Report, Run
 
 
-TODAY = date.today()
+TODAY = timezone.now().date()
 YESTERDAY = TODAY - timedelta(days=1)
 TOMORROW = TODAY + timedelta(days=1)
 
@@ -23,7 +23,7 @@ class TrainingTests(TestCase):
             email="pilot_b@example.com", role=get_user_model().Role.MEMBER
         )
         self.training = Training.objects.create(date=TOMORROW, max_pilots=3)
-        now = datetime.now()
+        now = timezone.now()
         self.signup_a = Signup.objects.create(
             pilot=pilot_a, training=self.training, signed_up_on=now
         )
@@ -48,7 +48,7 @@ class TrainingTests(TestCase):
         orga_2 = get_user_model().objects.create(
             email="orga_2@example.com", role=get_user_model().Role.ORGA
         )
-        now = datetime.now() + timedelta(hours=1)
+        now = timezone.now() + timedelta(hours=1)
         signup_1 = Signup.objects.create(
             pilot=orga_1, training=self.training, signed_up_on=now
         )
@@ -184,71 +184,71 @@ class SignupTests(TestCase):
         self.assertTrue(self.signup.has_priority)
         self.assertFalse(self.guest_signup.has_priority)
 
-    @mock.patch("trainings.models.datetime")
-    def test_resignup_sets_to_waiting_list(self, mocked_datetime):
-        mocked_datetime.now.return_value = datetime.now()
+    @mock.patch("trainings.models.timezone")
+    def test_resignup_sets_to_waiting_list(self, mocked_timezone):
+        mocked_timezone.now.return_value = timezone.now()
         self.assertEqual(self.signup.status, Signup.Status.SELECTED)
 
-        mocked_datetime.now.return_value += timedelta(seconds=10)
+        mocked_timezone.now.return_value += timedelta(seconds=10)
         self.signup.cancel()
         time_of_cancelation = self.signup.signed_up_on
         self.assertLess(self.time_selected, time_of_cancelation)
         self.assertEqual(self.signup.status, Signup.Status.CANCELED)
 
-        mocked_datetime.now.return_value += timedelta(seconds=10)
+        mocked_timezone.now.return_value += timedelta(seconds=10)
         self.signup.resignup()
         self.assertLess(time_of_cancelation, self.signup.signed_up_on)
         self.assertEqual(self.signup.status, Signup.Status.WAITING)
 
-    @mock.patch("trainings.models.datetime")
+    @mock.patch("trainings.models.timezone")
     def test_update_is_certain_sets_to_waiting_list_and_removes_priority(
-        self, mocked_datetime
+        self, mocked_timezone
     ):
-        mocked_datetime.now.return_value = datetime.now()
+        mocked_timezone.now.return_value = timezone.now()
         self.assertEqual(self.signup.status, Signup.Status.SELECTED)
         self.assertTrue(self.signup.has_priority)
 
-        mocked_datetime.now.return_value += timedelta(seconds=10)
+        mocked_timezone.now.return_value += timedelta(seconds=10)
         self.signup.update_is_certain(False)
         time_of_update_to_uncertain = self.signup.signed_up_on
         self.assertLess(self.time_selected, time_of_update_to_uncertain)
         self.assertEqual(self.signup.status, Signup.Status.WAITING)
         self.assertFalse(self.signup.has_priority)
 
-        mocked_datetime.now.return_value += timedelta(seconds=10)
+        mocked_timezone.now.return_value += timedelta(seconds=10)
         self.signup.update_is_certain(True)
         self.assertEqual(time_of_update_to_uncertain, self.signup.signed_up_on)
         self.assertEqual(self.signup.status, Signup.Status.WAITING)
         self.assertTrue(self.signup.has_priority)
 
-    @mock.patch("trainings.models.datetime")
+    @mock.patch("trainings.models.timezone")
     def test_update_duration_sets_to_waiting_list_and_removes_priority(
-        self, mocked_datetime
+        self, mocked_timezone
     ):
-        mocked_datetime.now.return_value = datetime.now()
+        mocked_timezone.now.return_value = timezone.now()
         self.assertEqual(self.signup.status, Signup.Status.SELECTED)
         self.assertTrue(self.signup.has_priority)
 
-        mocked_datetime.now.return_value += timedelta(seconds=10)
+        mocked_timezone.now.return_value += timedelta(seconds=10)
         self.signup.update_duration(Signup.Duration.ARRIVING_LATE)
         time_of_update_to_arrive_late = self.signup.signed_up_on
         self.assertLess(self.time_selected, time_of_update_to_arrive_late)
         self.assertEqual(self.signup.status, Signup.Status.WAITING)
         self.assertFalse(self.signup.has_priority)
 
-        mocked_datetime.now.return_value += timedelta(seconds=10)
+        mocked_timezone.now.return_value += timedelta(seconds=10)
         self.signup.update_duration(Signup.Duration.LEAVING_EARLY)
         self.assertEqual(time_of_update_to_arrive_late, self.signup.signed_up_on)
         self.assertEqual(self.signup.status, Signup.Status.WAITING)
         self.assertFalse(self.signup.has_priority)
 
-        mocked_datetime.now.return_value += timedelta(seconds=10)
+        mocked_timezone.now.return_value += timedelta(seconds=10)
         self.signup.update_duration(Signup.Duration.INDIVIDUALLY)
         self.assertEqual(time_of_update_to_arrive_late, self.signup.signed_up_on)
         self.assertEqual(self.signup.status, Signup.Status.WAITING)
         self.assertFalse(self.signup.has_priority)
 
-        mocked_datetime.now.return_value += timedelta(seconds=10)
+        mocked_timezone.now.return_value += timedelta(seconds=10)
         self.signup.update_duration(Signup.Duration.ALL_DAY)
         self.assertEqual(time_of_update_to_arrive_late, self.signup.signed_up_on)
         self.assertEqual(self.signup.status, Signup.Status.WAITING)
