@@ -233,7 +233,9 @@ class ReportCreateView(OrgaRequiredMixin, generic.CreateView):
     model = Report
     fields = ("cash_at_start",)
     template_name = "bookkeeping/report_create.html"
-    success_url = reverse_lazy("update_report", kwargs={"date": timezone.now().date()})
+    success_url = reverse_lazy(
+        "update_report", kwargs={"date": timezone.localtime().date()}
+    )
 
     def get(self, *args, **kwargs):
         """Redirect to existing report"""
