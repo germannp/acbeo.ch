@@ -1,8 +1,11 @@
 from datetime import timedelta
 from http import HTTPStatus
 import locale
+from unittest import mock
 
 from django.contrib.auth import get_user_model
+from django.core import mail
+from django.core.files import File
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -19,10 +22,10 @@ YESTERDAY = TODAY - timedelta(days=1)
 
 class ExpenseCreateViewTests(TestCase):
     def setUp(self):
-        orga = get_user_model().objects.create(
-            email="orga@example.com", role=get_user_model().Role.ORGA
+        self.orga = get_user_model().objects.create(
+            email="orga@example.com", first_name="Orga", role=get_user_model().Role.ORGA
         )
-        self.client.force_login(orga)
+        self.client.force_login(self.orga)
 
         training = Training.objects.create(date=TODAY)
         self.report = Report.objects.create(training=training, cash_at_start=1337)
@@ -51,6 +54,7 @@ class ExpenseCreateViewTests(TestCase):
     def test_amount_cannot_be_negative_and_is_prefilled(self):
         other_reason = "Other reason"
         amount = -42
+        mocked_image = mock.MagicMock(spec=File)
         with self.assertNumQueries(6):
             response = self.client.post(
                 reverse("create_expense", kwargs={"date": TODAY}),
@@ -58,6 +62,7 @@ class ExpenseCreateViewTests(TestCase):
                     "reason": Expense.Reasons.OTHER,
                     "other_reason": other_reason,
                     "amount": amount,
+                    "receipt": mocked_image,
                 },
                 follow=True,
             )
@@ -66,13 +71,30 @@ class ExpenseCreateViewTests(TestCase):
         self.assertContains(response, other_reason)
         self.assertContains(response, amount)
 
+    @mock.patch("bookkeeping.forms.ExpenseCreateForm.send_mail")
+    def test_failure_on_sending_mail(self, mocked_send_mail):
+        mocked_send_mail.side_effect = lambda: 1/0
+        reason = Expense.Reasons.GAS
+        amount = 42
+        mocked_image = mock.MagicMock(spec=File)
+        with self.assertRaises(ZeroDivisionError):
+            self.client.post(
+                reverse("create_expense", kwargs={"date": TODAY}),
+                data={"reason": reason, "amount": amount, "receipt": mocked_image},
+                follow=True,
+            )
+
+        self.assertEqual(0, len(Expense.objects.all()))
+        self.assertEqual(0, len(mail.outbox))
+
     def test_create_expense(self):
         reason = Expense.Reasons.GAS
         amount = 42
-        with self.assertNumQueries(17):
+        mocked_image = mock.MagicMock(spec=File)
+        with self.assertNumQueries(18):
             response = self.client.post(
                 reverse("create_expense", kwargs={"date": TODAY}),
-                data={"reason": reason, "amount": amount},
+                data={"reason": reason, "amount": amount, "receipt": mocked_image},
                 follow=True,
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
@@ -81,21 +103,36 @@ class ExpenseCreateViewTests(TestCase):
             response,
             f"Ausgabe für {Expense.Reasons.GAS.label} über Fr. {amount} gespeichert.",
         )
+
         self.assertEqual(1, len(Expense.objects.all()))
         created_expense = Expense.objects.first()
         self.assertEqual(Expense.Reasons.GAS.label, created_expense.reason)
         self.assertEqual(amount, created_expense.amount)
 
+        # For more on testing mails see https://blog.ovalerio.net/archives/1856
+        self.assertEqual(1, len(mail.outbox))
+        self.assertEqual(mail.outbox[0].from_email, "dev@example.com")
+        self.assertEqual(mail.outbox[0].to, ["finance@example.com"])
+        self.assertTrue(str(amount) in mail.outbox[0].subject)
+        self.assertTrue(reason.label in mail.outbox[0].subject)
+        self.assertTrue(str(self.orga) in mail.outbox[0].body)
+        self.assertTrue(str(TODAY) in mail.outbox[0].body)
+        self.assertEqual(1, len(mail.outbox[0].attachments))
+        file_name, _, _ = mail.outbox[0].attachments[0]
+        self.assertEqual(file_name, "receipt")
+
     def test_create_expense_for_other_reason(self):
         other_reason = "Other reason"
         amount = 42
-        with self.assertNumQueries(17):
+        mocked_image = mock.MagicMock(spec=File)
+        with self.assertNumQueries(18):
             response = self.client.post(
                 reverse("create_expense", kwargs={"date": TODAY}),
                 data={
                     "reason": Expense.Reasons.OTHER,
                     "other_reason": other_reason,
                     "amount": amount,
+                    "receipt": mocked_image,
                 },
                 follow=True,
             )
@@ -104,10 +141,22 @@ class ExpenseCreateViewTests(TestCase):
         self.assertContains(
             response, f"Ausgabe für {other_reason} über Fr. {amount} gespeichert."
         )
+
         self.assertEqual(1, len(Expense.objects.all()))
         created_expense = Expense.objects.first()
         self.assertEqual(other_reason, created_expense.reason)
         self.assertEqual(amount, created_expense.amount)
+
+        self.assertEqual(1, len(mail.outbox))
+        self.assertEqual(mail.outbox[0].from_email, "dev@example.com")
+        self.assertEqual(mail.outbox[0].to, ["finance@example.com"])
+        self.assertTrue(str(amount) in mail.outbox[0].subject)
+        self.assertTrue(other_reason in mail.outbox[0].subject)
+        self.assertTrue(str(self.orga) in mail.outbox[0].body)
+        self.assertTrue(str(TODAY) in mail.outbox[0].body)
+        self.assertEqual(1, len(mail.outbox[0].attachments))
+        file_name, _, _ = mail.outbox[0].attachments[0]
+        self.assertEqual(file_name, "receipt")
 
     def test_report_not_found_404(self):
         with self.assertNumQueries(5):

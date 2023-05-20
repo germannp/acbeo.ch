@@ -56,6 +56,7 @@ else:
 
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "dev@example.com")
 INFO_EMAIL = os.getenv("INFO_EMAIL", "info@example.com")
+FINANCE_EMAIL = os.getenv("FINANCE_EMAIL", "finance@example.com")
 EMERGENCY_EMAILS = os.getenv(
     "EMERGENCY_EMAILS", "emergency@example.com,emergency2@example.com"
 ).split(",")

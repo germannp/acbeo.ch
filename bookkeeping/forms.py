@@ -1,5 +1,7 @@
 from django import forms
+from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.mail import EmailMessage
 from django.forms import modelformset_factory
 
 from .models import Absorption, Bill, Expense, PaymentMethods, Purchase, Run
@@ -13,6 +15,7 @@ class ExpenseCreateForm(forms.ModelForm):
         widget=forms.widgets.RadioSelect(attrs={"class": "form-check-input"}),
     )
     other_reason = forms.CharField(max_length=50, required=False)
+    receipt = forms.FileField()
 
     class Meta:
         model = Expense  # Allow view to fill in report
@@ -27,6 +30,17 @@ class ExpenseCreateForm(forms.ModelForm):
         if not (other_reason := cleaned_data.get("other_reason")):
             raise ValidationError("Bitte Grund angeben.")
         self.instance.reason = other_reason
+
+    def send_mail(self):
+        mail = EmailMessage(
+            subject=f"Beleg für {self.instance.reason} über Fr. {self.instance.amount}",
+            body=f"Erfasst von {self.sender} für das Training vom {self.instance.report.training.date}.",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[settings.FINANCE_EMAIL],
+        )
+        receipt = self.cleaned_data["receipt"]
+        mail.attach(receipt.name, receipt.read(), receipt.content_type)
+        mail.send(fail_silently=False)
 
 
 class AbsorptionForm(forms.ModelForm):

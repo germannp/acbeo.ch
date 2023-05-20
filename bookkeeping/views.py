@@ -347,6 +347,8 @@ class ExpenseCreateView(OrgaRequiredMixin, generic.CreateView):
             self.request,
             f"Ausgabe für {form.instance.reason} über Fr. {form.instance.amount} gespeichert.",
         )
+        form.sender = self.request.user
+        form.send_mail()
         return super().form_valid(form)
 
     def get_success_url(self):
