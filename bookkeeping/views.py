@@ -233,15 +233,12 @@ class ReportCreateView(OrgaRequiredMixin, generic.CreateView):
     model = Report
     fields = ("cash_at_start",)
     template_name = "bookkeeping/report_create.html"
-    success_url = reverse_lazy(
-        "update_report", kwargs={"date": timezone.localtime().date()}
-    )
 
     def get(self, *args, **kwargs):
         """Redirect to existing report"""
         training = get_object_or_404(Training, date=timezone.now().date())
         if Report.objects.filter(training=training).exists():
-            return redirect(self.success_url)
+            return redirect(self.get_success_url())
 
         return super().get(*args, **kwargs)
 
@@ -249,10 +246,15 @@ class ReportCreateView(OrgaRequiredMixin, generic.CreateView):
         """Fill in training or redirect to existing report"""
         training = get_object_or_404(Training, date=timezone.now().date())
         if Report.objects.filter(training=training).exists():
-            return redirect(self.success_url)
+            return redirect(self.get_success_url())
 
         form.instance.training = training
         return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy(
+            "update_report", kwargs={"date": timezone.localtime().date()}
+        )
 
 
 class ReportUpdateView(OrgaRequiredMixin, generic.UpdateView):

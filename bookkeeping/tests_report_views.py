@@ -1,5 +1,6 @@
 from datetime import timedelta
 from http import HTTPStatus
+from unittest import mock
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
@@ -528,9 +529,15 @@ class ReportCreateViewTests(TestCase):
         created_report = Report.objects.first()
         self.assertEqual(1337, created_report.cash_at_start)
 
-    def test_redirect_to_existing_report(self):
-        training = Training.objects.create(date=TODAY)
+    @mock.patch("bookkeeping.views.timezone")
+    def test_redirect_to_existing_report(self, mocked_timezone):
+        training = Training.objects.create(date=YESTERDAY)
         report = Report.objects.create(training=training, cash_at_start=1337)
+        mocked_timezone.now.return_value = timezone.now() - timedelta(days=1)
+        mocked_timezone.localtime.return_value = timezone.localtime() - timedelta(
+            days=1
+        )
+
         with self.assertNumQueries(16):
             response = self.client.get(reverse("create_report"), follow=True)
         self.assertEqual(response.status_code, HTTPStatus.OK)
