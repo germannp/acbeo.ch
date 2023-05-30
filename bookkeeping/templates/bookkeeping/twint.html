@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block title %}TWINT QR Code{% endblock title %}
+
+{% block headline %}TWINT QR Code{% endblock headline %}
+
+{% block content %}
+
+<div class="row mt-2">
+    <div class="col-xl-4 col-lg-5">
+        <div class="card mb-4">
+            {% if amount %}
+            <h5 class="card-header">Betrag Fr. {{ amount }}</h5>
+            {% endif %}
+            <div class="card-body">
+                <img class="card-img-top" src="{% static 'bookkeeping/QR code ACBeo Twint.png' %}" alt="TWINT QR Code">
+                {% if view.get_success_url %}
+                <a href="{{ view.get_success_url }}" class="btn btn-primary">Fertig</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}

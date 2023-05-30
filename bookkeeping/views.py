@@ -660,7 +660,7 @@ class BillCreateView(OrgaRequiredMixin, generic.CreateView):
         )
         if signup.is_paid:
             messages.warning(self.request, f"{signup.pilot} hat bereits bezahlt.")
-            return redirect(self.get_success_url())
+            return redirect(self.get_report_url())
 
         return super().get(*args, **kwargs)
 
@@ -680,10 +680,6 @@ class BillCreateView(OrgaRequiredMixin, generic.CreateView):
 
     def post(self, request, *args, **kwargs):
         """Deal with training orgas"""
-        create_bill_url = reverse_lazy(
-            "create_bill",
-            kwargs={"date": self.kwargs["date"], "signup": self.kwargs["signup"]},
-        )
         if "make-orga" in request.POST:
             signup = get_object_or_404(
                 Signup.objects.select_related("bill"), pk=self.kwargs["signup"]
@@ -693,31 +689,31 @@ class BillCreateView(OrgaRequiredMixin, generic.CreateView):
                     request,
                     f"Nicht zu Tagesleiter·in gemacht, {signup.pilot} hat bereits bezahlt.",
                 )
-                return HttpResponseRedirect(self.get_success_url())
+                return HttpResponseRedirect(self.get_report_url())
 
             if signup.is_training_orga:
                 messages.warning(request, "Ist bereits Tagesleiter·in.")
-                return HttpResponseRedirect(create_bill_url)
+                return HttpResponseRedirect(self.get_bill_url())
 
             report = get_object_or_404(Report, training=signup.training)
             if not report.orga_1:
                 report.orga_1 = signup
                 report.save()
                 messages.success(request, "Zu Tagesleiter·in gemacht.")
-                return HttpResponseRedirect(create_bill_url)
+                return HttpResponseRedirect(self.get_bill_url())
 
             if not report.orga_2:
                 report.orga_2 = signup
                 report.save()
                 messages.success(request, "Zu Tagesleiter·in gemacht.")
-                return HttpResponseRedirect(create_bill_url)
+                return HttpResponseRedirect(self.get_bill_url())
 
             messages.warning(
                 request,
                 f"Nicht zu Tagesleiter·in gemacht, {report.orga_1.pilot} und "
                 f"{report.orga_2.pilot} sind bereits als Tagesleiter·innen gespeichert.",
             )
-            return HttpResponseRedirect(create_bill_url)
+            return HttpResponseRedirect(self.get_bill_url())
 
         if "undo-orga" in request.POST:
             signup = get_object_or_404(
@@ -728,7 +724,7 @@ class BillCreateView(OrgaRequiredMixin, generic.CreateView):
                     request,
                     f"Tagesleiter·in nicht entfernt, {signup.pilot} hat bereits bezahlt.",
                 )
-                return HttpResponseRedirect(self.get_success_url())
+                return HttpResponseRedirect(self.get_report_url())
 
             report = get_object_or_404(Report, training=signup.training)
             if report.orga_1 == signup:
@@ -739,7 +735,7 @@ class BillCreateView(OrgaRequiredMixin, generic.CreateView):
                 report.orga_2 = None
                 report.save()
             messages.warning(request, "Tagesleiter·in entfernt.")
-            return HttpResponseRedirect(create_bill_url)
+            return HttpResponseRedirect(self.get_bill_url())
 
         return super().post(self, request, *args, **kwargs)
 
@@ -754,7 +750,7 @@ class BillCreateView(OrgaRequiredMixin, generic.CreateView):
         )
         if signup.is_paid:
             messages.warning(self.request, f"{signup.pilot} hat bereits bezahlt.")
-            return HttpResponseRedirect(self.get_success_url())
+            return HttpResponseRedirect(self.get_report_url())
 
         form.instance.signup = signup
         report = get_object_or_404(Report, training=signup.training)
@@ -766,10 +762,35 @@ class BillCreateView(OrgaRequiredMixin, generic.CreateView):
             return super().form_invalid(form)
 
         messages.success(self.request, f"Bezahlung von {signup.pilot} gespeichert.")
+        success_url = self.get_report_url()
+        if form.instance.amount and form.instance.method == PaymentMethods.TWINT:
+            success_url = (
+                reverse_lazy("twint")
+                + f"?betrag={form.instance.amount}&next={success_url}"
+            )
+        self.success_url = success_url
         return super().form_valid(form)
 
-    def get_success_url(self):
+    def get_bill_url(self):
+        return reverse_lazy(
+            "create_bill",
+            kwargs={"date": self.kwargs["date"], "signup": self.kwargs["signup"]},
+        )
+
+    def get_report_url(self):
         return reverse_lazy("update_report", kwargs={"date": self.kwargs["date"]})
+
+
+class TwintView(generic.TemplateView):
+    template_name = "bookkeeping/twint.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["amount"] = self.request.GET.get("betrag")
+        return context
+
+    def get_success_url(self):
+        return self.request.GET.get("next")
 
 
 class BillUpdateView(OrgaRequiredMixin, generic.UpdateView):
@@ -788,7 +809,7 @@ class BillUpdateView(OrgaRequiredMixin, generic.UpdateView):
         if "delete" in request.POST:
             self.get_object().delete()
             messages.success(request, "Abrechnung gelöscht.")
-            return HttpResponseRedirect(self.get_success_url())
+            return HttpResponseRedirect(self.get_report_url())
 
         return super().post(self, request, *args, **kwargs)
 
@@ -803,9 +824,16 @@ class BillUpdateView(OrgaRequiredMixin, generic.UpdateView):
         messages.success(
             self.request, f"Bezahlung von {form.instance.signup.pilot} gespeichert."
         )
+        success_url = self.get_report_url()
+        if form.instance.amount and form.instance.method == PaymentMethods.TWINT:
+            success_url = (
+                reverse_lazy("twint")
+                + f"?betrag={form.instance.amount}&next={success_url}"
+            )
+        self.success_url = success_url
         return super().form_valid(form)
 
-    def get_success_url(self):
+    def get_report_url(self):
         return reverse_lazy("update_report", kwargs={"date": self.kwargs["date"]})
 
 

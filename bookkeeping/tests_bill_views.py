@@ -533,7 +533,7 @@ class BillCreateViewTests(TestCase):
 
     def test_create_bill(self):
         to_pay = Bill(signup=self.guest_signup, report=self.report).to_pay
-        method = PaymentMethods.TWINT
+        method = PaymentMethods.CASH
         with self.assertNumQueries(30):
             response = self.client.post(
                 reverse(
@@ -550,6 +550,32 @@ class BillCreateViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertContains(response, f"Bezahlung von {self.guest} gespeichert.")
+        self.guest_signup.refresh_from_db()
+        self.assertTrue(self.guest_signup.is_paid)
+        self.assertEqual(to_pay, self.guest_signup.bill.amount)
+        self.assertEqual(method, self.guest_signup.bill.method)
+
+    def test_create_bill_redirect_to_twint(self):
+        to_pay = Bill(signup=self.guest_signup, report=self.report).to_pay
+        method = PaymentMethods.TWINT
+        with self.assertNumQueries(14):
+            response = self.client.post(
+                reverse(
+                    "create_bill",
+                    kwargs={"date": TODAY, "signup": self.guest_signup.pk},
+                ),
+                data={
+                    "prepaid_flights": 0,
+                    "amount": to_pay,
+                    "method": method,
+                },
+                follow=True,
+            )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/twint.html")
+        self.assertContains(response, f"Bezahlung von {self.guest} gespeichert.")
+        self.assertContains(response, f"Betrag Fr. {to_pay}")
+        self.assertContains(response, reverse("update_report", kwargs={"date": TODAY}))
         self.guest_signup.refresh_from_db()
         self.assertTrue(self.guest_signup.is_paid)
         self.assertEqual(to_pay, self.guest_signup.bill.amount)
@@ -768,8 +794,8 @@ class BillUpdateViewTests(TestCase):
         self.assertEqual(1, len(Bill.objects.all()))
 
     def test_update_bill(self):
-        to_pay = Bill(signup=self.signup, report=self.report).to_pay
-        method = PaymentMethods.TWINT
+        to_pay = Bill(signup=self.signup, report=self.report).to_pay + 5
+        method = PaymentMethods.CASH
         with self.assertNumQueries(27):
             response = self.client.post(
                 reverse("update_bill", kwargs={"date": TODAY, "pk": self.bill.pk}),
@@ -783,6 +809,29 @@ class BillUpdateViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertContains(response, f"Bezahlung von {self.orga} gespeichert.")
+        self.assertEqual(1, len(Bill.objects.all()))
+        created_bill = Bill.objects.first()
+        self.assertEqual(to_pay, created_bill.amount)
+        self.assertEqual(method, created_bill.method)
+
+    def test_update_bill_redirect_to_twint(self):
+        to_pay = Bill(signup=self.signup, report=self.report).to_pay + 5
+        method = PaymentMethods.TWINT
+        with self.assertNumQueries(14):
+            response = self.client.post(
+                reverse("update_bill", kwargs={"date": TODAY, "pk": self.bill.pk}),
+                data={
+                    "prepaid_flights": 0,
+                    "amount": to_pay,
+                    "method": method,
+                },
+                follow=True,
+            )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/twint.html")
+        self.assertContains(response, f"Bezahlung von {self.orga} gespeichert.")
+        self.assertContains(response, f"Betrag Fr. {to_pay}")
+        self.assertContains(response, reverse("update_report", kwargs={"date": TODAY}))
         self.assertEqual(1, len(Bill.objects.all()))
         created_bill = Bill.objects.first()
         self.assertEqual(to_pay, created_bill.amount)
