@@ -662,6 +662,29 @@ class BillCreateView(OrgaRequiredMixin, generic.CreateView):
             messages.warning(self.request, f"{signup.pilot} hat bereits bezahlt.")
             return redirect(self.get_report_url())
 
+        old_signups = (
+            Signup.objects.filter(
+                pilot=signup.pilot,
+                training__date__year=signup.training.date.year,
+                training__date__lt=signup.training.date,
+            )
+            .select_related("bill")
+            .select_related("training")
+            .prefetch_related("runs")
+            .prefetch_related("purchases")
+            .order_by("training__date")
+        )
+        for old_signup in old_signups:
+            if old_signup.must_be_paid:
+                url = reverse_lazy(
+                    "create_bill",
+                    kwargs={"date": old_signup.training.date, "signup": old_signup.pk},
+                )
+                messages.warning(
+                    self.request,
+                    f'{old_signup.pilot} wurde für den <a href="{url}">{old_signup.training.date}</a> nicht abgerechnet.',
+                )
+
         return super().get(*args, **kwargs)
 
     def get_context_data(self, **kwargs):

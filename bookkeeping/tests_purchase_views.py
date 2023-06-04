@@ -62,7 +62,7 @@ class PurchaseCreateViewTests(TestCase):
             self.assertContains(response, item.label)
 
     def test_create_purchase(self):
-        with self.assertNumQueries(19):
+        with self.assertNumQueries(22):
             response = self.client.post(
                 reverse(
                     "create_purchase", kwargs={"date": TODAY, "signup": self.signup.pk}
@@ -167,7 +167,7 @@ class PurchaseDeleteViewTests(TestCase):
         )
 
     def test_delete_purchase(self):
-        with self.assertNumQueries(19):
+        with self.assertNumQueries(22):
             response = self.client.post(
                 reverse(
                     "delete_purchase", kwargs={"date": TODAY, "pk": self.purchase.pk}
@@ -195,7 +195,7 @@ class PurchaseDeleteViewTests(TestCase):
         Purchase.save_day_pass(signup, self.report)
         day_pass = Purchase.objects.last()
         self.assertEqual(Purchase.DAY_PASS_DESCRIPTION, day_pass.description)
-        with self.assertNumQueries(20):
+        with self.assertNumQueries(23):
             response = self.client.post(
                 reverse("delete_purchase", kwargs={"date": TODAY, "pk": day_pass.pk}),
                 follow=True,
