@@ -358,9 +358,10 @@ class BillCreateViewTests(TestCase):
             "create_bill",
             kwargs={"date": YESTERDAY, "signup": yesterdays_signup.pk},
         )
+        date = YESTERDAY.strftime("%A, %d. %B").replace(" 0", " ")
         self.assertContains(
             response,
-            f'{self.guest} wurde für den <a href="{url}">{YESTERDAY}</a> nicht abgerechnet.',
+            f'{self.guest} wurde für <a href="{url}">{date}</a>, nicht abgerechnet.',
         )
 
     def test_creates_day_pass(self):

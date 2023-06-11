@@ -116,7 +116,7 @@ class ExpenseCreateViewTests(TestCase):
         self.assertTrue(str(amount) in mail.outbox[0].subject)
         self.assertTrue(reason.label in mail.outbox[0].subject)
         self.assertTrue(str(self.orga) in mail.outbox[0].body)
-        self.assertTrue(str(TODAY) in mail.outbox[0].body)
+        self.assertTrue(TODAY.strftime("%x") in mail.outbox[0].body)
         self.assertEqual(1, len(mail.outbox[0].attachments))
         file_name, _, _ = mail.outbox[0].attachments[0]
         self.assertEqual(file_name, "receipt")
@@ -153,7 +153,7 @@ class ExpenseCreateViewTests(TestCase):
         self.assertTrue(str(amount) in mail.outbox[0].subject)
         self.assertTrue(other_reason in mail.outbox[0].subject)
         self.assertTrue(str(self.orga) in mail.outbox[0].body)
-        self.assertTrue(str(TODAY) in mail.outbox[0].body)
+        self.assertTrue(TODAY.strftime("%x") in mail.outbox[0].body)
         self.assertEqual(1, len(mail.outbox[0].attachments))
         file_name, _, _ = mail.outbox[0].attachments[0]
         self.assertEqual(file_name, "receipt")

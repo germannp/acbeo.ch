@@ -3,6 +3,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.mail import EmailMessage
 from django.forms import modelformset_factory
+from django.utils.formats import date_format
 
 from .models import Absorption, Bill, Expense, PaymentMethods, Purchase, Run
 from trainings.models import Signup
@@ -32,9 +33,10 @@ class ExpenseCreateForm(forms.ModelForm):
         self.instance.reason = other_reason
 
     def send_mail(self):
+        date = date_format(self.instance.report.training.date, "d.m.o")
         mail = EmailMessage(
             subject=f"Beleg für {self.instance.reason} über Fr. {self.instance.amount}",
-            body=f"Erfasst von {self.sender} für das Training vom {self.instance.report.training.date}.",
+            body=f"Erfasst von {self.sender} für das Training vom {date}.",
             from_email=settings.DEFAULT_FROM_EMAIL,
             to=[settings.FINANCE_EMAIL],
         )

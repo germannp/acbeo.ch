@@ -8,6 +8,7 @@ from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.utils import timezone
+from django.utils.formats import date_format
 from django.views import generic
 
 from . import forms
@@ -680,9 +681,10 @@ class BillCreateView(OrgaRequiredMixin, generic.CreateView):
                     "create_bill",
                     kwargs={"date": old_signup.training.date, "signup": old_signup.pk},
                 )
+                date = date_format(old_signup.training.date, "l, j. F")
                 messages.warning(
                     self.request,
-                    f'{old_signup.pilot} wurde für den <a href="{url}">{old_signup.training.date}</a> nicht abgerechnet.',
+                    f'{old_signup.pilot} wurde für <a href="{url}">{date}</a>, nicht abgerechnet.',
                 )
 
         return super().get(*args, **kwargs)

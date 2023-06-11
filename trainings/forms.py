@@ -7,6 +7,7 @@ from django.core.mail import send_mail
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.utils import timezone
+from django.utils.formats import date_format
 from django.utils.html import strip_tags
 from .models import Training, Signup
 
@@ -128,7 +129,7 @@ class EmergencyMailForm(forms.ModelForm):
         return emergency_contacts
 
     def send_mail(self):
-        date = self.instance.date.strftime("%A, %d. %B").replace(" 0", " ")
+        date = date_format(self.instance.date, "l, j. F")
         start = self.Start(int(self.cleaned_data["start"])).label
         end = self.End(int(self.cleaned_data["end"])).label
         contacts = self.cleaned_data["emergency_contacts"]

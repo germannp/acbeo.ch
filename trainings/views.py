@@ -7,6 +7,7 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.utils import timezone
+from django.utils.formats import date_format
 from django.views import generic
 
 from . import forms
@@ -161,8 +162,8 @@ class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateVi
         if Signup.objects.filter(pilot=pilot, training=training).exists():
             form.add_error(
                 None,
-                f"Du bist für <b>{self.date.strftime('%A')}</b>, den"
-                f"{self.date.strftime(' %d. %B %Y').replace (' 0', ' ')}, bereits eingeschrieben.",
+                f"Du bist für <b>{date_format(self.date, 'l')}</b>, den "
+                f"{date_format(self.date, 'j. F Y')}, bereits eingeschrieben.",
             )
             return super().form_invalid(form)
 
@@ -180,8 +181,8 @@ class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateVi
 
     def get_success_url(self):
         self.success_message = (
-            f"Eingeschrieben für <b>{self.date.strftime('%A')}</b>, "
-            f"den {self.date.strftime('%d. %B %Y')}.".replace(" 0", " ")
+            f"Eingeschrieben für <b>{date_format(self.date, 'l')}</b>, "
+            f"den {date_format(self.date, 'j. F Y')}."
         )
         next_day = self.date + timedelta(days=1)
         success_url = reverse_lazy("signup", kwargs={"date": next_day})
