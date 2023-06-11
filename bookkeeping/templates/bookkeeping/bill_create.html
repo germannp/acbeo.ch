@@ -46,18 +46,18 @@
                             {% endif %}
                         </tbody>
                         {% if bill.signup.purchases.all %}
-                        <tbody class="table-group-divider">
+                            <tbody class="table-group-divider">
                             {% for purchase in bill.signup.purchases.all %}
-                            <tr>
-                                <td>{{ purchase.description }} <a
-                                    href="{% url 'delete_purchase' date=bill.signup.training.date.isoformat pk=purchase.pk %}"
-                                    class="ba bi-trash text-danger"></a></td>
-                                    <td></td>
+                                <tr>
+                                    <td>{{ purchase.description }} <a
+                                        href="{% url 'delete_purchase' date=bill.signup.training.date.isoformat pk=purchase.pk %}"
+                                        class="ba bi-trash text-danger"></a></td>
+                                        <td></td>
                                     <td>{{ purchase.price }}</td>
                                 </tr>
-                                {% endfor %}
+                            {% endfor %}
                             </tbody>
-                            {% endif %}
+                        {% endif %}
                         <tfoot class="table-group-divider">
                             <td>Zu bezahlen</td>
                             <td></td>
@@ -90,11 +90,11 @@
                             <a href="{% url 'create_purchase' date=bill.signup.training.date.isoformat signup=bill.signup.pk %}"
                                 class="btn btn-primary">Einkauf erfassen</a>
                             {% if not bill.signup.is_training_orga %}
-                            <button class="btn btn-primary" type="submit" name="make-orga">Tagesleiter·in</button>
+                                <button class="btn btn-primary" type="submit" name="make-orga">Tagesleiter·in</button>
                             {% else %}
-                            <button class="btn btn-danger" type="submit" name="undo-orga">TL löschen</button>
+                                <button class="btn btn-danger" type="submit" name="undo-orga">TL löschen</button>
                             {% endif %}
-                            <button class="btn btn-primary" type="submit">Bezahlen</button>
+                            <button class="btn btn-secondary" type="submit">Bezahlen</button>
                             <a href="{{ view.get_report_url }}" class="btn btn-outline-dark">Abbrechen</a>
                         </div>
                     </form>

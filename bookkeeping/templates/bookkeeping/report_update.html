@@ -10,11 +10,7 @@
 
     <div class="col left">
         <div class="card mb-4">
-            <h5 class="card-header">Runs
-                {% if report.training.date == today %}
-                <a href="{% url 'create_run' %}" class="bi bi-plus-square"></a>
-                {% endif %}
-            </h5>
+            <h5 class="card-header">Runs</h5>
             <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-sm table-hover">
@@ -35,7 +31,7 @@
                                     {% if signup.is_paid %}
                                         <a href="{% url 'update_bill' date=report.training.date.isoformat pk=signup.bill.pk %}" class="bi bi-pencil-square"></a>
                                     {% else %}
-                                        <a href="{% url 'create_bill' date=report.training.date.isoformat signup=signup.pk %}" class="bi bi-cart3"></a>
+                                        <a href="{% url 'create_bill' date=report.training.date.isoformat signup=signup.pk %}" class="bi bi-cart3 link-secondary"></a>
                                     {% endif %}
                                 </td>
                                 {% for run in runs %}
@@ -60,6 +56,9 @@
                         {% endif %}
                     </table>
                 </div>
+                {% if report.training.date == today %}
+                    <a href="{% url 'create_run' %}" class="btn btn-secondary">Run hinzufügen</a>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -123,7 +122,11 @@
                         <div class="d-grid gap-2">
                             <a href="{% url 'create_expense' date=report.training.date.isoformat %}" class="btn btn-primary">Ausgabe erfassen</a>
                             <a href="{% url 'create_absorption' date=report.training.date.isoformat %}" class="btn btn-primary">Abschöpfen</a>
-                            <button class="btn btn-primary" type="submit">Speichern</button>
+                            {% if report.cash_at_end %}
+                                <button class="btn btn-primary" type="submit">Kasse Speichern</button>
+                            {% else %}
+                                <button class="btn btn-secondary" type="submit">Kasse Speichern</button>
+                            {% endif %}
                             <a href="javascript:history.back()" class="btn btn-outline-dark">Abbrechen</a>
                         </div>
                     </form>

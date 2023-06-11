@@ -106,7 +106,7 @@
                 </div>
                 {% if not request.user in training.pilots %}
                 <a href="{% url 'signup' date=training.date.isoformat %}?&page={{ page_obj.number }}&training={{ forloop.counter }}"
-                    class="btn btn-secondary mt-3">Einschreiben</a>
+                    class="btn btn-secondary">Einschreiben</a>
                 {% endif %}
             </div>
         </div>

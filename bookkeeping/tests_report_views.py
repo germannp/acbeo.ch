@@ -695,7 +695,6 @@ class ReportUpdateViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertContains(response, reverse("create_run"))
-        self.assertContains(response, "bi bi-plus-square")
 
         training = Training.objects.create(date=YESTERDAY)
         Report(training=training, cash_at_start=1337).save()
@@ -706,7 +705,6 @@ class ReportUpdateViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertNotContains(response, reverse("create_run"))
-        self.assertNotContains(response, "bi bi-plus-square")
 
     def test_update_run_buttons_only_shown_on_training_day(self):
         with self.assertNumQueries(21):
@@ -845,6 +843,10 @@ class ReportUpdateViewTests(TestCase):
         self.assertContains(response, "Es haben noch nicht alle bezahlt.")
         self.assertNotContains(response, "Bitte Kassenstand erfassen.")
         self.assertNotContains(response, "Zu wenig Geld in der Kasse.")
+        self.assertContains(
+            response,
+            '<button class="btn btn-secondary" type="submit">Kasse Speichern</button>',
+        )
 
         Bill(
             signup=self.orga_signup,
@@ -873,6 +875,10 @@ class ReportUpdateViewTests(TestCase):
         self.assertNotContains(response, "Es haben noch nicht alle bezahlt.")
         self.assertContains(response, "Bitte Kassenstand erfassen.")
         self.assertNotContains(response, "Zu wenig Geld in der Kasse.")
+        self.assertContains(
+            response,
+            '<button class="btn btn-secondary" type="submit">Kasse Speichern</button>',
+        )
 
         with self.assertNumQueries(34):
             response = self.client.post(
@@ -888,6 +894,10 @@ class ReportUpdateViewTests(TestCase):
         self.assertNotContains(response, "Es haben noch nicht alle bezahlt.")
         self.assertNotContains(response, "Bitte Kassenstand erfassen.")
         self.assertContains(response, "Zu wenig Geld in der Kasse.")
+        self.assertContains(
+            response,
+            '<button class="btn btn-primary" type="submit">Kasse Speichern</button>',
+        )
 
         with self.assertNumQueries(33):
             response = self.client.post(

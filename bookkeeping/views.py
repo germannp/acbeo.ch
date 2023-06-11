@@ -521,10 +521,10 @@ class RunCreateView(OrgaRequiredMixin, generic.TemplateView):
             form.instance.created_on = created_on
         previous_run = report.runs.order_by("created_on").last()
         formset.save()  # Only save after previous run is stored 🙄
-        if previous_run and created_on - previous_run.created_on < timedelta(minutes=5):
+        if previous_run and created_on - previous_run.created_on < timedelta(minutes=30):
             messages.warning(
                 self.request,
-                "Run erstellt, aber Achtung, es wurde vor weniger als fünf Minuten bereits ein Run erstellt!",
+                "Run erstellt, aber Achtung, es wurde vor weniger als einer halben Stunde bereits ein Run erstellt!",
             )
         else:
             messages.success(self.request, "Run erstellt.")

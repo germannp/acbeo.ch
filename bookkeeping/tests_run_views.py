@@ -221,7 +221,7 @@ class RunCreateViewTests(TestCase):
             signup=self.guest_signup,
             report=self.report,
             kind=Run.Kind.FLIGHT,
-            created_on=timezone.now() - timedelta(minutes=2),
+            created_on=timezone.now() - timedelta(minutes=20),
         ).save()
 
         with self.assertNumQueries(46):
@@ -240,7 +240,7 @@ class RunCreateViewTests(TestCase):
         self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertContains(
             response,
-            "Run erstellt, aber Achtung, es wurde vor weniger als fünf Minuten bereits ein Run erstellt!",
+            "Run erstellt, aber Achtung, es wurde vor weniger als einer halben Stunde bereits ein Run erstellt!",
         )
         self.assertEqual(4, len(Run.objects.all()))
 
