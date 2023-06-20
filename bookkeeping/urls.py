@@ -9,8 +9,8 @@ register_converter(DateConverter, "date")
 urlpatterns = [
     path("", views.ReportListView.as_view(), name="reports"),
     path("<int:year>/", views.ReportListView.as_view(), name="reports"),
-    path("abrechnung/", views.BalanceView.as_view(), name="balance"),
-    path("abrechnung/<int:year>/", views.BalanceView.as_view(), name="balance"),
+    path("bilanz/", views.BalanceView.as_view(), name="balance"),
+    path("bilanz/<int:year>/", views.BalanceView.as_view(), name="balance"),
     path("erstellen/", views.ReportCreateView.as_view(), name="create_report"),
     path("<date:date>/", views.ReportUpdateView.as_view(), name="update_report"),
     path(
