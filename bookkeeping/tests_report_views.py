@@ -848,20 +848,21 @@ class ReportUpdateViewTests(TestCase):
             '<button class="btn btn-secondary" type="submit">Kasse Speichern</button>',
         )
 
-        Bill(
+        expense = Expense.objects.create(report=self.report, reason="Gas", amount=35)
+        bill_1 = Bill.objects.create(
             signup=self.orga_signup,
             report=self.report,
             prepaid_flights=0,
-            amount=10,
+            amount=75,
             method=PaymentMethods.CASH,
-        ).save()
-        Bill(
+        )
+        bill_2 = Bill.objects.create(
             signup=self.guest_signup,
             report=self.report,
             prepaid_flights=0,
-            amount=2,
+            amount=20,
             method=PaymentMethods.CASH,
-        ).save()
+        )
         with self.assertNumQueries(33):
             response = self.client.post(
                 reverse("update_report", kwargs={"date": TODAY}),
@@ -904,7 +905,10 @@ class ReportUpdateViewTests(TestCase):
                 reverse("update_report", kwargs={"date": TODAY}),
                 data={
                     "cash_at_start": self.report.cash_at_start,
-                    "cash_at_end": self.report.cash_at_start + 100,
+                    "cash_at_end": self.report.cash_at_start
+                    - expense.amount
+                    + bill_1.amount
+                    + bill_2.amount,
                 },
                 follow=True,
             )

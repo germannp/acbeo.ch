@@ -308,14 +308,14 @@ class ReportUpdateView(OrgaRequiredMixin, generic.UpdateView):
             )
             return super().form_valid(form)
 
-        if not (difference := form.instance.difference):
+        if form.instance.cash_at_end is None:
             messages.warning(self.request, "Bitte Kassenstand erfassen.")
             self.success_url = reverse_lazy(
                 "update_report", kwargs={"date": form.instance.training.date}
             )
             return super().form_valid(form)
 
-        if difference < 0:
+        if form.instance.difference < 0:
             messages.warning(
                 self.request,
                 'Zu wenig Geld in der Kasse. <a href="javascript:history.back()">Zurück</a>.',
