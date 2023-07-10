@@ -747,34 +747,37 @@ class BillUpdateViewTests(TestCase):
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/bill_update.html")
-        self.assertContains(response, f'value="{self.bill.num_prepaid_flights}"')
         self.assertNotContains(response, "<td>Mit Abo bezahlt</td>")
         self.assertNotContains(response, "<td>Flüge gutgeschrieben</td>")
+        self.assertContains(response, f'value="{self.bill.prepaid_flights}"')
+        self.assertContains(response, f"<td>{self.bill.to_pay}</td>")
 
-        self.orga.prepaid_flights = 10
-        self.orga.save()
+        self.bill.prepaid_flights = 1
+        self.bill.save()
         with self.assertNumQueries(13):
             response = self.client.get(
                 reverse("update_bill", kwargs={"date": TODAY, "pk": self.bill.pk})
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/bill_update.html")
-        self.assertContains(response, f'value="{self.bill.num_prepaid_flights}"')
-        self.assertContains(response, f'value="{self.bill.to_pay}"')
         self.assertContains(response, "<td>Mit Abo bezahlt</td>")
+        self.assertContains(response, f'value="{self.bill.prepaid_flights}"')
+        self.assertContains(response, f"<td>{self.bill.prepaid_flights}</td>")
+        self.assertContains(response, f"<td>{self.bill.to_pay}</td>")
 
-        for run in Run.objects.all():
-            if not run.is_service:
-                run.delete()
+        self.bill.prepaid_flights = -3
+        self.bill.save()
         with self.assertNumQueries(13):
             response = self.client.get(
                 reverse("update_bill", kwargs={"date": TODAY, "pk": self.bill.pk})
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/bill_update.html")
-        self.assertContains(response, f'value="{self.bill.num_prepaid_flights}"')
-        self.assertContains(response, f'value="{self.bill.to_pay}"')
+        self.assertNotContains(response, "<td>Mit Abo bezahlt</td>")
         self.assertContains(response, "<td>Flüge gutgeschrieben</td>")
+        self.assertContains(response, f'value="{self.bill.prepaid_flights}"')
+        self.assertContains(response, f"<td>{-self.bill.prepaid_flights}</td>")
+        self.assertContains(response, f"<td>{self.bill.to_pay}</td>")
 
     def test_purchase_shown(self):
         with self.assertNumQueries(13):

@@ -195,6 +195,9 @@ class Bill(models.Model):
 
     @property
     def num_prepaid_flights(self):
+        if self.prepaid_flights:
+            return self.prepaid_flights
+
         return min(
             self.num_flights - self.num_services, self.signup.pilot.prepaid_flights
         )

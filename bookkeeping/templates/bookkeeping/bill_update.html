@@ -31,16 +31,16 @@
                                 <td>{{ bill.num_services }}</td>
                                 <td>-{{ bill.revenue_services }}</td>
                             </tr>
-                            {% if 0 < bill.num_prepaid_flights %}
+                            {% if 0 < bill.prepaid_flights %}
                             <tr>
                                 <td>Mit Abo bezahlt</td>
-                                <td>{{ bill.num_prepaid_flights }}</td>
+                                <td>{{ bill.prepaid_flights }}</td>
                                 <td>-{{ bill.costs_prepaid_flights }}</td>
                             </tr>
-                            {% elif bill.num_prepaid_flights < 0 %}
+                            {% elif bill.prepaid_flights < 0 %}
                             <tr>
                                 <td>Flüge gutgeschrieben</td>
-                                <td>{{ bill.num_prepaid_flights | stringformat:"+d"|slice:"1:" }}</td>
+                                <td>{{ bill.prepaid_flights | stringformat:"+d"|slice:"1:" }}</td>
                                 <td>{{ bill.costs_prepaid_flights | stringformat:"+d"|slice:"1:" }}</td>
                             </tr>
                             {% endif %}
@@ -66,7 +66,7 @@
                 <main class="form">
                     <form method="post">
                         {% csrf_token %}
-                        <input type="hidden" name="prepaid_flights" value="{{ bill.num_prepaid_flights }}">
+                        <input type="hidden" name="prepaid_flights" value="{{ bill.prepaid_flights }}">
                         <div class="mb-3">
                             <label>Zahlungsart</label>
                             {% for method in form.method %}

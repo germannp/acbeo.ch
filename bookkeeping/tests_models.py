@@ -243,9 +243,12 @@ class BillTests(TestCase):
                 )
 
                 bill.prepaid_flights = bill.num_prepaid_flights
-                bill.amount = bill.to_pay
+                to_pay_before_save = bill.to_pay
+                bill.amount = to_pay_before_save
                 bill.save()
                 self.assertEqual(final_prepaid_flights, self.pilot.prepaid_flights)
+                self.assertEqual(to_pay_before_save, bill.to_pay)
+                self.assertEqual(bill.prepaid_flights, bill.num_prepaid_flights)
 
                 bill.delete()
                 self.assertEqual(initial_prepaid_flights, self.pilot.prepaid_flights)
