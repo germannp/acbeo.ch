@@ -133,6 +133,12 @@ class ReportListViewTests(TestCase):
         )
 
     def test_difference_between_reports(self):
+        with self.assertNumQueries(20):
+            response = self.client.get(reverse("reports"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/report_list.html")
+        self.assertContains(response, "❓")
+
         difference_between_reports = 420
         training = Training.objects.create(date=YESTERDAY)
         Report(
@@ -140,8 +146,7 @@ class ReportListViewTests(TestCase):
             cash_at_start=1,
             cash_at_end=self.report.cash_at_start - difference_between_reports,
         ).save()
-
-        with self.assertNumQueries(22):
+        with self.assertNumQueries(20):
             response = self.client.get(reverse("reports"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/report_list.html")
@@ -165,6 +170,12 @@ class ReportListViewTests(TestCase):
         self.assertContains(response, self.expense.amount)
 
     def test_difference_within_report_shown(self):
+        with self.assertNumQueries(20):
+            response = self.client.get(reverse("reports"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/report_list.html")
+        self.assertContains(response, "❓")
+
         difference_within_report = 666
         self.report.cash_at_end = (
             self.report.cash_at_start
@@ -173,7 +184,7 @@ class ReportListViewTests(TestCase):
             + difference_within_report
         )
         self.report.save()
-        with self.assertNumQueries(20):
+        with self.assertNumQueries(18):
             response = self.client.get(reverse("reports"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/report_list.html")

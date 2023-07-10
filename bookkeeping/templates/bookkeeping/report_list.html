@@ -39,7 +39,7 @@
                                 <td>{{ report.cash_at_start }}{% if report.difference_between_reports %} ({{ report.difference_between_reports }}){% endif %}</td>
                                 <td>{{ report.cash_revenue }}</td>
                                 <td>{{ report.cash_expediture }}</td>
-                                <td>{{ report.cash_at_end }}{% if report.difference %} ({{ report.difference }}){% endif %}</td>
+                                <td>{% if report.cash_at_end %}{{ report.cash_at_end }} ({{ report.difference }}){% else %}❓{% endif %}</td>
                                 <td>{{ report.other_revenue }}</td>
                                 <td>{{ report.remarks }}</td>
                             </tr>
