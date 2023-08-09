@@ -46,6 +46,7 @@ class YearArchiveView(generic.ListView):
                 **{self.date_field + "__gte": since, self.date_field + "__lt": until}
             )
             .select_related(self.date_field[:-6])
+            .order_by(self.date_field)
         )
         if not queryset:
             raise Http404(f"Keine {self.name} im Jahr {year}.")
