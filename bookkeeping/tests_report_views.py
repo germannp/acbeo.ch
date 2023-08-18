@@ -456,6 +456,13 @@ class BalanceViewTests(TestCase):
         self.assertContains(response, self.twint_bill.amount)
         self.assertContains(response, self.absorption.description)
 
+        twint_date = self.twint_bill.signup.training.date
+        monday = twint_date - timedelta(days=twint_date.weekday())
+        self.assertContains(response, monday.strftime(".%d.%m.").replace(".0", ".")[1:])
+        sunday = twint_date + timedelta(days=6 - twint_date.weekday())
+        self.assertContains(response, sunday.strftime(".%d.%m.").replace(".0", ".")[1:])
+        self.assertContains(response, f"Total {self.twint_bill.amount}")
+
         self.assertNotContains(response, self.zero_absorption.description)
 
     def test_no_reports_in_year_404(self):

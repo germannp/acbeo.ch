@@ -219,20 +219,40 @@ class BalanceView(OrgaRequiredMixin, YearArchiveView):
                 - context.get("total_expeditures", 0)
             )
 
-        # Transactions
+        # Bank transfers
+        context["bank_transfers"] = [
+            absorption
+            for report in reports
+            for absorption in report.absorptions.all()
+            if absorption.method == PaymentMethods.BANK_TRANSFER and absorption.amount
+        ]
+
+        # TWINT
         transactions = [bill for report in reports for bill in report.bills.all()] + [
             absorption for report in reports for absorption in report.absorptions.all()
         ]
         transactions = [
             transaction
             for transaction in transactions
-            if transaction.method != PaymentMethods.CASH and transaction.amount
+            if transaction.method == PaymentMethods.TWINT and transaction.amount
         ]
-        context["transactions_by_method"] = {
-            method: sorted(transactions_with_method, key=by_date)
-            for method, transactions_with_method in groupby(
-                sorted(transactions, key=by_method), key=by_method
+        by_week = lambda expediture: int(expediture.report.training.date.strftime("%W"))
+        twint_by_week = {
+            week: sorted(transactions_in_week, key=by_date)
+            for week, transactions_in_week in groupby(
+                sorted(transactions, key=by_week), key=by_week
             )
+        }
+
+        def label(week, transactions_in_week):
+            monday = date.fromisocalendar(reports[0].training.date.year, week, 1)
+            sunday = date.fromisocalendar(reports[0].training.date.year, week, 7)
+            total = sum(transaction.amount for transaction in transactions_in_week)
+            return f"{date_format(monday, 'j.n.')} - {date_format(sunday, 'j.n.')}, Total {total}"
+
+        context["twint_weeks"] = {
+            label(week, transactions_in_week): transactions_in_week
+            for week, transactions_in_week in twint_by_week.items()
         }
         return context
 
@@ -529,7 +549,9 @@ class RunCreateView(OrgaRequiredMixin, generic.TemplateView):
             form.instance.created_on = created_on
         previous_run = report.runs.order_by("created_on").last()
         formset.save()  # Only save after previous run is stored 🙄
-        if previous_run and created_on - previous_run.created_on < timedelta(minutes=30):
+        if previous_run and created_on - previous_run.created_on < timedelta(
+            minutes=30
+        ):
             messages.warning(
                 self.request,
                 "Run erstellt, aber Achtung, es wurde vor weniger als einer halben Stunde bereits ein Run erstellt!",

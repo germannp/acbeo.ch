@@ -163,10 +163,48 @@
         </div>
     </div>
 
-    {% for method, transactions in transactions_by_method.items %}
     <div class="col-lg-6">
         <div class="card mb-4">
-            <h5 class="card-header">Transaktionen per {{ method }}</h5>
+            <h5 class="card-header">TWINT</h5>
+            <ul class="list-group list-group-flush">
+                {% for label, transactions in twint_weeks.items %}
+                <li class="list-group-item">
+                    {{ label }}
+                    <a class="bi bi-chevron-double-down" data-bs-toggle="collapse" href="#week-{{ forloop.counter }}"></a>
+                    <div class="collapse" id="week-{{ forloop.counter }}">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Bericht</th>
+                                        <th scope="col">Zweck</th>
+                                        <th scope="col">Betrag</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="table-group-divider">
+                                    {% for transaction in transactions %}
+                                    <tr>
+                                        <td>{{ transaction.report.training.date | date:"j.n." }} <a
+                                                href="{% url 'update_report' date=transaction.report.training.date.isoformat %}"
+                                                class="bi bi-pencil-square"></a></td>
+                                        <td>{{ transaction.description }}</td>
+                                        <td>{{ transaction.amount }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>                        
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    {% if bank_transfers %}
+    <div class="col-lg-6">
+        <div class="card mb-4">
+            <h5 class="card-header">Überweisungen</h5>
             <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-sm table-hover">
@@ -178,13 +216,13 @@
                             </tr>
                         </thead>
                         <tbody class="table-group-divider">
-                            {% for transaction in transactions %}
+                            {% for transfer in bank_transfers %}
                             <tr>
-                                <td>{{ transaction.report.training.date | date:"j.n." }} <a
-                                        href="{% url 'update_report' date=transaction.report.training.date.isoformat %}"
+                                <td>{{ transfer.report.training.date | date:"j.n." }} <a
+                                        href="{% url 'update_report' date=transfer.report.training.date.isoformat %}"
                                         class="bi bi-pencil-square"></a></td>
-                                <td>{{ transaction.description }}</td>
-                                <td>{{ transaction.amount }}</td>
+                                <td>{{ transfer.description }}</td>
+                                <td>{{ transfer.amount }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -193,7 +231,7 @@
             </div>
         </div>
     </div>
-    {% endfor %}
+    {% endif %}
 
 </div>
 
