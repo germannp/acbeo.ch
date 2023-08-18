@@ -87,9 +87,13 @@ class ReportListView(OrgaRequiredMixin, YearArchiveView):
         """Prefetch & compute cash difference between consecutive reports"""
         queryset = super().get_queryset()
         prefetch_related_objects(queryset, "absorptions")
+        prefetch_related_objects(queryset, "bills__signup__purchases")
         prefetch_related_objects(queryset, "expenses")
-        prefetch_related_objects(queryset, "training__signups")
-        prefetch_related_objects(queryset, "bills")
+        prefetch_related_objects(queryset, "training__signups__purchases")
+        prefetch_related_objects(queryset, "training__signups__runs")
+        prefetch_related_objects(queryset, "training__signups__bill")
+        prefetch_related_objects(queryset, "training__signups__pilot")
+        prefetch_related_objects(queryset, "runs")
 
         for previous_report, report in zip(queryset, queryset[1:]):
             if previous_report.cash_at_end is None:
@@ -109,13 +113,15 @@ class BalanceView(OrgaRequiredMixin, YearArchiveView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        prefetch_related_objects(queryset, "training__signups__pilot")
+        prefetch_related_objects(queryset, "absorptions__signup__pilot")
+        prefetch_related_objects(queryset, "bills__signup__pilot")
+        prefetch_related_objects(queryset, "bills__signup__purchases")
+        prefetch_related_objects(queryset, "expenses")
         prefetch_related_objects(queryset, "training__signups__purchases")
         prefetch_related_objects(queryset, "training__signups__runs")
-        prefetch_related_objects(queryset, "absorptions__signup__pilot")
-        prefetch_related_objects(queryset, "expenses")
-        prefetch_related_objects(queryset, "bills__signup__pilot")
-        prefetch_related_objects(queryset, "purchases")
+        prefetch_related_objects(queryset, "training__signups__bill")
+        prefetch_related_objects(queryset, "training__signups__pilot")
+        prefetch_related_objects(queryset, "runs")
         return queryset
 
     def get_context_data(self, **kwargs):

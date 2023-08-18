@@ -27,6 +27,7 @@
                             {% for signup, runs in runs_by_signup.items %}
                             <tr>
                                 <td>{{ forloop.counter }}</td>
+                                {# signup.pilot and signup.is_paid generate DB calls #}
                                 <td class="text-nowrap">{{ signup.pilot }}
                                     {% if signup.is_paid %}
                                         <a href="{% url 'update_bill' date=report.training.date.isoformat pk=signup.bill.pk %}" class="bi bi-pencil-square"></a>

@@ -60,9 +60,11 @@ class Report(models.Model):
 
     @property
     def num_unpaid_signups(self):
-        return len(
-            [signup for signup in self.training.active_signups if signup.must_be_paid]
-        )
+        return sum(signup.must_be_paid for signup in self.training.signups.all())
+
+    @property
+    def num_selected_signups(self):
+        return sum(signup.is_selected for signup in self.training.signups.all())
 
 
 class Expense(models.Model):

@@ -35,7 +35,7 @@
                                     <a href="{% url 'update_report' date=report.training.date.isoformat %}"
                                         class="bi bi-pencil-square" /a>
                                 </td>
-                                <td>{{ report.num_unpaid_signups }} / {{ report.training.selected_signups | length }}</td>
+                                <td>{{ report.num_unpaid_signups }} / {{ report.num_selected_signups }}</td>
                                 <td>{{ report.cash_at_start }}{% if report.difference_between_reports %} ({{ report.difference_between_reports }}){% endif %}</td>
                                 <td>{{ report.cash_revenue }}</td>
                                 <td>{{ report.cash_expediture }}</td>
