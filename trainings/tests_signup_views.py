@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 from http import HTTPStatus
 import locale
+from random import randint
 from unittest import mock
 
 from django.contrib.auth import get_user_model
@@ -630,3 +631,49 @@ class SignupUpdateViewTests(TestCase):
                 },
                 follow=True,
             )
+
+
+class PerformanceTests(TestCase):
+    def setUp(self):
+        num_days = randint(2, 6)
+        num_flights = randint(5, 10)
+
+        orga = get_user_model().objects.create(
+            email="orga@example.com", first_name="Orga", role=get_user_model().Role.ORGA
+        )
+        self.client.force_login(orga)
+
+        for i in range(num_days):
+            training = Training.objects.create(date=TODAY + timedelta(days=i))
+            signup = Signup.objects.create(pilot=orga, training=training)
+            report = Report.objects.create(training=training, cash_at_start=420)
+            for j in range(num_flights):
+                Run(
+                    signup=signup,
+                    report=report,
+                    kind=Run.Kind.FLIGHT,
+                    created_on=timezone.now() - timedelta(minutes=j),
+                ).save()
+            training.select_signups()
+
+    def test_signup_list_view(self):
+        with self.assertNumQueries(10):
+            response = self.client.get(reverse("signups"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "trainings/signup_list.html")
+
+    def test_signup_update_view(self):
+        with self.assertNumQueries(10):
+            response = self.client.get(reverse("update_signup", kwargs={"date": TODAY}))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "trainings/signup_update.html")
+
+        with self.assertNumQueries(5):
+            response = self.client.post(
+                reverse("update_signup", kwargs={"date": TODAY}),
+                data={
+                    "is_certain": False,
+                    "duration": Signup.Duration.ARRIVING_LATE,
+                },
+            )
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)

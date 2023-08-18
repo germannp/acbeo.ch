@@ -1,5 +1,6 @@
 from datetime import timedelta
 from http import HTTPStatus
+from random import randint
 import locale
 
 from django.contrib.auth import get_user_model
@@ -896,3 +897,110 @@ class BillUpdateViewTests(TestCase):
             )
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.assertTemplateUsed(response, "404.html")
+
+
+class PerformanceTests(TestCase):
+    def setUp(self):
+        num_days = randint(5, 10)
+        num_flights = randint(5, 10)
+
+        orga = get_user_model().objects.create(
+            email="orga@example.com", first_name="Orga", role=get_user_model().Role.ORGA
+        )
+        self.client.force_login(orga)
+
+        self.signups = []
+        self.bills = []
+        for i in range(num_days):
+            training = Training.objects.create(date=TODAY - timedelta(days=i))
+            report = Report.objects.create(training=training, cash_at_start=420)
+            signup = Signup.objects.create(pilot=orga, training=training)
+            self.signups.append(signup)
+            for j in range(num_flights):
+                Run(
+                    signup=signup,
+                    report=report,
+                    kind=Run.Kind.FLIGHT,
+                    created_on=timezone.now() - timedelta(minutes=j),
+                ).save()
+            Purchase.save_day_pass(signup=signup, report=report)
+            bill = Bill.objects.create(
+                signup=signup,
+                report=report,
+                prepaid_flights=3,
+                amount=15,
+                method=PaymentMethods.TWINT,
+            )
+            self.bills.append(bill)
+            training.select_signups()
+
+    def test_bill_list_view(self):
+        with self.assertNumQueries(11):
+            response = self.client.get(reverse("bills"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/bill_list.html")
+
+    def test_bill_create_view(self):
+        Bill.objects.all().delete()
+
+        signup = self.signups[-1]
+        with self.assertNumQueries(16):
+            response = self.client.get(
+                reverse(
+                    "create_bill",
+                    kwargs={"date": signup.training.date, "signup": signup.pk},
+                )
+            )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/bill_create.html")
+
+        signup = self.signups[0]
+        with self.assertNumQueries(19):
+            response = self.client.get(
+                reverse(
+                    "create_bill",
+                    kwargs={"date": signup.training.date, "signup": signup.pk},
+                )
+            )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/bill_create.html")
+
+        with self.assertNumQueries(10):
+            response = self.client.post(
+                reverse(
+                    "create_bill",
+                    kwargs={"date": signup.training.date, "signup": signup.pk},
+                ),
+                data={
+                    "prepaid_flights": 2,
+                    "amount": 420,
+                    "method": PaymentMethods.CASH,
+                },
+            )
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
+
+    def test_bill_update_view(self):
+        bill = self.bills[3]
+        with self.assertNumQueries(13):
+            response = self.client.get(
+                reverse(
+                    "update_bill",
+                    kwargs={"date": bill.signup.training.date, "pk": bill.pk},
+                )
+            )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/bill_update.html")
+
+        with self.assertNumQueries(9):
+            response = self.client.post(
+                reverse(
+                    "update_bill",
+                    kwargs={"date": bill.signup.training.date, "pk": bill.pk},
+                ),
+                data={
+                    "prepaid_flights": 0,
+                    "amount": 420,
+                    "method": PaymentMethods.CASH,
+                },
+            )
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)

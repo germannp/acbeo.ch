@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 from http import HTTPStatus
 import locale
+from random import randint
 from unittest import mock
 
 from django.contrib.auth import get_user_model
@@ -795,3 +796,64 @@ class EmergencyMailViewTests(TestCase):
             )
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.assertTemplateUsed(response, "404.html")
+
+
+class PerformanceTests(TestCase):
+    def setUp(self):
+        num_pilots = randint(5, 10)
+        num_days = randint(2, 6)
+
+        orga = get_user_model().objects.create(
+            email="orga@example.com", first_name="Orga", role=get_user_model().Role.ORGA
+        )
+        self.client.force_login(orga)
+
+        pilots = [orga] + [
+            get_user_model().objects.create(
+                email=f"pilot_{i}@example.com", first_name=f"Pilot {i}"
+            )
+            for i in range(num_pilots)
+        ]
+        for i in range(num_days):
+            training = Training.objects.create(date=TODAY + timedelta(days=i))
+            for pilot in pilots:
+                Signup(pilot=pilot, training=training).save()
+            training.select_signups()
+
+    def test_training_list_view(self):
+        with self.assertNumQueries(12):
+            response = self.client.get(reverse("trainings"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "trainings/training_list.html")
+
+    def test_training_update_view(self):
+        with self.assertNumQueries(6):
+            response = self.client.get(reverse("update_training", kwargs={"date": TODAY}))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "trainings/training_update.html")
+
+        with self.assertNumQueries(4):
+            response = self.client.post(
+                reverse("update_training", kwargs={"date": TODAY}),
+                data={
+                    "info": "New Info",
+                    "max_pilots": 11,
+                    "priority_date": YESTERDAY,
+                },
+            )
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
+
+    def test_emergency_mail_view(self):
+        with self.assertNumQueries(8):
+            response = self.client.get(
+                reverse("emergency_mail", kwargs={"date": TODAY})
+            )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "trainings/emergency_mail.html")
+
+        with self.assertNumQueries(5):
+            response = self.client.post(
+                reverse("emergency_mail", kwargs={"date": TODAY}),
+                data={"start": "2", "end": "5", "emergency_contacts": ["1", "2"]},
+            )
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)

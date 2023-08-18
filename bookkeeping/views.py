@@ -678,7 +678,7 @@ class BillCreateView(OrgaRequiredMixin, generic.CreateView):
             )
             .select_related("bill")
             .select_related("training")
-            .prefetch_related("runs")
+            .prefetch_related("runs__signup__pilot")
             .prefetch_related("purchases")
             .order_by("training__date")
         )
