@@ -1,4 +1,5 @@
 from datetime import timedelta
+from itertools import product
 from http import HTTPStatus
 from random import randint
 from unittest import mock
@@ -507,8 +508,8 @@ class ReportCreateViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.assertTemplateUsed(response, "404.html")
 
-        Training(date=TODAY).save()
-        with self.assertNumQueries(6):
+        Training(date=TODAY, emergency_mail_sender=self.orga).save()
+        with self.assertNumQueries(7):
             response = self.client.get(reverse("create_report"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/report_create.html")
@@ -526,6 +527,17 @@ class ReportCreateViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "base.html")
         self.assertContains(response, reverse("create_report"))
+
+    def test_redirect_to_emergency_mail(self):
+        Training(date=TODAY).save()
+        with self.assertNumQueries(10):
+            response = self.client.get(reverse("create_report"), follow=True)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "trainings/emergency_mail.html")
+        self.assertTrue(
+            reverse("create_report").replace("/", "%2F")
+            in response.request["QUERY_STRING"]
+        )
 
     def test_only_positive_integers_allowed_for_cash(self):
         Training(date=TODAY).save()
@@ -940,6 +952,41 @@ class ReportUpdateViewTests(TestCase):
         self.assertContains(
             response, "Alle haben bezahlt und der Kassenstand ist gespeichert 😊"
         )
+
+    @mock.patch("bookkeeping.views.timezone")
+    def test_warning_when_finishing_early(self, mocked_timezone):
+        Run.objects.all().delete()
+        training = Training.objects.create(date=YESTERDAY)
+        Report(training=training, cash_at_start=420).save()
+
+        for training_date, hours in product([YESTERDAY, TODAY], [16, 17]):
+            with self.subTest(training_date=training_date, hours=hours):
+                mocked_timezone.localtime.return_value = (
+                    timezone.datetime.fromisoformat(f"{TODAY} {hours}:05:00")
+                )
+                response = self.client.post(
+                    reverse("update_report", kwargs={"date": training_date}),
+                    data={
+                        "cash_at_start": self.report.cash_at_start,
+                        "cash_at_end": self.report.cash_at_start,
+                    },
+                    follow=True,
+                )
+                self.assertEqual(response.status_code, HTTPStatus.OK)
+                if training_date == TODAY and hours < 17:
+                    self.assertContains(
+                        response,
+                        "Falls das Training frühzeitig abgebrochen wurde, sollte insbesondere bei starkem "
+                        'Wind die Seelpolizei unter <a href="tel:+41316387676">+41 31 638 76 76</a> '
+                        "benachrichtigt werden, dass unser Boot nicht mehr vor Ort ist.",
+                    )
+                else:
+                    self.assertNotContains(
+                        response,
+                        "Falls das Training frühzeitig abgebrochen wurde, sollte insbesondere bei starkem "
+                        'Wind die Seelpolizei unter <a href="tel:+41316387676">+41 31 638 76 76</a> '
+                        "benachrichtigt werden, dass unser Boot nicht mehr vor Ort ist.",
+                    )
 
     def test_report_not_found_404(self):
         with self.assertNumQueries(6):

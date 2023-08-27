@@ -608,13 +608,13 @@ class EmergencyMailViewTests(TestCase):
             email="pilot_c@example.com", first_name="Name C"
         )
 
-        self.todays_training = Training.objects.create(date=TODAY)
-        self.signup_a_today = Signup.objects.create(
-            pilot=self.orga, training=self.todays_training
+        self.tomorrows_training = Training.objects.create(date=TOMORROW)
+        self.signup_a_tomorrow = Signup.objects.create(
+            pilot=self.orga, training=self.tomorrows_training
         )
-        Signup(pilot=self.pilot_b, training=self.todays_training).save()
-        Signup(pilot=self.pilot_c, training=self.todays_training).save()
-        self.todays_training.select_signups()
+        Signup(pilot=self.pilot_b, training=self.tomorrows_training).save()
+        Signup(pilot=self.pilot_c, training=self.tomorrows_training).save()
+        self.tomorrows_training.select_signups()
 
         yesterdays_training = Training.objects.create(date=YESTERDAY)
         Signup(pilot=self.orga, training=yesterdays_training).save()
@@ -632,7 +632,7 @@ class EmergencyMailViewTests(TestCase):
         self.client.force_login(guest)
         with self.assertNumQueries(3):
             response = self.client.get(
-                reverse("emergency_mail", kwargs={"date": TODAY})
+                reverse("emergency_mail", kwargs={"date": TOMORROW})
             )
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
         self.assertTemplateUsed(response, "403.html")
@@ -642,7 +642,9 @@ class EmergencyMailViewTests(TestCase):
             response = self.client.get(reverse("trainings"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "trainings/training_list.html")
-        self.assertContains(response, reverse("emergency_mail", kwargs={"date": TODAY}))
+        self.assertContains(
+            response, reverse("emergency_mail", kwargs={"date": TOMORROW})
+        )
 
         guest = get_user_model().objects.create(email="guest@example.com")
         self.client.force_login(guest)
@@ -651,13 +653,13 @@ class EmergencyMailViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "trainings/training_list.html")
         self.assertNotContains(
-            response, reverse("emergency_mail", kwargs={"date": TODAY})
+            response, reverse("emergency_mail", kwargs={"date": TOMORROW})
         )
 
     def test_only_selected_signups_can_be_chosen(self):
         with self.assertNumQueries(8):
             response = self.client.get(
-                reverse("emergency_mail", kwargs={"date": TODAY})
+                reverse("emergency_mail", kwargs={"date": TOMORROW})
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "trainings/emergency_mail.html")
@@ -665,11 +667,11 @@ class EmergencyMailViewTests(TestCase):
         self.assertContains(response, self.pilot_b.first_name)
         self.assertContains(response, self.pilot_c.first_name)
 
-        self.signup_a_today.cancel()
-        self.signup_a_today.save()
+        self.signup_a_tomorrow.cancel()
+        self.signup_a_tomorrow.save()
         with self.assertNumQueries(8):
             response = self.client.get(
-                reverse("emergency_mail", kwargs={"date": TODAY})
+                reverse("emergency_mail", kwargs={"date": TOMORROW})
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "trainings/emergency_mail.html")
@@ -679,7 +681,7 @@ class EmergencyMailViewTests(TestCase):
 
         with self.assertNumQueries(9):
             response = self.client.post(
-                reverse("emergency_mail", kwargs={"date": TODAY}),
+                reverse("emergency_mail", kwargs={"date": TOMORROW}),
                 data={"start": "2", "end": "5", "emergency_contacts": ["1", "2"]},
                 follow=True,
             )
@@ -690,7 +692,7 @@ class EmergencyMailViewTests(TestCase):
     def test_exactly_two_emergency_contacts_must_be_selected(self):
         with self.assertNumQueries(9):
             response = self.client.post(
-                reverse("emergency_mail", kwargs={"date": TODAY}),
+                reverse("emergency_mail", kwargs={"date": TOMORROW}),
                 data={"start": "2", "end": "5", "emergency_contacts": ["1"]},
                 follow=True,
             )
@@ -700,7 +702,7 @@ class EmergencyMailViewTests(TestCase):
 
         with self.assertNumQueries(9):
             response = self.client.post(
-                reverse("emergency_mail", kwargs={"date": TODAY}),
+                reverse("emergency_mail", kwargs={"date": TOMORROW}),
                 data={"start": "2", "end": "5", "emergency_contacts": ["1", "2", "3"]},
                 follow=True,
             )
@@ -711,7 +713,7 @@ class EmergencyMailViewTests(TestCase):
     def test_sending_emergency_mail(self):
         with self.assertNumQueries(18):
             response = self.client.post(
-                reverse("emergency_mail", kwargs={"date": TODAY}),
+                reverse("emergency_mail", kwargs={"date": TOMORROW}),
                 data={"start": "2", "end": "5", "emergency_contacts": ["1", "2"]},
                 follow=True,
             )
@@ -720,7 +722,7 @@ class EmergencyMailViewTests(TestCase):
         self.assertContains(response, "Seepolizeimail abgesendet.")
         self.assertEqual(1, len(mail.outbox))
         self.assertTrue(
-            TODAY.strftime("%A, %d. %B").replace(" 0", " ") in mail.outbox[0].subject
+            TOMORROW.strftime("%A, %d. %B").replace(" 0", " ") in mail.outbox[0].subject
         )
         self.assertEqual(mail.outbox[0].from_email, "dev@example.com")
         self.assertEqual(
@@ -732,16 +734,16 @@ class EmergencyMailViewTests(TestCase):
         self.assertTrue(self.pilot_b.first_name in mail.outbox[0].body)
         self.assertTrue(self.pilot_c.first_name not in mail.outbox[0].body)
 
-        self.todays_training.refresh_from_db()
-        self.assertTrue(self.todays_training.emergency_mail_sender == self.orga)
+        self.tomorrows_training.refresh_from_db()
+        self.assertTrue(self.tomorrows_training.emergency_mail_sender == self.orga)
 
     def test_cannot_send_emergency_mail_twice(self):
-        self.todays_training.emergency_mail_sender = self.orga
-        self.todays_training.save()
+        self.tomorrows_training.emergency_mail_sender = self.orga
+        self.tomorrows_training.save()
 
         with self.assertNumQueries(9):
             response = self.client.get(
-                reverse("emergency_mail", kwargs={"date": TODAY})
+                reverse("emergency_mail", kwargs={"date": TOMORROW})
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "trainings/emergency_mail.html")
@@ -754,7 +756,7 @@ class EmergencyMailViewTests(TestCase):
 
         with self.assertNumQueries(18):
             response = self.client.post(
-                reverse("emergency_mail", kwargs={"date": TODAY}),
+                reverse("emergency_mail", kwargs={"date": TOMORROW}),
                 data={"start": "2", "end": "5", "emergency_contacts": ["1", "2"]},
                 follow=True,
             )
@@ -782,10 +784,21 @@ class EmergencyMailViewTests(TestCase):
 
         with self.assertNumQueries(6):
             response = self.client.get(
-                reverse("emergency_mail", kwargs={"date": TOMORROW})
+                reverse("emergency_mail", kwargs={"date": TODAY})
             )
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.assertTemplateUsed(response, "404.html")
+
+    def test_next_urls(self):
+        with self.assertNumQueries(11):
+            response = self.client.post(
+                reverse("emergency_mail", kwargs={"date": TOMORROW})
+                + f"?next={reverse('home')}",
+                data={"start": "2", "end": "5", "emergency_contacts": ["1", "2"]},
+                follow=True,
+            )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "news/post_list.html")
 
     def test_cannot_send_emergency_mail_for_trainings_far_ahead_404(self):
         with self.assertNumQueries(5):
@@ -828,7 +841,9 @@ class PerformanceTests(TestCase):
 
     def test_training_update_view(self):
         with self.assertNumQueries(6):
-            response = self.client.get(reverse("update_training", kwargs={"date": TODAY}))
+            response = self.client.get(
+                reverse("update_training", kwargs={"date": TODAY})
+            )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "trainings/training_update.html")
 

@@ -264,9 +264,19 @@ class ReportCreateView(OrgaRequiredMixin, generic.CreateView):
 
     def get(self, *args, **kwargs):
         """Redirect to existing report"""
-        training = get_object_or_404(Training, date=timezone.now().date())
+        today = timezone.now().date()
+        training = get_object_or_404(Training, date=today)
         if Report.objects.filter(training=training).exists():
             return redirect(self.get_success_url())
+
+        if not training.emergency_mail_sender:
+            messages.warning(
+                self.request, "Es wurde noch kein Seepolizeimail abgesendet!"
+            )
+            return redirect(
+                reverse_lazy("emergency_mail", kwargs={"date": today})
+                + f"?next={reverse_lazy('create_report')}"
+            )
 
         return super().get(*args, **kwargs)
 
@@ -355,6 +365,15 @@ class ReportUpdateView(OrgaRequiredMixin, generic.UpdateView):
         messages.success(
             self.request, "Alle haben bezahlt und der Kassenstand ist gespeichert 😊"
         )
+        training_is_today = form.instance.training.date == timezone.localtime().date()
+        finishing_early = timezone.localtime().hour < 17
+        if training_is_today and finishing_early:
+            messages.warning(
+                self.request,
+                "Falls das Training frühzeitig abgebrochen wurde, sollte insbesondere bei starkem "
+                'Wind die Seelpolizei unter <a href="tel:+41316387676">+41 31 638 76 76</a> '
+                "benachrichtigt werden, dass unser Boot nicht mehr vor Ort ist.",
+            )
         return super().form_valid(form)
 
 

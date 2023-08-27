@@ -107,6 +107,12 @@ class EmergencyMailView(OrgaRequiredMixin, SuccessMessageMixin, generic.UpdateVi
         form.send_mail()
         return super().form_valid(form)
 
+    def get_success_url(self):
+        if success_url := self.request.GET.get("next"):
+            return success_url
+
+        return self.success_url
+
 
 class SignupListView(LoginRequiredMixin, generic.ListView):
     model = Signup

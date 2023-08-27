@@ -27,7 +27,7 @@ class RunCreateViewTests(TestCase):
             first_name="Guest 2", email="guest_2@example.com"
         )
 
-        training = Training.objects.create(date=TODAY)
+        training = Training.objects.create(date=TODAY, emergency_mail_sender=orga)
         now = timezone.now()
         Signup(pilot=orga, training=training, signed_up_on=now).save()
         now += timedelta(hours=1)
@@ -50,7 +50,7 @@ class RunCreateViewTests(TestCase):
 
     def test_redirect_to_create_report_if_no_report_exists(self):
         Report.objects.all().delete()
-        with self.assertNumQueries(11):
+        with self.assertNumQueries(12):
             response = self.client.get(reverse("create_run"), follow=True)
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/report_create.html")
@@ -258,7 +258,7 @@ class RunUpdateViewTests(TestCase):
             first_name="Guest 2", email="guest_2@example.com"
         )
 
-        training = Training.objects.create(date=TODAY)
+        training = Training.objects.create(date=TODAY, emergency_mail_sender=orga)
         now = timezone.now()
         self.orga_signup = Signup.objects.create(
             pilot=orga, training=training, signed_up_on=now
