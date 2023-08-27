@@ -796,22 +796,22 @@ class ReportUpdateViewTests(TestCase):
             response = self.client.get(reverse("update_report", kwargs={"date": TODAY}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/report_update.html")
-        guest_column = (
+        guest_row = (
             response.content.decode(response.charset)
             .split("Guest")[1]
             .split("</tr>")[0]
             .replace(" ", "")
             .replace("\n", "")
         )
-        self.assertTrue(guest_column.endswith("<td>🪂</td><td>❌</td>"))
-        orga_column = (
+        self.assertTrue(guest_row.endswith("<td>🪂</td><td>❌</td>"))
+        orga_row = (
             response.content.decode(response.charset)
             .split("Orga")[1]
             .split("</tr>")[0]
             .replace(" ", "")
             .replace("\n", "")
         )
-        self.assertTrue(orga_column.endswith("<td>❌</td><td>🪂</td>"))
+        self.assertTrue(orga_row.endswith("<td>❌</td><td>🪂</td>"))
 
     def test_update_report(self):
         Bill(

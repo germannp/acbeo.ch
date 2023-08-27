@@ -679,6 +679,42 @@ class BillListView(LoginRequiredMixin, YearArchiveView):
         return queryset
 
 
+class PilotListView(OrgaRequiredMixin, YearArchiveView):
+    model = Bill
+    name = "aktive Pilot·innen"
+    date_field = "signup__training__date"
+    template_name = "bookkeeping/pilot_list.html"
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        prefetch_related_objects(queryset, "signup__pilot")
+        prefetch_related_objects(queryset, "signup__runs")
+        prefetch_related_objects(queryset, "signup__training__report")
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        stats = {}
+        by_pilots_pk = lambda bill: bill.signup.pilot.pk
+        for _, bills in groupby(
+            sorted(context["bill_list"], key=by_pilots_pk), key=by_pilots_pk
+        ):
+            bills = list(bills)
+            pilot = bills[0].signup.pilot
+            stats[pilot] = [
+                len(bills),
+                sum(bill.num_flights for bill in bills),
+                sum(bill.num_services for bill in bills),
+            ]
+
+        by_num_days = lambda item: item[1][0]
+        context["stats_by_pilot"] = dict(
+            sorted(stats.items(), key=by_num_days, reverse=True)
+        )
+        return context
+
+
 class BillCreateView(OrgaRequiredMixin, generic.CreateView):
     form_class = forms.BillForm
     template_name = "bookkeeping/bill_create.html"

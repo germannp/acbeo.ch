@@ -11,6 +11,8 @@ urlpatterns = [
     path("<int:year>/", views.ReportListView.as_view(), name="reports"),
     path("bilanz/", views.BalanceView.as_view(), name="balance"),
     path("bilanz/<int:year>/", views.BalanceView.as_view(), name="balance"),
+    path("pilotinnen/", views.PilotListView.as_view(), name="pilots"),
+    path("pilotinnen/<int:year>/", views.PilotListView.as_view(), name="pilots"),
     path("erstellen/", views.ReportCreateView.as_view(), name="create_report"),
     path("<date:date>/", views.ReportUpdateView.as_view(), name="update_report"),
     path(

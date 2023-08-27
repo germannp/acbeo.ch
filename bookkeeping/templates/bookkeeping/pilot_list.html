@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Aktive Pilot·innen {{ year }}{% endblock title %}
+
+{% block headline %}Aktive Pilot·innen {{ year }}{% endblock headline %}
+
+{% block content %}
+
+<div class="row mt-2">
+
+    <div class="col-md-12 left">
+    
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Name</th>
+                                <th scope="col">Rolle</th>
+                                <th scope="col">Tage ⯆</th>
+                                <th scope="col">Flüge</th>
+                                <th scope="col">Dienste</th>
+                            </tr>
+                        </thead>
+                        <tbody class="table-group-divider">
+                            {% for pilot, stats in stats_by_pilot.items %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td class="text-nowrap">{{ pilot }}</td>
+                                <td>
+                                    {% if pilot.get_role_display == 'Guest' %}
+                                    Gast
+                                    {% elif pilot.get_role_display == 'Member' %}
+                                    Mitglied
+                                    {% else %}
+                                    Leiter·in
+                                    {% endif %}
+                                </td>
+                                {% for num in stats %}
+                                <td>{{ num }}</td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        {% if previous_year or next_year %}
+        <ul class="pagination justify-content-center">
+            <div class="btn-group">
+                {% if previous_year %}
+                <a href="{% url 'pilots' year=previous_year %}" type="button" class="btn btn-primary"><i
+                        class="bi bi-chevron-double-left"></i></a>
+                {% endif %}
+                {% if next_year %}
+                <a href="{% url 'pilots' %}" type="button" class="btn btn-primary">Aktuelles Jahr</a>
+                <a href="{% url 'pilots' year=next_year %}" type="button" class="btn btn-primary"><i
+                        class="bi bi-chevron-double-right"></i></a>
+                {% endif %}
+            </div>
+        </ul>
+        {% endif %}
+
+    </div>
+</div>
+
+{% endblock content %}

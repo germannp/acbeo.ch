@@ -16,7 +16,7 @@
                     <table class="table table-sm table-hover">
                         <tbody>
                             <tr>
-                                <td>Berichte <a href="{% url 'reports' year=year %}" class="bi bi-pencil-square"></a>
+                                <td><a href="{% url 'reports' year=year %}">Berichte</a>
                                 </td>
                                 <td>{{ num_reports }}</td>
                             </tr>
@@ -29,7 +29,7 @@
                                 <td>{{ num_flights }}</td>
                             </tr>
                             <tr>
-                                <td>Pilot·innen</td>
+                                <td><a href="{% url 'pilots' year=year %}">Aktive Pilot·innen</a></td>
                                 <td>{{ num_pilots }}</td>
                             </tr>
                             <tr>
