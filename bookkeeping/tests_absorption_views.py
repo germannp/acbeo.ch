@@ -78,7 +78,7 @@ class AbsorptionCreateViewTests(TestCase):
 
     def test_create_absorption(self):
         amount = 42
-        with self.assertNumQueries(27):
+        with self.assertNumQueries(25):
             response = self.client.post(
                 reverse("create_absorption", kwargs={"date": TODAY}),
                 data={
@@ -196,7 +196,7 @@ class AbsorptionUpdateViewTests(TestCase):
     def test_update_absorption(self):
         new_amount = 23
         new_method = PaymentMethods.TWINT
-        with self.assertNumQueries(25):
+        with self.assertNumQueries(23):
             response = self.client.post(
                 reverse(
                     "update_absorption",
@@ -221,7 +221,7 @@ class AbsorptionUpdateViewTests(TestCase):
         self.assertEqual(new_method, self.absorption.method)
 
     def test_delete_absorption(self):
-        with self.assertNumQueries(22):
+        with self.assertNumQueries(20):
             response = self.client.post(
                 reverse(
                     "update_absorption",

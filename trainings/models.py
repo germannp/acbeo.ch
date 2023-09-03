@@ -53,7 +53,7 @@ class Training(models.Model):
         self.select_signups()
         return [
             signup
-            for signup in self.signups.all().order_by("pilot")
+            for signup in self.signups.all().prefetch_related("bill").order_by("pilot")
             if signup.is_active
         ]
 

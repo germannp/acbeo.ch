@@ -320,7 +320,10 @@ class ReportUpdateView(OrgaRequiredMixin, generic.UpdateView):
         times_of_runs = sorted(set(run.created_on for run in runs))
         context["times_of_runs"] = times_of_runs
         runs_by_signup = {}
-        for signup in self.object.training.selected_signups:
+        signups = self.object.training.selected_signups
+        prefetch_related_objects(signups, "pilot")
+        prefetch_related_objects(signups, "bill")
+        for signup in signups:
             # Templates don't work with defaultdict, so we do nested loops.
             runs_by_signup[signup] = []
             for time in times_of_runs:
@@ -338,6 +341,8 @@ class ReportUpdateView(OrgaRequiredMixin, generic.UpdateView):
         return context
 
     def form_valid(self, form):
+        prefetch_related_objects([form.instance], "training__signups__bill")
+        prefetch_related_objects([form.instance], "training__signups__purchases")
         if form.instance.num_unpaid_signups:
             messages.warning(self.request, "Es haben noch nicht alle bezahlt.")
             self.success_url = reverse_lazy(
@@ -526,6 +531,7 @@ class RunCreateView(OrgaRequiredMixin, generic.TemplateView):
             date=timezone.now().date(),
         )
         active_signups = training.active_signups
+        prefetch_related_objects(active_signups, "pilot")
         if "formset" in context:
             formset = context["formset"]
         else:
@@ -596,6 +602,7 @@ class RunUpdateView(OrgaRequiredMixin, generic.TemplateView):
         time_of_run = times_of_runs[num_run]
         context["time_of_run"] = time_of_run
         runs = report.runs.filter(created_on=time_of_run)
+        prefetch_related_objects(runs, "signup__pilot")
         if "formset" in context:
             formset = context["formset"]
         else:
@@ -620,7 +627,11 @@ class RunUpdateView(OrgaRequiredMixin, generic.TemplateView):
         report = get_object_or_404(Report, training=training)
         times_of_runs = sorted(set(run.created_on for run in report.runs.all()))
         num_run = self.kwargs["run"] - 1
-        runs = report.runs.filter(created_on=times_of_runs[num_run])
+        runs = (
+            Run.objects.filter(created_on=times_of_runs[num_run])
+            .prefetch_related("signup__bill")
+            .prefetch_related("signup__pilot")
+        )
         for form, run in zip(formset, runs):
             if run.signup.is_paid and run.kind != form.instance.kind:
                 messages.warning(
@@ -643,8 +654,8 @@ class RunUpdateView(OrgaRequiredMixin, generic.TemplateView):
         num_run = self.kwargs["run"] - 1
         runs = (
             Run.objects.filter(created_on=times_of_runs[num_run])
-            .prefetch_related("signup__pilot")
             .prefetch_related("signup__bill")
+            .prefetch_related("signup__pilot")
         )
 
         for run in runs:

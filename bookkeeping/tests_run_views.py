@@ -1,5 +1,6 @@
 from datetime import timedelta
 from http import HTTPStatus
+from random import randint
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
@@ -59,7 +60,7 @@ class RunCreateViewTests(TestCase):
         for signup in Signup.objects.all():
             self.assertEqual(signup.status, Signup.Status.WAITING)
 
-        with self.assertNumQueries(20):
+        with self.assertNumQueries(16):
             response = self.client.get(reverse("create_run"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/run_create.html")
@@ -68,7 +69,7 @@ class RunCreateViewTests(TestCase):
             self.assertEqual(signup.status, Signup.Status.SELECTED)
 
     def test_forms_are_prefilled(self):
-        with self.assertNumQueries(20):
+        with self.assertNumQueries(16):
             response = self.client.get(reverse("create_run"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/run_create.html")
@@ -76,7 +77,7 @@ class RunCreateViewTests(TestCase):
         self.assertNotContains(response, f'value="{Run.Kind.FLIGHT}" \\n')
 
     def test_pilots_listed_alphabetically(self):
-        with self.assertNumQueries(20):
+        with self.assertNumQueries(16):
             response = self.client.get(reverse("create_run"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/run_create.html")
@@ -96,7 +97,7 @@ class RunCreateViewTests(TestCase):
         ).save()
         self.assertTrue(self.guest_2_signup.is_paid)
 
-        with self.assertNumQueries(19):
+        with self.assertNumQueries(16):
             response = self.client.get(reverse("create_run"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/run_create.html")
@@ -112,7 +113,7 @@ class RunCreateViewTests(TestCase):
         ).save()
         self.assertTrue(self.guest_2_signup.is_paid)
 
-        with self.assertNumQueries(28):
+        with self.assertNumQueries(23):
             response = self.client.post(
                 reverse("create_run"),
                 data={
@@ -133,7 +134,7 @@ class RunCreateViewTests(TestCase):
         self.assertEqual(0, len(Run.objects.all()))
 
     def test_only_one_bus_per_run_allowed(self):
-        with self.assertNumQueries(18):
+        with self.assertNumQueries(14):
             response = self.client.post(
                 reverse("create_run"),
                 data={
@@ -155,7 +156,7 @@ class RunCreateViewTests(TestCase):
         self.assertEqual(0, len(Run.objects.all()))
 
     def test_at_most_two_boats_per_run_allowed(self):
-        with self.assertNumQueries(18):
+        with self.assertNumQueries(14):
             response = self.client.post(
                 reverse("create_run"),
                 data={
@@ -177,7 +178,7 @@ class RunCreateViewTests(TestCase):
         self.assertEqual(0, len(Run.objects.all()))
 
     def test_number_of_selected_signups_changed(self):
-        with self.assertNumQueries(29):
+        with self.assertNumQueries(23):
             response = self.client.post(
                 reverse("create_run"),
                 data={
@@ -196,7 +197,7 @@ class RunCreateViewTests(TestCase):
         self.assertEqual(0, len(Run.objects.all()))
 
     def test_create_run(self):
-        with self.assertNumQueries(46):
+        with self.assertNumQueries(38):
             response = self.client.post(
                 reverse("create_run"),
                 data={
@@ -224,7 +225,7 @@ class RunCreateViewTests(TestCase):
             created_on=timezone.now() - timedelta(minutes=20),
         ).save()
 
-        with self.assertNumQueries(46):
+        with self.assertNumQueries(38):
             response = self.client.post(
                 reverse("create_run"),
                 data={
@@ -307,7 +308,7 @@ class RunUpdateViewTests(TestCase):
         self.assertTemplateUsed(response, "404.html")
 
     def test_forms_are_prefilled(self):
-        with self.assertNumQueries(15):
+        with self.assertNumQueries(11):
             response = self.client.get(reverse("update_run", kwargs={"run": 1}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/run_update.html")
@@ -316,7 +317,7 @@ class RunUpdateViewTests(TestCase):
         self.assertContains(response, f'value="{Run.Kind.BOAT}" \n')
 
     def test_pilots_listed_alphabetically(self):
-        with self.assertNumQueries(15):
+        with self.assertNumQueries(11):
             response = self.client.get(reverse("update_run", kwargs={"run": 1}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/run_update.html")
@@ -336,7 +337,7 @@ class RunUpdateViewTests(TestCase):
         ).save()
         self.assertTrue(self.guest_signup.is_paid)
 
-        with self.assertNumQueries(25):
+        with self.assertNumQueries(21):
             response = self.client.post(
                 reverse("update_run", kwargs={"run": 1}),
                 data={
@@ -357,7 +358,7 @@ class RunUpdateViewTests(TestCase):
         self.assertContains(response, f"{self.guest} hat bereits bezahlt.")
 
     def test_update_run(self):
-        with self.assertNumQueries(46):
+        with self.assertNumQueries(39):
             response = self.client.post(
                 reverse("update_run", kwargs={"run": 1}),
                 data={
@@ -386,7 +387,7 @@ class RunUpdateViewTests(TestCase):
         self.assertEqual(Run.Kind.BREAK, self.orga_run.kind)
 
     def test_run_with_changed_number_of_pilots_cannot_be_deleted(self):
-        with self.assertNumQueries(37):
+        with self.assertNumQueries(33):
             response = self.client.post(
                 reverse("update_run", kwargs={"run": 1}),
                 data={
@@ -406,7 +407,7 @@ class RunUpdateViewTests(TestCase):
         self.assertEqual(3, len(Run.objects.all()))
 
     def test_run_with_changed_kind_cannot_be_deleted(self):
-        with self.assertNumQueries(37):
+        with self.assertNumQueries(33):
             response = self.client.post(
                 reverse("update_run", kwargs={"run": 1}),
                 data={
@@ -437,7 +438,7 @@ class RunUpdateViewTests(TestCase):
         self.assertTrue(self.guest_signup.is_paid)
         self.assertEqual(3, len(Run.objects.all()))
 
-        with self.assertNumQueries(37):
+        with self.assertNumQueries(33):
             response = self.client.post(
                 reverse("update_run", kwargs={"run": 1}),
                 data={
@@ -458,7 +459,7 @@ class RunUpdateViewTests(TestCase):
         self.assertEqual(3, len(Run.objects.all()))
 
     def test_delete_run(self):
-        with self.assertNumQueries(37):
+        with self.assertNumQueries(33):
             response = self.client.post(
                 reverse("update_run", kwargs={"run": 1}),
                 data={
@@ -475,3 +476,78 @@ class RunUpdateViewTests(TestCase):
         self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertContains(response, "Run gelöscht.")
         self.assertEqual(0, len(Run.objects.all()))
+
+
+class PerformanceTests(TestCase):
+    def setUp(self):
+        self.num_pilots = randint(5, 10)
+        num_flights = randint(5, 10)
+
+        orga = get_user_model().objects.create(
+            email="orga@example.com", first_name="Orga", role=get_user_model().Role.ORGA
+        )
+        self.client.force_login(orga)
+
+        pilots = [orga] + [
+            get_user_model().objects.create(
+                email=f"pilot_{i}@example.com", first_name=f"Pilot {i}"
+            )
+            for i in range(self.num_pilots - 1)
+        ]
+        training = Training.objects.create(date=TODAY)
+        report = Report.objects.create(training=training, cash_at_start=420)
+        now = timezone.now()
+        self.runs = []
+        for pilot in pilots:
+            signup = Signup.objects.create(pilot=pilot, training=training)
+            for j in range(num_flights):
+                created_on = now + timedelta(minutes=j)
+                self.runs.append(Run.objects.create(
+                    signup=signup,
+                    report=report,
+                    kind=Run.Kind.FLIGHT,
+                    created_on=created_on,
+                ))
+        training.select_signups()
+
+    def test_run_create_view(self):
+        with self.assertNumQueries(13):
+            response = self.client.get(reverse("create_run"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/run_create.html")
+
+        data = {"form-TOTAL_FORMS": self.num_pilots, "form-INITIAL_FORMS": 0}
+        for i in range(self.num_pilots):
+            data[f"form-{i}-kind"] = Run.Kind.FLIGHT
+        # Creating each run costs a call 🤷
+        with self.assertNumQueries(11 + self.num_pilots):
+            response = self.client.post(reverse("create_run"), data=data)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
+
+    def test_run_update_view(self):
+        with self.assertNumQueries(11):
+            response = self.client.get(reverse("update_run", kwargs={"run": 1}))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/run_update.html")
+
+        data = {"form-TOTAL_FORMS": self.num_pilots, "form-INITIAL_FORMS": 0, "save": ""}
+        for i in range(self.num_pilots):
+            data[f"form-{i}-kind"] = Run.Kind.FLIGHT
+            data[f"form-{i}-id"] = self.runs[i].pk
+        # Unfortunately, validating a formset costs a call for each form and caching
+        # would be complicated, see https://stackoverflow.com/questions/40665770/.
+        with self.assertNumQueries(9 + 2 * self.num_pilots):
+            response = self.client.post(
+                reverse("update_run", kwargs={"run": 1}), data=data, follow=False
+            )
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
+
+
+        del data["save"]
+        data["delete"] = ""
+        # Deleting can be done in one go, validation still costs.
+        with self.assertNumQueries(10 + self.num_pilots):
+            response = self.client.post(
+                reverse("update_run", kwargs={"run": 1}), data=data, follow=False
+            )
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)

@@ -642,7 +642,7 @@ class BillCreateViewTests(TestCase):
 
     def test_cannot_make_paid_signup_orga(self):
         self.assertTrue(self.orga_signup.is_paid)
-        with self.assertNumQueries(25):
+        with self.assertNumQueries(23):
             response = self.client.post(
                 reverse(
                     "create_bill",
@@ -733,7 +733,7 @@ class BillCreateViewTests(TestCase):
         self.report.save()
         self.assertTrue(self.orga_signup.is_paid)
         self.assertTrue(self.orga_signup.is_training_orga)
-        with self.assertNumQueries(27):
+        with self.assertNumQueries(25):
             response = self.client.post(
                 reverse(
                     "create_bill",
@@ -751,7 +751,7 @@ class BillCreateViewTests(TestCase):
     def test_create_bill(self):
         to_pay = Bill(signup=self.guest_signup, report=self.report).to_pay
         method = PaymentMethods.CASH
-        with self.assertNumQueries(30):
+        with self.assertNumQueries(28):
             response = self.client.post(
                 reverse(
                     "create_bill",
@@ -808,7 +808,7 @@ class BillCreateViewTests(TestCase):
         ).save()
         self.assertTrue(self.guest_signup.is_paid)
 
-        with self.assertNumQueries(25):
+        with self.assertNumQueries(23):
             response = self.client.get(
                 reverse(
                     "create_bill",
@@ -820,7 +820,7 @@ class BillCreateViewTests(TestCase):
         self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertContains(response, f"{self.guest} hat bereits bezahlt.")
 
-        with self.assertNumQueries(25):
+        with self.assertNumQueries(23):
             response = self.client.post(
                 reverse(
                     "create_bill",
@@ -1102,15 +1102,17 @@ class PerformanceTests(TestCase):
         for i in range(num_days):
             training = Training.objects.create(date=TODAY - timedelta(days=i))
             report = Report.objects.create(training=training, cash_at_start=420)
+            now = timezone.now() - timedelta(days=i)
             for pilot in pilots:
                 signup = Signup.objects.create(pilot=pilot, training=training)
                 self.signups.append(signup)
                 for j in range(num_flights):
+                    created_on = now + timedelta(minutes=j)
                     Run(
                         signup=signup,
                         report=report,
                         kind=Run.Kind.FLIGHT,
-                        created_on=timezone.now() - timedelta(minutes=j),
+                        created_on=created_on,
                     ).save()
                 Purchase.save_day_pass(signup=signup, report=report)
                 bill = Bill.objects.create(

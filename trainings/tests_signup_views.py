@@ -647,12 +647,14 @@ class PerformanceTests(TestCase):
             training = Training.objects.create(date=TODAY + timedelta(days=i))
             signup = Signup.objects.create(pilot=orga, training=training)
             report = Report.objects.create(training=training, cash_at_start=420)
+            now = timezone.now() + timedelta(days=i)
             for j in range(num_flights):
+                created_on = now + timedelta(minutes=j)
                 Run(
                     signup=signup,
                     report=report,
                     kind=Run.Kind.FLIGHT,
-                    created_on=timezone.now() - timedelta(minutes=j),
+                    created_on=created_on,
                 ).save()
             training.select_signups()
 
