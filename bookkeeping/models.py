@@ -66,6 +66,10 @@ class Report(models.Model):
     def num_selected_signups(self):
         return sum(signup.is_selected for signup in self.training.signups.all())
 
+    @property
+    def num_runs(self):
+        return len(set(run.created_on for run in self.runs.all()))
+
 
 class Expense(models.Model):
     class Reasons(models.IntegerChoices):

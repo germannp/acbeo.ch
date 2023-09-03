@@ -38,6 +38,13 @@ class ReportListViewTests(TestCase):
         )
         self.guest = get_user_model().objects.create(email="guest@example.com")
         signup = Signup.objects.create(pilot=self.guest, training=self.training)
+        for i in range(3):
+            Run(
+                signup=signup,
+                report=self.report,
+                kind=Run.Kind.FLIGHT,
+                created_on=timezone.now() - timedelta(minutes=i),
+            ).save()
         self.twint_bill = Bill.objects.create(
             signup=signup,
             report=self.report,
@@ -134,6 +141,13 @@ class ReportListViewTests(TestCase):
         self.assertNotContains(
             response, reverse("reports", kwargs={"year": TODAY.year - 4})
         )
+
+    def test_num_runs_shown(self):
+        with self.assertNumQueries(19):
+            response = self.client.get(reverse("reports"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/report_list.html")
+        self.assertContains(response, f"<td>{self.report.num_runs}</td>")
 
     def test_difference_between_reports(self):
         with self.assertNumQueries(19):

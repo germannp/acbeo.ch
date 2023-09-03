@@ -18,6 +18,7 @@
                             <tr>
                                 <th scope="col">#</th>
                                 <th scope="col">Datum</th>
+                                <th scope="col">Runs</th>
                                 <th scope="col">Offen</th>
                                 <th scope="col">Kasse Anfang</th>
                                 <th scope="col">Einnahmen</th>
@@ -35,6 +36,7 @@
                                     <a href="{% url 'update_report' date=report.training.date.isoformat %}"
                                         class="bi bi-pencil-square" /a>
                                 </td>
+                                <td>{{ report.num_runs }}</td>
                                 <td>{{ report.num_unpaid_signups }} / {{ report.num_selected_signups }}</td>
                                 <td>{{ report.cash_at_start }}{% if report.difference_between_reports %} ({{ report.difference_between_reports }}){% endif %}</td>
                                 <td>{{ report.cash_revenue }}</td>
