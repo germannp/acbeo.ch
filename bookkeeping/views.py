@@ -738,9 +738,9 @@ class PilotListView(OrgaRequiredMixin, YearArchiveView):
                 sum(bill.num_services for bill in bills),
             ]
 
-        by_num_days = lambda item: item[1][0]
+        by_numbers_and_name = lambda item: (item[1], str(item[0]))
         context["stats_by_pilot"] = dict(
-            sorted(stats.items(), key=by_num_days, reverse=True)
+            sorted(stats.items(), key=by_numbers_and_name, reverse=True)
         )
         return context
 
