@@ -126,6 +126,7 @@ class Run(models.Model):
     created_on = models.DateTimeField()
 
     class Meta:
+        indexes = [models.Index(fields=["created_on"])]
         unique_together = (("signup", "report", "created_on"),)
         ordering = ("report", "created_on", "signup__pilot")
 
@@ -270,6 +271,9 @@ class Purchase(models.Model):
     )
     description = models.CharField(max_length=50)
     price = models.SmallIntegerField(validators=[MinValueValidator(0)])
+
+    class Meta:
+        indexes = [models.Index(fields=["description"])]
 
     @classmethod
     def save_item(cls, signup, report, choice):

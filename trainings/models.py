@@ -31,6 +31,7 @@ class Training(models.Model):
     )
 
     class Meta:
+        indexes = [models.Index(fields=["date"])]
         ordering = ["date"]
 
     def __str__(self):
@@ -103,6 +104,7 @@ class Signup(models.Model):
     comment = models.CharField(max_length=150, default="", blank=True)
 
     class Meta:
+        indexes = [models.Index(fields=["status"])]
         unique_together = (("pilot", "training"),)
         ordering = ["status", "signed_up_on"]
 
