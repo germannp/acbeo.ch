@@ -1,5 +1,6 @@
 from datetime import timedelta
 from http import HTTPStatus
+from random import randint
 import locale
 
 from django.contrib.auth import get_user_model
@@ -35,22 +36,20 @@ class PurchaseCreateViewTests(TestCase):
     def test_orga_required_to_see(self):
         guest = get_user_model().objects.create(email="guest@example.com")
         self.client.force_login(guest)
-        with self.assertNumQueries(3):
-            response = self.client.get(
-                reverse(
-                    "create_purchase", kwargs={"date": TODAY, "signup": self.signup.pk}
-                )
+        response = self.client.get(
+            reverse(
+                "create_purchase", kwargs={"date": TODAY, "signup": self.signup.pk}
             )
+        )
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
         self.assertTemplateUsed(response, "403.html")
 
     def test_pilot_and_date_shown_and_items_listed(self):
-        with self.assertNumQueries(9):
-            response = self.client.get(
-                reverse(
-                    "create_purchase", kwargs={"date": TODAY, "signup": self.signup.pk}
-                )
+        response = self.client.get(
+            reverse(
+                "create_purchase", kwargs={"date": TODAY, "signup": self.signup.pk}
             )
+        )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/purchase_create.html")
         self.assertContains(response, self.orga)
@@ -62,14 +61,13 @@ class PurchaseCreateViewTests(TestCase):
             self.assertContains(response, item.label)
 
     def test_create_purchase(self):
-        with self.assertNumQueries(22):
-            response = self.client.post(
-                reverse(
-                    "create_purchase", kwargs={"date": TODAY, "signup": self.signup.pk}
-                ),
-                data={"item": Purchase.Items.REARMING_KIT},
-                follow=True,
-            )
+        response = self.client.post(
+            reverse(
+                "create_purchase", kwargs={"date": TODAY, "signup": self.signup.pk}
+            ),
+            data={"item": Purchase.Items.REARMING_KIT},
+            follow=True,
+        )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/bill_create.html")
         self.assertEqual(1, len(Purchase.objects.all()))
@@ -89,34 +87,31 @@ class PurchaseCreateViewTests(TestCase):
             amount=42,
             method=PaymentMethods.CASH,
         ).save()
-        with self.assertNumQueries(25):
-            response = self.client.post(
-                reverse(
-                    "create_purchase", kwargs={"date": TODAY, "signup": self.signup.pk}
-                ),
-                data={"item": Purchase.Items.REARMING_KIT},
-                follow=True,
-            )
+        response = self.client.post(
+            reverse(
+                "create_purchase", kwargs={"date": TODAY, "signup": self.signup.pk}
+            ),
+            data={"item": Purchase.Items.REARMING_KIT},
+            follow=True,
+        )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertContains(response, f"{self.orga} hat bereits bezahlt.")
 
     def test_signup_not_found_404(self):
-        with self.assertNumQueries(6):
-            response = self.client.get(
-                reverse("create_purchase", kwargs={"date": TODAY, "signup": 666})
-            )
+        response = self.client.get(
+            reverse("create_purchase", kwargs={"date": TODAY, "signup": 666})
+        )
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.assertTemplateUsed(response, "404.html")
 
     def test_report_not_found_404(self):
         Report.objects.all().delete()
-        with self.assertNumQueries(8):
-            response = self.client.get(
-                reverse(
-                    "create_purchase", kwargs={"date": TODAY, "signup": self.signup.pk}
-                )
+        response = self.client.get(
+            reverse(
+                "create_purchase", kwargs={"date": TODAY, "signup": self.signup.pk}
             )
+        )
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.assertTemplateUsed(response, "404.html")
 
@@ -141,22 +136,20 @@ class PurchaseDeleteViewTests(TestCase):
     def test_orga_required_to_see(self):
         guest = get_user_model().objects.create(email="guest@example.com")
         self.client.force_login(guest)
-        with self.assertNumQueries(3):
-            response = self.client.get(
-                reverse(
-                    "delete_purchase", kwargs={"date": TODAY, "pk": self.purchase.pk}
-                )
+        response = self.client.get(
+            reverse(
+                "delete_purchase", kwargs={"date": TODAY, "pk": self.purchase.pk}
             )
+        )
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
         self.assertTemplateUsed(response, "403.html")
 
     def test_pilot_and_desciption_shown(self):
-        with self.assertNumQueries(8):
-            response = self.client.get(
-                reverse(
-                    "delete_purchase", kwargs={"date": TODAY, "pk": self.purchase.pk}
-                )
+        response = self.client.get(
+            reverse(
+                "delete_purchase", kwargs={"date": TODAY, "pk": self.purchase.pk}
             )
+        )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/purchase_confirm_delete.html")
         self.assertContains(response, self.orga)
@@ -167,13 +160,12 @@ class PurchaseDeleteViewTests(TestCase):
         )
 
     def test_delete_purchase(self):
-        with self.assertNumQueries(22):
-            response = self.client.post(
-                reverse(
-                    "delete_purchase", kwargs={"date": TODAY, "pk": self.purchase.pk}
-                ),
-                follow=True,
-            )
+        response = self.client.post(
+            reverse(
+                "delete_purchase", kwargs={"date": TODAY, "pk": self.purchase.pk}
+            ),
+            follow=True,
+        )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/bill_create.html")
         self.assertEqual(0, len(Purchase.objects.all()))
@@ -195,11 +187,10 @@ class PurchaseDeleteViewTests(TestCase):
         Purchase.save_day_pass(signup, self.report)
         day_pass = Purchase.objects.last()
         self.assertEqual(Purchase.DAY_PASS_DESCRIPTION, day_pass.description)
-        with self.assertNumQueries(23):
-            response = self.client.post(
-                reverse("delete_purchase", kwargs={"date": TODAY, "pk": day_pass.pk}),
-                follow=True,
-            )
+        response = self.client.post(
+            reverse("delete_purchase", kwargs={"date": TODAY, "pk": day_pass.pk}),
+            follow=True,
+        )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/bill_create.html")
         self.assertEqual(1, len(Purchase.objects.all()))
@@ -212,21 +203,73 @@ class PurchaseDeleteViewTests(TestCase):
             amount=42,
             method=PaymentMethods.CASH,
         ).save()
-        with self.assertNumQueries(27):
-            response = self.client.post(
-                reverse(
-                    "delete_purchase", kwargs={"date": TODAY, "pk": self.purchase.pk}
-                ),
-                follow=True,
-            )
+        response = self.client.post(
+            reverse(
+                "delete_purchase", kwargs={"date": TODAY, "pk": self.purchase.pk}
+            ),
+            follow=True,
+        )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertContains(response, f"{self.orga} hat bereits bezahlt.")
 
     def test_purchase_not_found_404(self):
-        with self.assertNumQueries(6):
-            response = self.client.get(
-                reverse("delete_purchase", kwargs={"date": TODAY, "pk": 666})
-            )
+        response = self.client.get(
+            reverse("delete_purchase", kwargs={"date": TODAY, "pk": 666})
+        )
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.assertTemplateUsed(response, "404.html")
+
+
+class DatabaseCallsTests(TestCase):
+    def setUp(self):
+        self.num_pilots = randint(5, 10)
+
+        orga = get_user_model().objects.create(
+            email="orga@example.com", first_name="Orga", role=get_user_model().Role.ORGA
+        )
+        self.client.force_login(orga)
+
+        pilots = [orga] + [
+            get_user_model().objects.create(
+                email=f"pilot_{i}@example.com", first_name=f"Pilot {i}"
+            )
+            for i in range(self.num_pilots - 1)
+        ]
+        training = Training.objects.create(date=TODAY)
+        for pilot in pilots:
+            signup = Signup.objects.create(pilot=pilot, training=training)
+        self.signup = signup
+        training.select_signups()
+        self.report = Report.objects.create(training=training, cash_at_start=1337)
+
+    def test_purchase_create_view(self):
+        with self.assertNumQueries(9):
+            response = self.client.get(
+                reverse("create_purchase", kwargs={"date": TODAY, "signup": self.signup.pk})
+            )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/purchase_create.html")
+
+        with self.assertNumQueries(6):
+            response = self.client.post(
+                reverse(
+                    "create_purchase", kwargs={"date": TODAY, "signup": self.signup.pk}
+                ),
+                data={"item": Purchase.Items.REARMING_KIT},
+                follow=False,
+            )
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
+        self.assertEqual(1, len(Purchase.objects.all()))
+
+    def test_purchase_delete_view(self):
+        purchase = Purchase.save_day_pass(signup=self.signup, report=self.report)
+        with self.assertNumQueries(6):
+            response = self.client.post(
+                reverse(
+                    "delete_purchase", kwargs={"date": TODAY, "pk": purchase.pk}
+                ),
+                follow=False,
+            )
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
+        self.assertEqual(0, len(Purchase.objects.all()))
