@@ -28,7 +28,8 @@
                         </div>
                     </div>
 
-                    <label for="id_emergency_contacts" class="form-label">Notfallkontakte (bitte zwei auswählen):</label>
+                    <label for="id_emergency_contacts" class="form-label">Notfallkontakte (bitte zwei
+                        auswählen)</label>
                     {% for pk, choice in form.emergency_contacts.field.widget.choices %}
                     <div class="form-check" id="id_emergency_contacts">
                         <input class="form-check-input" type="checkbox"
@@ -38,6 +39,16 @@
                             {{ choice }}</label>
                     </div>
                     {% endfor %}
+
+                    <label for="ctrInactive" class="form-label mt-3">Militärflugplatz</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="ctr_inactive" id="ctrInactive"
+                            {% if form.ctr_inactive.value %}checked{% endif %}>
+                        <label class="form-check-label" for="ctrInactive">
+                            CTR/TMA Meiringen ist laut <a href="tel:+41800496347">0800 HX MEIR</a> nicht
+                            aktiv (oder wir fliegen mit Flugfunk o. Ä.).
+                        </label>
+                    </div>
 
                     <button class="btn btn-primary mt-3" type="submit" {% if form.instance.emergency_mail_sender %}disabled{% endif %}>Senden</button>
                     <a href="{% url 'trainings' %}" class="btn btn-outline-dark mt-3">Abbrechen</a>

@@ -258,8 +258,7 @@ class BalanceView(OrgaRequiredMixin, YearArchiveView):
 
 
 class ReportCreateView(OrgaRequiredMixin, generic.CreateView):
-    model = Report
-    fields = ("cash_at_start",)
+    form_class = forms.ReportCreateForm
     template_name = "bookkeeping/report_create.html"
 
     def get(self, *args, **kwargs):
@@ -287,6 +286,10 @@ class ReportCreateView(OrgaRequiredMixin, generic.CreateView):
             return redirect(self.get_success_url())
 
         form.instance.training = training
+        if not form.cleaned_data["sufficient_parking_tickets"]:
+            messages.warning(
+                self.request, "Bitte im Tourismusbüro neue Parkkarten besorgen."
+            )
         return super().form_valid(form)
 
     def get_success_url(self):

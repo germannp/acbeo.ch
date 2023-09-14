@@ -519,11 +519,30 @@ class ReportCreateViewTests(TestCase):
         Training(date=TODAY).save()
         response = self.client.post(
             reverse("create_report"),
-            data={"cash_at_start": 1337},
+            data={"cash_at_start": 1337, "sufficient_parking_tickets": True},
             follow=True,
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/report_update.html")
+        self.assertNotContains(
+            response, "Bitte im Tourismusbüro neue Parkkarten besorgen."
+        )
+        self.assertEqual(1, len(Report.objects.all()))
+        created_report = Report.objects.first()
+        self.assertEqual(1337, created_report.cash_at_start)
+
+    def test_create_report_with_parking_ticket_warning(self):
+        Training(date=TODAY).save()
+        response = self.client.post(
+            reverse("create_report"),
+            data={"cash_at_start": 1337, "sufficient_parking_tickets": False},
+            follow=True,
+        )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/report_update.html")
+        self.assertContains(
+            response, "Bitte im Tourismusbüro neue Parkkarten besorgen."
+        )
         self.assertEqual(1, len(Report.objects.all()))
         created_report = Report.objects.first()
         self.assertEqual(1337, created_report.cash_at_start)

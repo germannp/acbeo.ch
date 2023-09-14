@@ -629,6 +629,7 @@ class EmergencyMailViewTests(TestCase):
                 "start": "2",
                 "end": "5",
                 "emergency_contacts": ["1", "2"],
+                "ctr_inactive": True,
             },
             follow=True,
         )
@@ -643,6 +644,7 @@ class EmergencyMailViewTests(TestCase):
                 "start": "2",
                 "end": "5",
                 "emergency_contacts": ["1"],
+                "ctr_inactive": True,
             },
             follow=True,
         )
@@ -656,12 +658,31 @@ class EmergencyMailViewTests(TestCase):
                 "start": "2",
                 "end": "5",
                 "emergency_contacts": ["1", "2", "3"],
+                "ctr_inactive": True,
             },
             follow=True,
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "trainings/emergency_mail.html")
         self.assertContains(response, "Bitte genau zwei Notfallkontakte auswählen.")
+
+    def test_ctr_must_be_inactive(self):
+        response = self.client.post(
+            reverse("emergency_mail", kwargs={"date": TOMORROW}),
+            data={
+                "start": "2",
+                "end": "5",
+                "emergency_contacts": ["1", "2"],
+                "ctr_inactive": False,
+            },
+            follow=True,
+        )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "trainings/emergency_mail.html")
+        self.assertContains(
+            response,
+            "Wir dürfen nur mit Absprache fliegen, wenn CTR/TMA Meiringen aktiv ist.",
+        )
 
     def test_sending_emergency_mail(self):
         response = self.client.post(
@@ -670,6 +691,7 @@ class EmergencyMailViewTests(TestCase):
                 "start": "2",
                 "end": "5",
                 "emergency_contacts": ["1", "2"],
+                "ctr_inactive": True,
             },
             follow=True,
         )
@@ -713,6 +735,7 @@ class EmergencyMailViewTests(TestCase):
                 "start": "2",
                 "end": "5",
                 "emergency_contacts": ["1", "2"],
+                "ctr_inactive": True,
             },
             follow=True,
         )
@@ -728,6 +751,7 @@ class EmergencyMailViewTests(TestCase):
                 "start": "2",
                 "end": "5",
                 "emergency_contacts": ["4", "5"],
+                "ctr_inactive": True,
             },
             follow=True,
         )
@@ -752,6 +776,7 @@ class EmergencyMailViewTests(TestCase):
                 "start": "2",
                 "end": "5",
                 "emergency_contacts": ["1", "2"],
+                "ctr_inactive": True,
             },
             follow=True,
         )
@@ -765,6 +790,7 @@ class EmergencyMailViewTests(TestCase):
                 "start": "2",
                 "end": "5",
                 "emergency_contacts": ["6", "7"],
+                "ctr_inactive": True,
             },
             follow=True,
         )
@@ -856,6 +882,7 @@ class DatabaseCallsTests(TestCase):
                     "start": "2",
                     "end": "5",
                     "emergency_contacts": ["1", "2"],
+                    "ctr_inactive": True,
                 },
             )
         self.assertEqual(response.status_code, HTTPStatus.FOUND)

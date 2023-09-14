@@ -5,8 +5,16 @@ from django.core.mail import EmailMessage
 from django.forms import modelformset_factory
 from django.utils.formats import date_format
 
-from .models import Absorption, Bill, Expense, PaymentMethods, Purchase, Run
+from .models import Absorption, Bill, Expense, PaymentMethods, Purchase, Report, Run
 from trainings.models import Signup
+
+
+class ReportCreateForm(forms.ModelForm):
+    sufficient_parking_tickets = forms.BooleanField(required=False)
+
+    class Meta:
+        model = Report
+        fields = ("cash_at_start",)
 
 
 class ExpenseCreateForm(forms.ModelForm):

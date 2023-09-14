@@ -109,8 +109,9 @@ class EmergencyMailForm(forms.ModelForm):
     start = forms.ChoiceField(choices=Start.choices, initial=Start["9:00"])
     end = forms.ChoiceField(choices=End.choices, initial=End["19:00"])
     emergency_contacts = EmergencyContactChoiceField(
-        queryset=None, widget=forms.CheckboxSelectMultiple
+        queryset=None, widget=forms.CheckboxSelectMultiple, required=False
     )
+    ctr_inactive = forms.BooleanField(required=False)
 
     class Meta:
         model = Training
@@ -127,6 +128,14 @@ class EmergencyMailForm(forms.ModelForm):
         if len(emergency_contacts) != 2:
             raise ValidationError("Bitte genau zwei Notfallkontakte auswählen.")
         return emergency_contacts
+
+    def clean_ctr_inactive(self):
+        ctr_inactive = self.cleaned_data["ctr_inactive"]
+        if not ctr_inactive:
+            raise ValidationError(
+                "Wir dürfen nur mit Absprache fliegen, wenn CTR/TMA Meiringen aktiv ist."
+            )
+        return ctr_inactive
 
     def send_mail(self):
         date = date_format(self.instance.date, "l, j. F")
