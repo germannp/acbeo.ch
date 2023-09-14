@@ -92,11 +92,15 @@ class EmergencyMailView(OrgaRequiredMixin, SuccessMessageMixin, generic.UpdateVi
             raise Http404(
                 "Seepolizeimail kann höchstens drei Tage im Voraus versandt werden."
             )
-        training = get_object_or_404(Training, date=self.kwargs["date"])
+        training = get_object_or_404(
+            Training.objects.prefetch_related("signups__pilot"),
+            date=self.kwargs["date"],
+        )
         if sender := training.emergency_mail_sender:
             messages.info(
                 self.request, f"{sender} hat bereits ein Seepolizeimail versandt."
             )
+        training.select_signups()
         return training
 
     def form_valid(self, form):
