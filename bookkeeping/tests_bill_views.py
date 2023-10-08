@@ -564,17 +564,26 @@ class BillCreateViewTests(TestCase):
         self.guest_signup.refresh_from_db()
 
     def test_make_orga(self):
+        amount = 42
         response = self.client.post(
             reverse(
                 "create_bill",
                 kwargs={"date": TODAY, "signup": self.guest_signup.pk},
             ),
-            data={"make-orga": ""},
+            data={
+                "prepaid_flights": 0,
+                "amount": amount,
+                "method": PaymentMethods.TWINT,
+                "make-orga": "",
+            },
             follow=True,
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/bill_create.html")
         self.assertContains(response, "Zu Tagesleiter·in gemacht.")
+        self.assertContains(response, 'id="id_method_1" required checked')
+        self.assertContains(response, amount)
+
         self.guest_signup.refresh_from_db()
         self.assertTrue(self.guest_signup.is_training_orga)
         self.report.refresh_from_db()
@@ -584,52 +593,72 @@ class BillCreateViewTests(TestCase):
         self.report.orga_1 = self.guest_signup
         self.report.save()
         self.assertTrue(self.guest_signup.is_training_orga)
+
+        amount = 42
         response = self.client.post(
             reverse(
                 "create_bill",
                 kwargs={"date": TODAY, "signup": self.guest_signup.pk},
             ),
-            data={"make-orga": ""},
+            data={
+                "prepaid_flights": 0,
+                "amount": amount,
+                "method": PaymentMethods.TWINT,
+                "make-orga": "",
+            },
             follow=True,
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/bill_create.html")
         self.assertContains(response, "Ist bereits Tagesleiter·in.")
+        self.assertContains(response, 'id="id_method_1" required checked')
+        self.assertContains(response, amount)
 
     def test_cannot_make_paid_signup_orga(self):
         self.assertTrue(self.orga_signup.is_paid)
+
+        amount = 42
         response = self.client.post(
             reverse(
                 "create_bill",
                 kwargs={"date": TODAY, "signup": self.orga_signup.pk},
             ),
-            data={"make-orga": ""},
+            data={
+                "prepaid_flights": 0,
+                "amount": amount,
+                "method": PaymentMethods.TWINT,
+                "make-orga": "",
+            },
             follow=True,
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/report_update.html")
-        self.assertContains(
-            response,
-            f"Nicht zu Tagesleiter·in gemacht, {self.orga} hat bereits bezahlt.",
-        )
+        self.assertContains(response, f"{self.orga} hat bereits bezahlt.")
         self.assertFalse(self.guest_signup.is_training_orga)
 
     def test_no_more_than_two_orgas(self):
         self.report.orga_1 = self.orga_signup
         self.report.orga_2 = self.guest_signup
         self.report.save()
+
         pilot = get_user_model().objects.create(
             first_name="Pilot", email="pilot@example.com"
         )
         signup = Signup.objects.create(
             pilot=pilot, training=self.training, signed_up_on=timezone.now()
         )
+        amount = 42
         response = self.client.post(
             reverse(
                 "create_bill",
                 kwargs={"date": TODAY, "signup": signup.pk},
             ),
-            data={"make-orga": ""},
+            data={
+                "prepaid_flights": 0,
+                "amount": amount,
+                "method": PaymentMethods.TWINT,
+                "make-orga": "",
+            },
             follow=True,
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
@@ -639,6 +668,9 @@ class BillCreateViewTests(TestCase):
             f"Nicht zu Tagesleiter·in gemacht, {self.orga} und "
             f"{self.guest} sind bereits als Tagesleiter·innen gespeichert.",
         )
+        self.assertContains(response, 'id="id_method_1" required checked')
+        self.assertContains(response, amount)
+
         signup.refresh_from_db()
         self.assertFalse(signup.is_training_orga)
 
@@ -646,12 +678,19 @@ class BillCreateViewTests(TestCase):
         self.report.orga_1 = self.guest_signup
         self.report.save()
         self.assertTrue(self.guest_signup.is_training_orga)
+
+        amount = 42
         response = self.client.post(
             reverse(
                 "create_bill",
                 kwargs={"date": TODAY, "signup": self.guest_signup.pk},
             ),
-            data={"undo-orga": ""},
+            data={
+                "prepaid_flights": 0,
+                "amount": amount,
+                "method": PaymentMethods.TWINT,
+                "undo-orga": "",
+            },
             follow=True,
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
@@ -659,22 +698,34 @@ class BillCreateViewTests(TestCase):
         self.assertContains(response, "Tagesleiter·in entfernt.")
         self.guest_signup.refresh_from_db()
         self.assertFalse(self.guest_signup.is_training_orga)
-
+        self.assertContains(response, 'id="id_method_1" required checked')
+        self.assertContains(response, amount)
+    
     def test_undo_first_of_two_orgas(self):
         self.report.orga_1 = self.guest_signup
         self.report.orga_2 = self.orga_signup
         self.report.save()
+
+        amount = 42
         response = self.client.post(
             reverse(
                 "create_bill",
                 kwargs={"date": TODAY, "signup": self.guest_signup.pk},
             ),
-            data={"undo-orga": ""},
+            data={
+                "prepaid_flights": 0,
+                "amount": amount,
+                "method": PaymentMethods.TWINT,
+                "undo-orga": "",
+            },
             follow=True,
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/bill_create.html")
         self.assertContains(response, "Tagesleiter·in entfernt.")
+        self.assertContains(response, 'id="id_method_1" required checked')
+        self.assertContains(response, amount)
+
         self.guest_signup.refresh_from_db()
         self.assertFalse(self.guest_signup.is_training_orga)
         self.report.refresh_from_db()
@@ -685,21 +736,29 @@ class BillCreateViewTests(TestCase):
         self.report.save()
         self.assertTrue(self.orga_signup.is_paid)
         self.assertTrue(self.orga_signup.is_training_orga)
+
+        amount = 42
         response = self.client.post(
             reverse(
                 "create_bill",
                 kwargs={"date": TODAY, "signup": self.orga_signup.pk},
             ),
-            data={"undo-orga": ""},
+            data={
+                "prepaid_flights": 0,
+                "amount": amount,
+                "method": PaymentMethods.TWINT,
+                "undo-orga": "",
+            },
             follow=True,
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertContains(
-            response, f"Tagesleiter·in nicht entfernt, {self.orga} hat bereits bezahlt."
+            response, f"{self.orga} hat bereits bezahlt."
         )
 
     def test_create_bill(self):
+        self.assertTrue(self.guest.is_new)
         to_pay = Bill(signup=self.guest_signup, report=self.report).to_pay
         method = PaymentMethods.CASH
         response = self.client.post(
@@ -721,6 +780,8 @@ class BillCreateViewTests(TestCase):
         self.assertTrue(self.guest_signup.is_paid)
         self.assertEqual(to_pay, self.guest_signup.bill.amount)
         self.assertEqual(method, self.guest_signup.bill.method)
+        self.guest.refresh_from_db()
+        self.assertFalse(self.guest.is_new)
 
     def test_create_bill_redirect_to_twint(self):
         to_pay = Bill(signup=self.guest_signup, report=self.report).to_pay

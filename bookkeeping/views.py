@@ -1,9 +1,9 @@
 from datetime import date, timedelta
 from itertools import groupby
 
-from django.db.models import prefetch_related_objects
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import prefetch_related_objects
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
@@ -802,69 +802,8 @@ class BillCreateView(OrgaRequiredMixin, generic.CreateView):
         context["bill"] = Bill(signup=signup, report=report)
         return context
 
-    def post(self, request, *args, **kwargs):
-        """Deal with training orgas"""
-        if "make-orga" in request.POST:
-            signup = get_object_or_404(
-                Signup.objects.select_related("bill"), pk=self.kwargs["signup"]
-            )
-            if signup.is_paid:
-                messages.warning(
-                    request,
-                    f"Nicht zu Tagesleiter·in gemacht, {signup.pilot} hat bereits bezahlt.",
-                )
-                return HttpResponseRedirect(self.get_report_url())
-
-            if signup.is_training_orga:
-                messages.warning(request, "Ist bereits Tagesleiter·in.")
-                return HttpResponseRedirect(self.get_bill_url())
-
-            report = get_object_or_404(Report, training=signup.training)
-            if not report.orga_1:
-                report.orga_1 = signup
-                report.save()
-                messages.success(request, "Zu Tagesleiter·in gemacht.")
-                return HttpResponseRedirect(self.get_bill_url())
-
-            if not report.orga_2:
-                report.orga_2 = signup
-                report.save()
-                messages.success(request, "Zu Tagesleiter·in gemacht.")
-                return HttpResponseRedirect(self.get_bill_url())
-
-            messages.warning(
-                request,
-                f"Nicht zu Tagesleiter·in gemacht, {report.orga_1.pilot} und "
-                f"{report.orga_2.pilot} sind bereits als Tagesleiter·innen gespeichert.",
-            )
-            return HttpResponseRedirect(self.get_bill_url())
-
-        if "undo-orga" in request.POST:
-            signup = get_object_or_404(
-                Signup.objects.select_related("bill"), pk=self.kwargs["signup"]
-            )
-            if signup.is_paid:
-                messages.warning(
-                    request,
-                    f"Tagesleiter·in nicht entfernt, {signup.pilot} hat bereits bezahlt.",
-                )
-                return HttpResponseRedirect(self.get_report_url())
-
-            report = get_object_or_404(Report, training=signup.training)
-            if report.orga_1 == signup:
-                report.orga_1 = report.orga_2
-                report.orga_2 = None
-                report.save()
-            if report.orga_2 == signup:
-                report.orga_2 = None
-                report.save()
-            messages.warning(request, "Tagesleiter·in entfernt.")
-            return HttpResponseRedirect(self.get_bill_url())
-
-        return super().post(self, request, *args, **kwargs)
-
     def form_valid(self, form):
-        """Fill in pilot and report"""
+        """Deal with training orgas and fill in pilot and report"""
         signup = get_object_or_404(
             Signup.objects.select_related("training")
             .prefetch_related("runs")
@@ -876,8 +815,53 @@ class BillCreateView(OrgaRequiredMixin, generic.CreateView):
             messages.warning(self.request, f"{signup.pilot} hat bereits bezahlt.")
             return HttpResponseRedirect(self.get_report_url())
 
-        form.instance.signup = signup
         report = get_object_or_404(Report, training=signup.training)
+        if "make-orga" in self.request.POST:
+            if signup.is_training_orga:
+                messages.warning(self.request, "Ist bereits Tagesleiter·in.")
+                return super().form_invalid(form)
+
+            if not report.orga_1:
+                report.orga_1 = signup
+                report.save()
+                messages.success(self.request, "Zu Tagesleiter·in gemacht.")
+                return super().form_invalid(form)
+
+            if not report.orga_2:
+                report.orga_2 = signup
+                report.save()
+                messages.success(self.request, "Zu Tagesleiter·in gemacht.")
+                return super().form_invalid(form)
+
+            messages.warning(
+                self.request,
+                f"Nicht zu Tagesleiter·in gemacht, {report.orga_1.pilot} und "
+                f"{report.orga_2.pilot} sind bereits als Tagesleiter·innen gespeichert.",
+            )
+            return super().form_invalid(form)
+
+        if "undo-orga" in self.request.POST:
+            signup = get_object_or_404(
+                Signup.objects.select_related("bill"), pk=self.kwargs["signup"]
+            )
+            if signup.is_paid:
+                messages.warning(
+                    self.request,
+                    f"Tagesleiter·in nicht entfernt, {signup.pilot} hat bereits bezahlt.",
+                )
+                return HttpResponseRedirect(self.get_report_url())
+
+            if report.orga_1 == signup:
+                report.orga_1 = report.orga_2
+                report.orga_2 = None
+                report.save()
+            if report.orga_2 == signup:
+                report.orga_2 = None
+                report.save()
+            messages.warning(self.request, "Tagesleiter·in entfernt.")
+            return super().form_invalid(form)
+
+        form.instance.signup = signup
         form.instance.report = report
         if form.instance.amount < form.instance.to_pay:
             form.add_error(
@@ -894,12 +878,6 @@ class BillCreateView(OrgaRequiredMixin, generic.CreateView):
             )
         self.success_url = success_url
         return super().form_valid(form)
-
-    def get_bill_url(self):
-        return reverse_lazy(
-            "create_bill",
-            kwargs={"date": self.kwargs["date"], "signup": self.kwargs["signup"]},
-        )
 
     def get_report_url(self):
         return reverse_lazy("update_report", kwargs={"date": self.kwargs["date"]})
