@@ -463,7 +463,7 @@ class BalanceViewTests(TestCase):
 class ReportCreateViewTests(TestCase):
     def setUp(self):
         self.orga = get_user_model().objects.create(
-            email="orga@example.com", role=get_user_model().Role.ORGA
+            email="orga@example.com", first_name="Orga", role=get_user_model().Role.ORGA
         )
         self.client.force_login(self.orga)
 
@@ -506,6 +506,37 @@ class ReportCreateViewTests(TestCase):
             in response.request["QUERY_STRING"]
         )
 
+    def test_briefing_checkbox_shown(self):
+        training = Training.objects.create(date=TODAY, emergency_mail_sender=self.orga)
+        pilot = get_user_model().objects.create(
+            email="pilot_a@example.com", first_name="Name A"
+        )
+        Signup(training=training, pilot=pilot).save()
+        response = self.client.get(reverse("create_report"), follow=True)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/report_create.html")
+        self.assertContains(response, "Briefing mit Name A durchgeführt.")
+
+        pilot = get_user_model().objects.create(
+            email="pilot_b@example.com", first_name="Name B"
+        )
+        Signup(training=training, pilot=pilot).save()
+        response = self.client.get(reverse("create_report"), follow=True)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/report_create.html")
+        self.assertContains(response, "Briefing mit Name A und Name B durchgeführt.")
+
+        pilot = get_user_model().objects.create(
+            email="pilot_c@example.com", first_name="Name C"
+        )
+        Signup(training=training, pilot=pilot).save()
+        response = self.client.get(reverse("create_report"), follow=True)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/report_create.html")
+        self.assertContains(
+            response, "Briefing mit Name A, Name B und Name C durchgeführt."
+        )
+
     def test_only_positive_integers_allowed_for_cash(self):
         Training(date=TODAY).save()
         response = self.client.post(
@@ -516,16 +547,27 @@ class ReportCreateViewTests(TestCase):
         self.assertEqual(0, len(Report.objects.all()))
 
     def test_create_report(self):
-        Training(date=TODAY).save()
+        training = Training.objects.create(date=TODAY)
+        pilot = get_user_model().objects.create(
+            email="pilot_a@example.com", first_name="Name A"
+        )
+        Signup(training=training, pilot=pilot).save()
         response = self.client.post(
             reverse("create_report"),
-            data={"cash_at_start": 1337, "sufficient_parking_tickets": True},
+            data={
+                "cash_at_start": 1337,
+                "sufficient_parking_tickets": True,
+                "briefing": True,
+            },
             follow=True,
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertNotContains(
             response, "Bitte im Tourismusbüro neue Parkkarten besorgen."
+        )
+        self.assertNotContains(
+            response, "Bitte Briefing vor dem ersten Flug durchführen."
         )
         self.assertEqual(1, len(Report.objects.all()))
         created_report = Report.objects.first()
@@ -543,6 +585,24 @@ class ReportCreateViewTests(TestCase):
         self.assertContains(
             response, "Bitte im Tourismusbüro neue Parkkarten besorgen."
         )
+        self.assertEqual(1, len(Report.objects.all()))
+        created_report = Report.objects.first()
+        self.assertEqual(1337, created_report.cash_at_start)
+
+    def test_create_report_with_briefing_warning(self):
+        training = Training.objects.create(date=TODAY)
+        pilot = get_user_model().objects.create(
+            email="pilot_a@example.com", first_name="Name A"
+        )
+        Signup(training=training, pilot=pilot).save()
+        response = self.client.post(
+            reverse("create_report"),
+            data={"cash_at_start": 1337, "briefing": False},
+            follow=True,
+        )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/report_update.html")
+        self.assertContains(response, "Bitte Briefing vor dem ersten Flug durchführen.")
         self.assertEqual(1, len(Report.objects.all()))
         created_report = Report.objects.first()
         self.assertEqual(1337, created_report.cash_at_start)
@@ -608,6 +668,7 @@ class ReportUpdateViewTests(TestCase):
 
     def test_get_update_report_selects_signups(self):
         for signup in Signup.objects.all():
+            signup.refresh_from_db()
             self.assertEqual(signup.status, Signup.Status.WAITING)
 
         response = self.client.get(reverse("update_report", kwargs={"date": TODAY}))
@@ -998,13 +1059,13 @@ class DatabaseCallsTests(TestCase):
             training.select_signups()
 
     def test_report_list_view(self):
-        with self.assertNumQueries(19):
+        with self.assertNumQueries(17):
             response = self.client.get(reverse("reports"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/report_list.html")
 
     def test_balance_view(self):
-        with self.assertNumQueries(22):
+        with self.assertNumQueries(20):
             response = self.client.get(reverse("balance"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/report_balance.html")
@@ -1013,12 +1074,12 @@ class DatabaseCallsTests(TestCase):
         training = Training.objects.filter(date=TODAY)[0]
         Report.objects.filter(training=training).delete()
 
-        with self.assertNumQueries(8):
+        with self.assertNumQueries(13):
             response = self.client.get(reverse("create_report"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/report_create.html")
 
-        with self.assertNumQueries(6):
+        with self.assertNumQueries(12):
             response = self.client.post(
                 reverse("create_report"), data={"cash_at_start": 420}, follow=False
             )
@@ -1026,7 +1087,7 @@ class DatabaseCallsTests(TestCase):
         self.assertTrue(Report.objects.filter(training=training).exists())
 
     def test_report_update_view(self):
-        with self.assertNumQueries(17):
+        with self.assertNumQueries(15):
             response = self.client.get(reverse("update_report", kwargs={"date": TODAY}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/report_update.html")

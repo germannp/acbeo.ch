@@ -33,6 +33,7 @@ class PilotAdmin(BaseUserAdmin):
         "date_joined",
         "prepaid_flights",
         "role",
+        "is_new",
         "is_active",
     )
     ordering = ("-date_joined",)
@@ -53,6 +54,7 @@ class PilotAdmin(BaseUserAdmin):
                     "phone",
                     "prepaid_flights",
                     "role",
+                    "is_new",
                     "is_active",
                     "password1",
                     "password2",
@@ -73,6 +75,7 @@ class PilotAdmin(BaseUserAdmin):
                     "phone",
                     "prepaid_flights",
                     "role",
+                    "is_new",
                     "is_active",
                     "password",
                 )

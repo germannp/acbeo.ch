@@ -17,10 +17,14 @@ TOMORROW = TODAY + timedelta(days=1)
 class TrainingTests(TestCase):
     def setUp(self):
         pilot_a = get_user_model().objects.create(
-            email="pilot_a@example.com", role=get_user_model().Role.MEMBER
+            email="pilot_a@example.com",
+            first_name="Name A",
+            role=get_user_model().Role.MEMBER,
         )
         pilot_b = get_user_model().objects.create(
-            email="pilot_b@example.com", role=get_user_model().Role.MEMBER
+            email="pilot_b@example.com",
+            first_name="Name B",
+            role=get_user_model().Role.MEMBER,
         )
         self.training = Training.objects.create(date=TOMORROW, max_pilots=3)
         now = timezone.now()
@@ -34,6 +38,7 @@ class TrainingTests(TestCase):
 
     def test_two_and_only_two_spots_are_reserved_for_orgas(self):
         for signup in [self.signup_a, self.signup_b]:
+            signup.refresh_from_db()
             self.assertEqual(signup.status, Signup.Status.WAITING)
 
         self.training.select_signups()
@@ -95,6 +100,7 @@ class TrainingTests(TestCase):
 
     def test_stay_selected_when_max_pilots_is_reduced(self):
         for signup in [self.signup_a, self.signup_b]:
+            signup.refresh_from_db()
             self.assertEqual(signup.status, Signup.Status.WAITING)
 
         self.training.select_signups()
@@ -160,6 +166,15 @@ class TrainingTests(TestCase):
         for signup in [self.signup_a, self.signup_b]:
             signup.refresh_from_db()
             self.assertEqual(signup.status, Signup.Status.SELECTED)
+
+    def test_new_pilots(self):
+        pilots = [signup.pilot for signup in self.training.active_signups]
+        self.assertEqual(pilots, self.training.new_pilots)
+
+        for pilot in pilots:
+            pilot.is_new = False
+            pilot.save()
+        self.assertEqual([], self.training.new_pilots)
 
 
 class SignupTests(TestCase):

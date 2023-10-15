@@ -234,9 +234,13 @@ class Bill(models.Model):
 
 
 @receiver(models.signals.post_save, sender=Bill)
-def pay_with_prepaid_flights(sender, instance, created, **kwargs):
+def pay_with_prepaid_flights_and_mark_not_new(sender, instance, created, **kwargs):
     if not created:
         return
+
+    if instance.signup.pilot.is_new:
+        instance.signup.pilot.is_new = False
+        instance.signup.pilot.save()
 
     if not instance.prepaid_flights:
         return
@@ -247,6 +251,9 @@ def pay_with_prepaid_flights(sender, instance, created, **kwargs):
 
 @receiver(models.signals.post_delete, sender=Bill)
 def return_prepaid_flights(sender, instance, **kwargs):
+    # Since this is even called in `create_bill` we don't mark pilots new when deleting
+    # the last `Bill`.
+
     if not instance.prepaid_flights:
         return
 

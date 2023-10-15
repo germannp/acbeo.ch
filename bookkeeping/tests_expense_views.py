@@ -266,7 +266,7 @@ class DatabaseCallsTests(TestCase):
         self.report = Report.objects.create(training=training, cash_at_start=420)
 
     def test_expense_create_view(self):
-        with self.assertNumQueries(6):
+        with self.assertNumQueries(5):
             response = self.client.get(
                 reverse("create_expense", kwargs={"date": TODAY})
             )
@@ -289,7 +289,7 @@ class DatabaseCallsTests(TestCase):
 
     def test_expense_update_view(self):
         expense = Expense.objects.create(report=self.report, reason="Gas", amount=11)
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(4):
             response = self.client.get(
                 reverse(
                     "update_expense",

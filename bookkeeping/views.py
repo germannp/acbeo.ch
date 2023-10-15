@@ -279,17 +279,39 @@ class ReportCreateView(OrgaRequiredMixin, generic.CreateView):
 
         return super().get(*args, **kwargs)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        today = timezone.now().date()
+        training = get_object_or_404(Training, date=today)
+        prefetch_related_objects([training], "signups__pilot")
+        prefetch_related_objects([training], "signups__bill")
+        if new_pilots := training.new_pilots:
+            names = [pilot.first_name for pilot in new_pilots]
+            label = (", ".join(names[:-1]) + " und ") * (len(names) >= 2) + names[-1]
+            context["new_pilots"] = label
+        return context
+
     def form_valid(self, form):
         """Fill in training or redirect to existing report"""
-        training = get_object_or_404(Training, date=timezone.now().date())
+        today = timezone.now().date()
+        training = get_object_or_404(Training, date=today)
         if Report.objects.filter(training=training).exists():
             return redirect(self.get_success_url())
 
         form.instance.training = training
+
         if not form.cleaned_data["sufficient_parking_tickets"]:
             messages.warning(
                 self.request, "Bitte im Tourismusbüro neue Parkkarten besorgen."
             )
+
+        prefetch_related_objects([training], "signups__pilot")
+        prefetch_related_objects([training], "signups__bill")
+        if training.new_pilots and not form.cleaned_data["briefing"]:
+            messages.warning(
+                self.request, "Bitte Briefing vor dem ersten Flug durchführen."
+            )
+
         return super().form_valid(form)
 
     def get_success_url(self):

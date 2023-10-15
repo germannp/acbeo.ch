@@ -18,15 +18,26 @@
                             <label>Kassenstand vor dem Training</label>
                             <small class="text-muted">Bitte auf ganze Franken runden.</small>
                         </div>
-                        <div class="form-check mb-3">
+                        <div class="form-check">
                             <input class="form-check-input" type="checkbox" name="sufficient_parking_tickets"
                                 id="sufficientParkingTickets" {% if form.sufficient_parking_tickets.value %}checked{% endif %}>
                             <label class="form-check-label" for="sufficientParkingTickets">
                                 Parkkarten sind noch für mindestens drei Wochenenden gültig.
                             </label>
                         </div>
-                        <button class="btn btn-primary" type="submit">Erstellen</button>
-                        <a href="javascript:history.back()" class="btn btn-outline-dark">Abbrechen</a>
+                        {% if new_pilots %}
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="briefing"
+                                id="briefing" {% if form.briefing.value %}checked{% endif %}>
+                            <label class="form-check-label" for="briefing">
+                                Briefing mit {{ new_pilots }} durchgeführt.
+                            </label>
+                        </div>
+                        {% endif %}
+                        <div class="mt-3">
+                            <button class="btn btn-primary" type="submit">Erstellen</button>
+                            <a href="javascript:history.back()" class="btn btn-outline-dark">Abbrechen</a>
+                        </div>
                     </form>
                 </main>
             </div>

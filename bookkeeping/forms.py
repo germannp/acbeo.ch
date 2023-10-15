@@ -11,6 +11,7 @@ from trainings.models import Signup
 
 class ReportCreateForm(forms.ModelForm):
     sufficient_parking_tickets = forms.BooleanField(required=False)
+    briefing = forms.BooleanField(required=False)
 
     class Meta:
         model = Report

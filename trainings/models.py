@@ -54,13 +54,20 @@ class Training(models.Model):
         self.select_signups()
         return [
             signup
-            for signup in self.signups.all().prefetch_related("bill").order_by("pilot")
+            for signup in self.signups.all()
+            .prefetch_related("pilot")
+            .prefetch_related("bill")
+            .order_by("pilot")
             if signup.is_active
         ]
 
     @property
     def number_of_motivated_pilots(self):
         return sum(signup.is_motivated for signup in self.signups.all())
+
+    @property
+    def new_pilots(self):
+        return [signup.pilot for signup in self.active_signups if signup.pilot.is_new]
 
     def select_signups(self):
         signups = self.signups.all()

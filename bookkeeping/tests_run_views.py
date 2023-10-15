@@ -56,6 +56,7 @@ class RunCreateViewTests(TestCase):
 
     def test_get_create_run_selects_signups(self):
         for signup in Signup.objects.all():
+            signup.refresh_from_db()
             self.assertEqual(signup.status, Signup.Status.WAITING)
 
         response = self.client.get(reverse("create_run"))
@@ -459,7 +460,7 @@ class RunUpdateViewTests(TestCase):
 class DatabaseCallsTests(TestCase):
     def setUp(self):
         self.num_pilots = randint(5, 10)
-        num_flights = randint(5, 10)
+        self.num_flights = randint(5, 10)
 
         orga = get_user_model().objects.create(
             email="orga@example.com", first_name="Orga", role=get_user_model().Role.ORGA
@@ -478,18 +479,20 @@ class DatabaseCallsTests(TestCase):
         self.runs = []
         for pilot in pilots:
             signup = Signup.objects.create(pilot=pilot, training=training)
-            for j in range(num_flights):
+            for j in range(self.num_flights):
                 created_on = now + timedelta(minutes=j)
-                self.runs.append(Run.objects.create(
-                    signup=signup,
-                    report=report,
-                    kind=Run.Kind.FLIGHT,
-                    created_on=created_on,
-                ))
+                self.runs.append(
+                    Run.objects.create(
+                        signup=signup,
+                        report=report,
+                        kind=Run.Kind.FLIGHT,
+                        created_on=created_on,
+                    )
+                )
         training.select_signups()
 
     def test_run_create_view(self):
-        with self.assertNumQueries(13):
+        with self.assertNumQueries(11):
             response = self.client.get(reverse("create_run"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/run_create.html")
@@ -498,17 +501,24 @@ class DatabaseCallsTests(TestCase):
         for i in range(self.num_pilots):
             data[f"form-{i}-kind"] = Run.Kind.FLIGHT
         # Creating each run costs a call 🤷
-        with self.assertNumQueries(11 + self.num_pilots):
+        with self.assertNumQueries(13 + self.num_pilots):
             response = self.client.post(reverse("create_run"), data=data)
         self.assertEqual(response.status_code, HTTPStatus.FOUND)
+        self.assertEqual(
+            (self.num_flights + 1) * self.num_pilots, len(Run.objects.all())
+        )
 
     def test_run_update_view(self):
-        with self.assertNumQueries(11):
+        with self.assertNumQueries(9):
             response = self.client.get(reverse("update_run", kwargs={"run": 1}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/run_update.html")
 
-        data = {"form-TOTAL_FORMS": self.num_pilots, "form-INITIAL_FORMS": 0, "save": ""}
+        data = {
+            "form-TOTAL_FORMS": self.num_pilots,
+            "form-INITIAL_FORMS": 0,
+            "save": "",
+        }
         for i in range(self.num_pilots):
             data[f"form-{i}-kind"] = Run.Kind.FLIGHT
             data[f"form-{i}-id"] = self.runs[i].pk
@@ -528,3 +538,6 @@ class DatabaseCallsTests(TestCase):
                 reverse("update_run", kwargs={"run": 1}), data=data, follow=False
             )
         self.assertEqual(response.status_code, HTTPStatus.FOUND)
+        self.assertEqual(
+            (self.num_flights - 1) * self.num_pilots, len(Run.objects.all())
+        )

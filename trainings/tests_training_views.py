@@ -569,18 +569,15 @@ class EmergencyMailViewTests(TestCase):
         )
         Signup(pilot=self.pilot_b, training=self.tomorrows_training).save()
         Signup(pilot=self.pilot_c, training=self.tomorrows_training).save()
-        self.tomorrows_training.select_signups()
 
         yesterdays_training = Training.objects.create(date=YESTERDAY)
         Signup(pilot=self.orga, training=yesterdays_training).save()
         Signup(pilot=self.pilot_b, training=yesterdays_training).save()
-        yesterdays_training.select_signups()
 
         self.in_a_week = TODAY + timedelta(days=7)
         training_in_a_week = Training.objects.create(date=self.in_a_week)
         Signup(pilot=self.orga, training=training_in_a_week).save()
         Signup(pilot=self.pilot_b, training=training_in_a_week).save()
-        training_in_a_week.select_signups()
 
     def test_orga_required_to_see(self):
         guest = get_user_model().objects.create(email="guest@example.com")
@@ -605,6 +602,40 @@ class EmergencyMailViewTests(TestCase):
         self.assertNotContains(
             response, reverse("emergency_mail", kwargs={"date": TOMORROW})
         )
+
+    def test_get_emergency_mail_selects_signups(self):
+        self.signup_a_tomorrow.refresh_from_db()
+        self.assertEqual(self.signup_a_tomorrow.status, Signup.Status.WAITING)
+
+        response = self.client.get(reverse("emergency_mail", kwargs={"date": TOMORROW}))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "trainings/emergency_mail.html")
+        self.assertContains(response, "Name A , ")
+
+        self.signup_a_tomorrow.refresh_from_db()
+        self.assertEqual(self.signup_a_tomorrow.status, Signup.Status.SELECTED)
+
+    def test_new_pilots_warning_shown(self):
+        response = self.client.get(reverse("emergency_mail", kwargs={"date": TOMORROW}))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "trainings/emergency_mail.html")
+        self.assertContains(
+            response, "Name A, Name B und Name C sind zum ersten Mal dabei."
+        )
+
+        Signup.objects.first().delete()
+        response = self.client.get(reverse("emergency_mail", kwargs={"date": TOMORROW}))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "trainings/emergency_mail.html")
+        self.assertContains(response, "Name B und Name C sind zum ersten Mal dabei.")
+        self.assertNotContains(response, "Name A,")
+
+        Signup.objects.first().delete()
+        response = self.client.get(reverse("emergency_mail", kwargs={"date": TOMORROW}))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "trainings/emergency_mail.html")
+        self.assertContains(response, "Name C ist zum ersten Mal dabei.")
+        self.assertNotContains(response, "und Name C")
 
     def test_only_selected_signups_can_be_chosen(self):
         response = self.client.get(reverse("emergency_mail", kwargs={"date": TOMORROW}))
@@ -698,6 +729,10 @@ class EmergencyMailViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "trainings/training_list.html")
         self.assertContains(response, "Seepolizeimail abgesendet.")
+        self.assertNotContains(
+            response, "Name A, Name B und Name C sind zum ersten Mal dabei."
+        )
+
         self.assertEqual(1, len(mail.outbox))
         self.assertTrue(
             TOMORROW.strftime("%A, %d. %B").replace(" 0", " ") in mail.outbox[0].subject
@@ -822,13 +857,13 @@ class DatabaseCallsTests(TestCase):
                 Signup(pilot=pilot, training=training).save()
 
     def test_training_list_view(self):
-        with self.assertNumQueries(12 + self.num_days * self.num_pilots):
+        with self.assertNumQueries(10 + self.num_days * self.num_pilots):
             response = self.client.get(reverse("trainings"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "trainings/training_list.html")
 
     def test_training_create_view(self):
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(3):
             response = self.client.get(reverse("create_trainings"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "trainings/training_create.html")
@@ -849,7 +884,7 @@ class DatabaseCallsTests(TestCase):
         self.assertEqual(2 * self.num_days, len(Training.objects.all()))
 
     def test_training_update_view(self):
-        with self.assertNumQueries(6):
+        with self.assertNumQueries(4):
             response = self.client.get(
                 reverse("update_training", kwargs={"date": TODAY})
             )
@@ -868,14 +903,14 @@ class DatabaseCallsTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_emergency_mail_view(self):
-        with self.assertNumQueries(10 + self.num_pilots):
+        with self.assertNumQueries(12 + self.num_pilots):
             response = self.client.get(
                 reverse("emergency_mail", kwargs={"date": TODAY})
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "trainings/emergency_mail.html")
 
-        with self.assertNumQueries(7):
+        with self.assertNumQueries(8):
             response = self.client.post(
                 reverse("emergency_mail", kwargs={"date": TODAY}),
                 data={

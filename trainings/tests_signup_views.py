@@ -615,13 +615,13 @@ class DatabaseCallsTests(TestCase):
             training.select_signups()
 
     def test_signup_list_view(self):
-        with self.assertNumQueries(10):
+        with self.assertNumQueries(8):
             response = self.client.get(reverse("signups"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "trainings/signup_list.html")
 
     def test_signup_create_view(self):
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(3):
             response = self.client.get(reverse("signup"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "trainings/signup_create.html")
@@ -638,7 +638,7 @@ class DatabaseCallsTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_signup_update_view(self):
-        with self.assertNumQueries(10):
+        with self.assertNumQueries(8):
             response = self.client.get(reverse("update_signup", kwargs={"date": TODAY}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "trainings/signup_update.html")

@@ -64,6 +64,16 @@ class BillListViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "news/login.html")
 
+    def test_link_not_shown_to_new_pilot(self):
+        self.assertFalse(self.guest.is_new)
+        response = self.client.get(reverse("home"))
+        self.assertContains(response, reverse("bills"))
+
+        self.guest.is_new = True
+        self.guest.save()
+        response = self.client.get(reverse("home"))
+        self.assertNotContains(response, reverse("bills"))
+
     def test_pagination_by_year(self):
         response = self.client.get(reverse("bills"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
@@ -149,9 +159,6 @@ class BillListViewTests(TestCase):
         response = self.client.get(reverse("bills"))
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.assertTemplateUsed(response, "404.html")
-
-        response = self.client.get(reverse("home"))
-        self.assertNotContains(response, reverse("bills"))
 
 
 class PilotListViewTests(TestCase):
@@ -1120,13 +1127,13 @@ class DatabaseCallsTests(TestCase):
             training.select_signups()
 
     def test_bill_list_view(self):
-        with self.assertNumQueries(11):
+        with self.assertNumQueries(9):
             response = self.client.get(reverse("bills"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/bill_list.html")
 
     def test_pilot_list_view(self):
-        with self.assertNumQueries(11):
+        with self.assertNumQueries(9):
             response = self.client.get(reverse("pilots"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/pilot_list.html")
@@ -1135,7 +1142,7 @@ class DatabaseCallsTests(TestCase):
         Bill.objects.all().delete()
 
         signup = self.signups[-1]
-        with self.assertNumQueries(18):
+        with self.assertNumQueries(16):
             response = self.client.get(
                 reverse(
                     "create_bill",
@@ -1147,7 +1154,7 @@ class DatabaseCallsTests(TestCase):
 
         # Previous unpaid signup requires extra call.
         signup = self.signups[0]
-        with self.assertNumQueries(19):
+        with self.assertNumQueries(17):
             response = self.client.get(
                 reverse(
                     "create_bill",
@@ -1170,10 +1177,11 @@ class DatabaseCallsTests(TestCase):
                 },
             )
         self.assertEqual(response.status_code, HTTPStatus.FOUND)
+        self.assertEqual(1, len(Bill.objects.all()))
 
     def test_bill_update_view(self):
         bill = self.bills[3]
-        with self.assertNumQueries(13):
+        with self.assertNumQueries(11):
             response = self.client.get(
                 reverse(
                     "update_bill",

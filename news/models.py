@@ -63,6 +63,7 @@ class Pilot(AbstractBaseUser):
     prepaid_flights = models.SmallIntegerField(
         validators=[MinValueValidator(0)], default=0
     )
+    is_new = models.BooleanField(default=True)
     is_active = models.BooleanField(default=True)
 
     objects = PilotManager()

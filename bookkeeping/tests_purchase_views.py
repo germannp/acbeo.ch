@@ -244,7 +244,7 @@ class DatabaseCallsTests(TestCase):
         self.report = Report.objects.create(training=training, cash_at_start=1337)
 
     def test_purchase_create_view(self):
-        with self.assertNumQueries(9):
+        with self.assertNumQueries(7):
             response = self.client.get(
                 reverse("create_purchase", kwargs={"date": TODAY, "signup": self.signup.pk})
             )

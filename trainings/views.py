@@ -3,6 +3,7 @@ from datetime import timedelta
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
+from django.db.models import prefetch_related_objects
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
@@ -18,16 +19,16 @@ class TrainingListView(LoginRequiredMixin, generic.ListView):
     paginate_by = 4
 
     def get_queryset(self):
-        trainings = Training.objects.filter(date__gte=timezone.now().date()).prefetch_related(
-            "signups__pilot"
-        )
+        trainings = Training.objects.filter(
+            date__gte=timezone.now().date()
+        ).prefetch_related("signups__pilot")
         for training in trainings:
             training.select_signups()
-        # Selecting signups can alter their order, but Signup instances cannot be sorted.
-        # Refreshing them from the DB is the best solution I found 🤷
-        trainings = Training.objects.filter(date__gte=timezone.now().date()).prefetch_related(
-            "signups__pilot"
-        )
+        # Selecting signups can alter their order, but Signup instances cannot be
+        # sorted. Refreshing them from the DB is the best solution I found 🤷
+        trainings = Training.objects.filter(
+            date__gte=timezone.now().date()
+        ).prefetch_related("signups__pilot")
         return trainings
 
     def get_context_data(self, **kwargs):
@@ -92,6 +93,7 @@ class EmergencyMailView(OrgaRequiredMixin, SuccessMessageMixin, generic.UpdateVi
             raise Http404(
                 "Seepolizeimail kann höchstens drei Tage im Voraus versandt werden."
             )
+
         training = get_object_or_404(
             Training.objects.prefetch_related("signups__pilot"),
             date=self.kwargs["date"],
@@ -100,6 +102,16 @@ class EmergencyMailView(OrgaRequiredMixin, SuccessMessageMixin, generic.UpdateVi
             messages.info(
                 self.request, f"{sender} hat bereits ein Seepolizeimail versandt."
             )
+
+        prefetch_related_objects([training], "signups__pilot")
+        prefetch_related_objects([training], "signups__bill")
+        if self.request.method == "GET" and (new_pilots := training.new_pilots):
+            names = sorted(pilot.first_name for pilot in new_pilots)
+            message = (", ".join(names[:-1]) + " und ") * (len(names) >= 2) + names[-1]
+            message += " ist" if len(new_pilots) == 1 else " sind"
+            message += " zum ersten Mal dabei."
+            messages.info(self.request, message)
+
         training.select_signups()
         return training
 

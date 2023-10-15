@@ -283,6 +283,18 @@ class BillTests(TestCase):
         bill.save()
         self.assertEqual(8, self.pilot.prepaid_flights)
 
+    def test_create_bill_marks_pilot_not_new(self):
+        self.assertTrue(self.pilot.is_new)
+        signup = Signup.objects.create(pilot=self.pilot, training=self.training)
+        Bill(
+            signup=signup,
+            report=self.report,
+            prepaid_flights=2,
+            amount=0,
+            method=PaymentMethods.CASH,
+        ).save()
+        self.assertFalse(self.pilot.is_new)
+
     def test_was_paid_in_cash(self):
         signup = Signup.objects.create(pilot=self.pilot, training=self.training)
         for method in PaymentMethods:

@@ -113,7 +113,7 @@
                         <a class="nav-link dropdown-toggle" href="#" id="dropdown04" data-bs-toggle="dropdown"
                             aria-expanded="false">Konto</a>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            {% if request.user.has_bills %}
+                            {% if not request.user.is_new %}
                             <li><a class="dropdown-item" href="{% url 'bills' %}">Rechnungen</a></li>
                             {% endif %}
                             <li><a class="dropdown-item" href="{% url 'update_pilot' %}?next={{ request.path }}">Bearbeiten</a></li>
