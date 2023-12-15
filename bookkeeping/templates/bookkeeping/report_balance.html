@@ -90,6 +90,12 @@
                                 <td>{{ amount }}</td>
                                 {% endfor %}
                             </tr>
+                            <tr>
+                                <td>Abschöpfung</td>
+                                {% for amount in revenue_from_absorptions.values %}
+                                <td>{% if amount %}{{ amount }}{% endif %}</td>
+                                {% endfor %}
+                            </tr>
                         </tbody>
                         <tfoot class="table-group-divider">
                             <td>Total</td>

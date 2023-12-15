@@ -233,21 +233,23 @@ class BalanceViewTests(TestCase):
 
         self.training = Training.objects.create(date=TODAY)
         orga_signup = Signup.objects.create(pilot=self.orga, training=self.training)
-        self.report = Report.objects.create(
+        self.first_report = Report.objects.create(
             training=self.training,
             cash_at_start=420,
-            cash_at_end=1337,
+            cash_at_end=666,
             remarks="Some remarks.",
         )
-        self.day_pass = Purchase.save_day_pass(signup=orga_signup, report=self.report)
+        self.day_pass = Purchase.save_day_pass(
+            signup=orga_signup, report=self.first_report
+        )
         self.prepaid_flights = Purchase.save_item(
             signup=orga_signup,
-            report=self.report,
+            report=self.first_report,
             choice=Purchase.Items.PREPAID_FLIGHTS,
         )
         self.cash_bill = Bill.objects.create(
             signup=orga_signup,
-            report=self.report,
+            report=self.first_report,
             prepaid_flights=0,
             amount=self.day_pass.price + self.prepaid_flights.price,
             method=PaymentMethods.CASH,
@@ -258,38 +260,57 @@ class BalanceViewTests(TestCase):
         )
         guest_signup = Signup.objects.create(pilot=self.guest, training=self.training)
         self.life_jacket = Purchase.save_item(
-            signup=guest_signup, report=self.report, choice=Purchase.Items.LIFEJACKET
+            signup=guest_signup,
+            report=self.first_report,
+            choice=Purchase.Items.LIFEJACKET,
         )
         self.rearming_kit = Purchase.save_item(
-            signup=guest_signup, report=self.report, choice=Purchase.Items.REARMING_KIT
+            signup=guest_signup,
+            report=self.first_report,
+            choice=Purchase.Items.REARMING_KIT,
         )
         self.twint_bill = Bill.objects.create(
             signup=guest_signup,
-            report=self.report,
+            report=self.first_report,
             prepaid_flights=0,
             amount=self.life_jacket.price + self.rearming_kit.price,
             method=PaymentMethods.TWINT,
         )
 
         self.first_gas = Expense.objects.create(
-            report=self.report, reason="Gas", amount=87
+            report=self.first_report, reason="Gas", amount=87
         )
         self.second_gas = Expense.objects.create(
-            report=self.report, reason="Gas", amount=25
+            report=self.first_report, reason="Gas", amount=25
         )
         self.other_expense = Expense.objects.create(
-            report=self.report, reason="other", amount=25
+            report=self.first_report, reason="other", amount=25
         )
-        self.absorption = Absorption.objects.create(
-            report=self.report,
+        self.bank_absorption = Absorption.objects.create(
+            report=self.first_report,
             signup=orga_signup,
             amount=83,
             method=PaymentMethods.BANK_TRANSFER,
         )
         self.zero_absorption = Absorption.objects.create(
-            report=self.report,
+            report=self.first_report,
             signup=guest_signup,
             amount=0,
+            method=PaymentMethods.TWINT,
+        )
+
+        later_training = Training.objects.create(date=TODAY + timedelta(days=10))
+        orga_signup = Signup.objects.create(pilot=self.orga, training=later_training)
+        self.last_report = Report.objects.create(
+            training=later_training,
+            cash_at_start=666,
+            cash_at_end=1337,
+            remarks="Some remarks.",
+        )
+        self.twint_absorption = Absorption.objects.create(
+            report=self.last_report,
+            signup=orga_signup,
+            amount=39,
             method=PaymentMethods.TWINT,
         )
 
@@ -378,9 +399,10 @@ class BalanceViewTests(TestCase):
         response = self.client.get(reverse("balance"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/report_balance.html")
-        self.assertContains(response, self.report.cash_at_start)
+        self.assertContains(response, self.first_report.cash_at_start)
+        total_difference = self.first_report.difference + self.last_report.difference
         self.assertContains(
-            response, f"{self.report.cash_at_end} ({self.report.difference})"
+            response, f"{self.last_report.cash_at_end} ({total_difference})"
         )
         self.assertContains(response, reverse("reports"))
 
@@ -398,6 +420,14 @@ class BalanceViewTests(TestCase):
         self.assertContains(response, self.life_jacket.price + self.rearming_kit.price)
         self.assertContains(response, self.twint_bill.amount)
 
+    def test_twint_absorption_is_revenue(self):
+        response = self.client.get(reverse("balance"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/report_balance.html")
+        self.assertContains(
+            response, self.twint_absorption.amount + self.twint_bill.amount
+        )
+
     def test_expeditures_shown(self):
         response = self.client.get(reverse("balance"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
@@ -410,7 +440,8 @@ class BalanceViewTests(TestCase):
             self.first_gas.amount
             + self.second_gas.amount
             + self.other_expense.amount
-            + self.absorption.amount,
+            + self.bank_absorption.amount
+            + self.twint_absorption.amount,
         )
 
         self.assertContains(response, self.first_gas.amount)
@@ -421,18 +452,18 @@ class BalanceViewTests(TestCase):
 
     def test_non_zero_transactions_shown(self):
         response = self.client.get(reverse("balance"))
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed(response, "bookkeeping/report_balance.html")
-        self.assertContains(response, reverse("update_report", kwargs={"date": TODAY}))
-
         self.assertContains(response, PaymentMethods.BANK_TRANSFER.label)
-        self.assertContains(response, self.absorption.amount)
-        self.assertContains(response, f"Abschöpfung {self.orga}")
+        self.assertContains(response, self.bank_absorption.amount)
+        self.assertContains(response, self.bank_absorption.description)
 
         self.assertContains(response, PaymentMethods.TWINT.label)
         self.assertContains(response, self.twint_bill.amount)
-        self.assertContains(response, self.absorption.description)
+        self.assertContains(response, self.twint_bill.description)
 
+        self.assertNotContains(response, self.zero_absorption.description)
+
+    def test_twint_totals_by_week(self):
+        response = self.client.get(reverse("balance"))
         twint_date = self.twint_bill.signup.training.date
         monday = twint_date - timedelta(days=twint_date.weekday())
         self.assertContains(response, monday.strftime(".%d.%m.").replace(".0", ".")[1:])
@@ -440,7 +471,12 @@ class BalanceViewTests(TestCase):
         self.assertContains(response, sunday.strftime(".%d.%m.").replace(".0", ".")[1:])
         self.assertContains(response, f"Total {self.twint_bill.amount}")
 
-        self.assertNotContains(response, self.zero_absorption.description)
+        twint_date = self.twint_absorption.report.training.date
+        monday = twint_date - timedelta(days=twint_date.weekday())
+        self.assertContains(response, monday.strftime(".%d.%m.").replace(".0", ".")[1:])
+        sunday = twint_date + timedelta(days=6 - twint_date.weekday())
+        self.assertContains(response, sunday.strftime(".%d.%m.").replace(".0", ".")[1:])
+        self.assertContains(response, f"Total {self.twint_absorption.amount}")
 
     def test_no_reports_in_year_404(self):
         response = self.client.get(reverse("balance", kwargs={"year": 1984}))
@@ -954,10 +990,12 @@ class ReportUpdateViewTests(TestCase):
             reverse("update_report", kwargs={"date": TODAY}),
             data={
                 "cash_at_start": self.report.cash_at_start,
-                "cash_at_end": self.report.cash_at_start
-                - expense.amount
-                + bill_1.amount
-                + bill_2.amount,
+                "cash_at_end": (
+                    self.report.cash_at_start
+                    - expense.amount
+                    + bill_1.amount
+                    + bill_2.amount
+                ),
             },
             follow=True,
         )

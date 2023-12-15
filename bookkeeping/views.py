@@ -132,67 +132,69 @@ class BalanceView(OrgaRequiredMixin, YearArchiveView):
             context["report_list"], key=lambda report: report.training.date
         )
         context["num_reports"] = len(reports)
-        context["num_runs"] = len(
-            set(run.created_on for report in reports for run in report.runs.all())
-        )
-        context["num_flights"] = sum(
-            run.is_flight for report in reports for run in report.runs.all()
-        )
+        runs = [run for report in reports for run in report.runs.all()]
+        context["num_runs"] = len(set(run.created_on for run in runs))
+        context["num_flights"] = sum(run.is_flight for run in runs)
+        signups = [
+            signup for report in reports for signup in report.training.signups.all()
+        ]
         context["num_pilots"] = len(
-            set(
-                signup.pilot
-                for report in reports
-                for signup in report.training.signups.all()
-                if signup.is_paid
-            )
+            set(signup.pilot for signup in signups if signup.is_paid)
         )
-        context["num_open_signups"] = sum(
-            signup.must_be_paid
-            for report in reports
-            for signup in report.training.signups.all()
-        )
+        context["num_open_signups"] = sum(signup.must_be_paid for signup in signups)
 
         # Revenue
+        context["revenue_from_absorptions"] = {}
         context["revenue_from_day_passes"] = {}
         context["revenue_from_prepaid_flights"] = {}
         context["revenue_from_flights"] = {}
         context["revenue_from_equipment"] = {}
         context["total_revenue"] = {}
+        absorptions = [
+            absorption for report in reports for absorption in report.absorptions.all()
+        ]
         bills = [bill for report in reports for bill in report.bills.all()]
-        by_method = lambda bill: bill.get_method_display()
-        for method, bills_paid_with_method in groupby(
-            sorted(bills, key=by_method), key=by_method
-        ):
-            bills_paid_with_method = list(bills_paid_with_method)
+        for method in PaymentMethods:
+            if method == PaymentMethods.BANK_TRANSFER:
+                continue
+
+            absorptions_paid_with_method = [
+                absorption for absorption in absorptions if absorption.method == method
+            ]
+            context["revenue_from_absorptions"][method.label] = sum(
+                absorption.amount for absorption in absorptions_paid_with_method
+            )
+
+            bills_paid_with_method = [bill for bill in bills if bill.method == method]
             purchases = [
                 purchase
                 for bill in bills_paid_with_method
                 for purchase in bill.signup.purchases.all()
             ]
-            context["revenue_from_day_passes"][method] = sum(
+            context["revenue_from_day_passes"][method.label] = sum(
                 purchase.price for purchase in purchases if purchase.is_day_pass
             )
-            context["revenue_from_prepaid_flights"][method] = sum(
+            context["revenue_from_prepaid_flights"][method.label] = sum(
                 purchase.price for purchase in purchases if purchase.is_prepaid_flights
             )
-            context["revenue_from_equipment"][method] = sum(
+            context["revenue_from_equipment"][method.label] = sum(
                 purchase.price for purchase in purchases if purchase.is_equipment
             )
-            context["total_revenue"][method] = sum(
-                bill.amount for bill in bills_paid_with_method
+            context["total_revenue"][method.label] = (
+                sum(bill.amount for bill in bills_paid_with_method)
+                + context["revenue_from_absorptions"][method.label]
             )
-            context["revenue_from_flights"][method] = (
-                context["total_revenue"][method]
-                - context["revenue_from_day_passes"][method]
-                - context["revenue_from_prepaid_flights"][method]
-                - context["revenue_from_equipment"][method]
+            context["revenue_from_flights"][method.label] = (
+                context["total_revenue"][method.label]
+                - context["revenue_from_absorptions"][method.label]
+                - context["revenue_from_day_passes"][method.label]
+                - context["revenue_from_prepaid_flights"][method.label]
+                - context["revenue_from_equipment"][method.label]
             )
 
         # Expeditures
-        expeditures = [
+        expeditures = absorptions + [
             expense for report in reports for expense in report.expenses.all()
-        ] + [
-            absorption for report in reports for absorption in report.absorptions.all()
         ]
         by_reason = lambda expediture: expediture.reason
         context["expeditures_by_reason"] = {
@@ -222,15 +224,12 @@ class BalanceView(OrgaRequiredMixin, YearArchiveView):
         # Bank transfers
         context["bank_transfers"] = [
             absorption
-            for report in reports
-            for absorption in report.absorptions.all()
+            for absorption in absorptions
             if absorption.method == PaymentMethods.BANK_TRANSFER and absorption.amount
         ]
 
         # TWINT
-        transactions = [bill for report in reports for bill in report.bills.all()] + [
-            absorption for report in reports for absorption in report.absorptions.all()
-        ]
+        transactions = absorptions + bills
         transactions = [
             transaction
             for transaction in transactions
