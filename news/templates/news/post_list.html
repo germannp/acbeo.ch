@@ -14,7 +14,7 @@
             <h5 class="card-header"><a href="{% url 'post' post.slug  %}">{{ post.title }}</a></h5>
             <div class="card-body">
                 <h6 class="card-subtitle mb-2 text-muted">{{ post.author }} | {{ post.created_on.date }}</h6>
-                <p class="card-text">{{ post.content | safe }}</p>
+                {{ post.content | safe }}
             </div>
         </div>
         {% endfor %}
