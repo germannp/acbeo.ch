@@ -466,16 +466,24 @@ class BalanceViewTests(TestCase):
         response = self.client.get(reverse("balance"))
         twint_date = self.twint_bill.signup.training.date
         monday = twint_date - timedelta(days=twint_date.weekday())
-        self.assertContains(response, monday.strftime(".%d.%m.").replace(".0", ".")[1:])
+        self.assertContains(
+            response, monday.strftime("%d.%m.").lstrip("0").replace(".0", ".")
+        )
         sunday = twint_date + timedelta(days=6 - twint_date.weekday())
-        self.assertContains(response, sunday.strftime(".%d.%m.").replace(".0", ".")[1:])
+        self.assertContains(
+            response, sunday.strftime("%d.%m.").lstrip("0").replace(".0", ".")
+        )
         self.assertContains(response, f"Total {self.twint_bill.amount}")
 
         twint_date = self.twint_absorption.report.training.date
         monday = twint_date - timedelta(days=twint_date.weekday())
-        self.assertContains(response, monday.strftime(".%d.%m.").replace(".0", ".")[1:])
+        self.assertContains(
+            response, monday.strftime("%d.%m.").lstrip("0").replace(".0", ".")
+        )
         sunday = twint_date + timedelta(days=6 - twint_date.weekday())
-        self.assertContains(response, sunday.strftime(".%d.%m.").replace(".0", ".")[1:])
+        self.assertContains(
+            response, sunday.strftime("%d.%m.").lstrip("0").replace(".0", ".")
+        )
         self.assertContains(response, f"Total {self.twint_absorption.amount}")
 
     def test_no_reports_in_year_404(self):
