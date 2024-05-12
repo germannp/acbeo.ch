@@ -21,9 +21,10 @@
                                         <th scope="col">#</th>
                                         <th scope="col">Pilot·in</th>
                                         <th scope="col">🪂</th>
-                                        <th scope="col">🚌</th>
+                                        <th scope="col">🚐</th>
                                         <th scope="col">🚢</th>
                                         <th scope="col">❌</th>
+                                        <th scope="col">📯</th>
                                     </tr>
                                 </thead>
                                 <tbody class="table-group-divider">
@@ -66,6 +67,15 @@
                                                     name="form-{{ forloop.counter0 }}-kind"
                                                     id="id_form-{{ forloop.counter0 }}-kind"
                                                     value="{{ Kind.BREAK }}" {% if form.instance.kind == Kind.BREAK %}checked{% endif %}
+                                                    required>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="radio"
+                                                    name="form-{{ forloop.counter0 }}-kind"
+                                                    id="id_form-{{ forloop.counter0 }}-kind"
+                                                    value="{{ Kind.FLIGHT_WITH_POSTBUS }}" {% if form.instance.kind == Kind.FLIGHT_WITH_POSTBUS %}checked{% endif %}
                                                     required>
                                             </div>
                                         </td>

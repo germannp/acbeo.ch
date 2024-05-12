@@ -379,12 +379,12 @@ class SignupTests(TestCase):
         signup = Signup.objects.create(pilot=self.guest, training=training)
         report = Report.objects.create(training=training, cash_at_start=1337)
         now = timezone.now()
-        for _ in range(3):
+        for kind in [Run.Kind.FLIGHT, Run.Kind.FLIGHT, Run.Kind.FLIGHT_WITH_POSTBUS]:
             self.assertFalse(signup.needs_day_pass)
             Run(
                 signup=signup,
                 report=report,
-                kind=Run.Kind.FLIGHT,
+                kind=kind,
                 created_on=now,
             ).save()
             now += timedelta(minutes=5)

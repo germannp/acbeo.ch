@@ -116,7 +116,7 @@ class Absorption(models.Model):
 
 
 class Run(models.Model):
-    Kind = models.IntegerChoices("Kind", "FLIGHT BREAK BUS BOAT")
+    Kind = models.IntegerChoices("Kind", "FLIGHT BREAK BUS BOAT FLIGHT_WITH_POSTBUS")
 
     signup = models.ForeignKey(
         "trainings.Signup", on_delete=models.CASCADE, related_name="runs"
@@ -139,7 +139,15 @@ class Run(models.Model):
 
     @property
     def is_flight(self):
+        return self.kind in (self.Kind.FLIGHT, self.Kind.FLIGHT_WITH_POSTBUS)
+
+    @property
+    def with_bus(self):
         return self.kind == self.Kind.FLIGHT
+
+    @property
+    def with_postbus(self):
+        return self.kind == self.Kind.FLIGHT_WITH_POSTBUS
 
     @property
     def is_service(self):
@@ -185,8 +193,34 @@ class Bill(models.Model):
         return len([run for run in runs if run.is_flight])
 
     @property
-    def costs_flights(self):
-        return self.num_flights * self.PRICE_OF_FLIGHT
+    def detailed_flights(self):
+        if not self.num_flights:
+            return "0"
+
+        details = []
+        if self.num_flights_with_bus:
+            details.append(str(self.num_flights_with_bus) + "x🚐")
+        if self.num_flights_with_postbus:
+            details.append(str(self.num_flights_with_postbus) + "x📯")
+        return str(self.num_flights) + " (" + ", ".join(details) + ")"
+
+    @property
+    def num_flights_with_bus(self):
+        runs = self.signup.runs.all()
+        return len([run for run in runs if run.with_bus])
+
+    @property
+    def costs_flights_with_bus(self):
+        return self.num_flights_with_bus * self.PRICE_OF_FLIGHT
+
+    @property
+    def num_flights_with_postbus(self):
+        runs = self.signup.runs.all()
+        return len([run for run in runs if run.with_postbus])
+
+    @property
+    def costs_flights_with_postbus(self):
+        return 0
 
     @property
     def num_services(self):
@@ -206,7 +240,8 @@ class Bill(models.Model):
             return self.prepaid_flights
 
         return min(
-            self.num_flights - self.num_services, self.signup.pilot.prepaid_flights
+            self.num_flights_with_bus - self.num_services,
+            self.signup.pilot.prepaid_flights,
         )
 
     @property
@@ -215,7 +250,7 @@ class Bill(models.Model):
 
     @property
     def num_flights_to_pay(self):
-        return self.num_flights - self.num_services - self.num_prepaid_flights
+        return self.num_flights_with_bus - self.num_services - self.num_prepaid_flights
 
     @property
     def costs_flights_to_pay(self):

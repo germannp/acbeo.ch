@@ -29,6 +29,12 @@ class BillListViewTests(TestCase):
         training = Training.objects.create(date=TODAY)
         signup = Signup.objects.create(pilot=self.guest, training=training)
         report = Report.objects.create(training=training, cash_at_start=666)
+        Run(
+            signup=signup,
+            report=report,
+            kind=Run.Kind.FLIGHT_WITH_POSTBUS,
+            created_on=timezone.now(),
+        ).save()
         self.purchase = Purchase.save_day_pass(signup, report)
         self.bill = Bill.objects.create(
             signup=signup,
@@ -143,6 +149,12 @@ class BillListViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/bill_list.html")
         self.assertContains(response, self.purchase.description)
+
+    def test_detailed_flights_shown(self):
+        response = self.client.get(reverse("bills"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/bill_list.html")
+        self.assertContains(response, self.bill.detailed_flights)
 
     def test_prepaid_flights_shown(self):
         response = self.client.get(reverse("bills"))
@@ -707,7 +719,7 @@ class BillCreateViewTests(TestCase):
         self.assertFalse(self.guest_signup.is_training_orga)
         self.assertContains(response, 'id="id_method_1" required checked')
         self.assertContains(response, amount)
-    
+
     def test_undo_first_of_two_orgas(self):
         self.report.orga_1 = self.guest_signup
         self.report.orga_2 = self.orga_signup
@@ -760,9 +772,7 @@ class BillCreateViewTests(TestCase):
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/report_update.html")
-        self.assertContains(
-            response, f"{self.orga} hat bereits bezahlt."
-        )
+        self.assertContains(response, f"{self.orga} hat bereits bezahlt.")
 
     def test_create_bill(self):
         self.assertTrue(self.guest.is_new)

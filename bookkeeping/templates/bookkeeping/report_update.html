@@ -38,7 +38,8 @@
                                 {% for run in runs %}
                                 <td>
                                     {% if run.get_kind_display == 'Flight' %}🪂
-                                    {% elif run.get_kind_display == 'Bus' %}🚌
+                                    {% elif run.get_kind_display == 'Flight With Postbus' %}📯
+                                    {% elif run.get_kind_display == 'Bus' %}🚐
                                     {% elif run.get_kind_display == 'Boat' %}🚢
                                     {% else %}❌{% endif %}
                                 </td>

@@ -33,16 +33,12 @@ class ExpenseCreateViewTests(TestCase):
     def test_orga_required_to_see(self):
         guest = get_user_model().objects.create(email="guest@example.com")
         self.client.force_login(guest)
-        response = self.client.get(
-            reverse("create_expense", kwargs={"date": TODAY})
-        )
+        response = self.client.get(reverse("create_expense", kwargs={"date": TODAY}))
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
         self.assertTemplateUsed(response, "403.html")
 
     def test_date_shown_and_reasons_listed(self):
-        response = self.client.get(
-            reverse("create_expense", kwargs={"date": TODAY})
-        )
+        response = self.client.get(reverse("create_expense", kwargs={"date": TODAY}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/expense_create.html")
         self.assertContains(response, TODAY.strftime("%A, %d. %B").replace(" 0", " "))
@@ -197,9 +193,7 @@ class ExpenseUpdateViewTests(TestCase):
         new_reason = "Petrol"
         new_amount = -42
         response = self.client.post(
-            reverse(
-                "update_expense", kwargs={"date": TODAY, "pk": self.expense.pk}
-            ),
+            reverse("update_expense", kwargs={"date": TODAY, "pk": self.expense.pk}),
             data={"reason": new_reason, "amount": new_amount},
             follow=True,
         )
@@ -215,9 +209,7 @@ class ExpenseUpdateViewTests(TestCase):
         new_reason = "Petrol"
         new_amount = 23
         response = self.client.post(
-            reverse(
-                "update_expense", kwargs={"date": TODAY, "pk": self.expense.pk}
-            ),
+            reverse("update_expense", kwargs={"date": TODAY, "pk": self.expense.pk}),
             data={"reason": new_reason, "amount": new_amount},
             follow=True,
         )
@@ -233,9 +225,7 @@ class ExpenseUpdateViewTests(TestCase):
 
     def test_delete_expense(self):
         response = self.client.post(
-            reverse(
-                "update_expense", kwargs={"date": TODAY, "pk": self.expense.pk}
-            ),
+            reverse("update_expense", kwargs={"date": TODAY, "pk": self.expense.pk}),
             data={"reason": "Petrol", "amount": 24, "delete": ""},
             follow=True,
         )
@@ -246,9 +236,7 @@ class ExpenseUpdateViewTests(TestCase):
 
     def test_wrong_date_does_not_404(self):
         response = self.client.get(
-            reverse(
-                "update_expense", kwargs={"date": YESTERDAY, "pk": self.expense.pk}
-            )
+            reverse("update_expense", kwargs={"date": YESTERDAY, "pk": self.expense.pk})
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/expense_update.html")
@@ -303,9 +291,7 @@ class DatabaseCallsTests(TestCase):
         new_amount = 23
         with self.assertNumQueries(4):
             response = self.client.post(
-                reverse(
-                    "update_expense", kwargs={"date": TODAY, "pk": expense.pk}
-                ),
+                reverse("update_expense", kwargs={"date": TODAY, "pk": expense.pk}),
                 data={"reason": new_reason, "amount": new_amount},
                 follow=False,
             )
@@ -316,9 +302,7 @@ class DatabaseCallsTests(TestCase):
 
         with self.assertNumQueries(4):
             response = self.client.post(
-                reverse(
-                    "update_expense", kwargs={"date": TODAY, "pk": expense.pk}
-                ),
+                reverse("update_expense", kwargs={"date": TODAY, "pk": expense.pk}),
                 data={"reason": "Petrol", "amount": 24, "delete": ""},
                 follow=False,
             )

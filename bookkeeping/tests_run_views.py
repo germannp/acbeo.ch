@@ -144,6 +144,33 @@ class RunCreateViewTests(TestCase):
         self.assertContains(response, "Höchstens eine Person kann Bus fahren.")
         self.assertContains(response, f'value="{Run.Kind.FLIGHT}" checked')
         self.assertContains(response, f'value="{Run.Kind.BUS}" checked')
+        self.assertNotContains(
+            response, f'value="{Run.Kind.FLIGHT_WITH_POSTBUS}" checked'
+        )
+        self.assertNotContains(response, f'value="{Run.Kind.BOAT}" checked')
+        self.assertNotContains(response, f'value="{Run.Kind.BREAK}" checked')
+        self.assertEqual(0, len(Run.objects.all()))
+
+    def test_no_bus_allowed_if_noone_uses_it(self):
+        response = self.client.post(
+            reverse("create_run"),
+            data={
+                "form-TOTAL_FORMS": 3,
+                "form-INITIAL_FORMS": 0,
+                "form-0-kind": Run.Kind.BUS,
+                "form-1-kind": Run.Kind.FLIGHT_WITH_POSTBUS,
+                "form-2-kind": Run.Kind.FLIGHT_WITH_POSTBUS,
+            },
+            follow=True,
+        )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/run_create.html")
+        self.assertContains(
+            response, "Niemand muss Bus fahren, wenn ihn niemand benutzt."
+        )
+        self.assertContains(response, f'value="{Run.Kind.FLIGHT_WITH_POSTBUS}" checked')
+        self.assertContains(response, f'value="{Run.Kind.BUS}" checked')
+        self.assertNotContains(response, f'value="{Run.Kind.FLIGHT}" checked')
         self.assertNotContains(response, f'value="{Run.Kind.BOAT}" checked')
         self.assertNotContains(response, f'value="{Run.Kind.BREAK}" checked')
         self.assertEqual(0, len(Run.objects.all()))
@@ -165,8 +192,35 @@ class RunCreateViewTests(TestCase):
         self.assertContains(response, "Höchstens zwei Personen können Boot machen.")
         self.assertContains(response, f'value="{Run.Kind.BOAT}" checked')
         self.assertNotContains(response, f'value="{Run.Kind.FLIGHT}" checked')
+        self.assertNotContains(
+            response, f'value="{Run.Kind.FLIGHT_WITH_POSTBUS}" checked'
+        )
         self.assertNotContains(response, f'value="{Run.Kind.BUS}" checked')
         self.assertNotContains(response, f'value="{Run.Kind.BREAK}" checked')
+        self.assertEqual(0, len(Run.objects.all()))
+
+    def test_no_boat_allowed_if_noone_flies(self):
+        response = self.client.post(
+            reverse("create_run"),
+            data={
+                "form-TOTAL_FORMS": 3,
+                "form-INITIAL_FORMS": 0,
+                "form-0-kind": Run.Kind.BOAT,
+                "form-1-kind": Run.Kind.BREAK,
+                "form-2-kind": Run.Kind.BREAK,
+            },
+            follow=True,
+        )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/run_create.html")
+        self.assertContains(response, "Niemand muss Boot machen, wenn niemand fliegt.")
+        self.assertContains(response, f'value="{Run.Kind.BOAT}" checked')
+        self.assertContains(response, f'value="{Run.Kind.BREAK}" checked')
+        self.assertNotContains(response, f'value="{Run.Kind.FLIGHT}" checked')
+        self.assertNotContains(
+            response, f'value="{Run.Kind.FLIGHT_WITH_POSTBUS}" checked'
+        )
+        self.assertNotContains(response, f'value="{Run.Kind.BUS}" checked')
         self.assertEqual(0, len(Run.objects.all()))
 
     def test_number_of_selected_signups_changed(self):
@@ -202,7 +256,7 @@ class RunCreateViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/report_update.html")
         self.assertContains(response, "Run erstellt.")
-        self.assertContains(response, "🚌")
+        self.assertContains(response, "🚐")
         self.assertContains(response, "🪂")
         self.assertContains(response, "🚢")
         self.assertEqual(3, len(Run.objects.all()))
@@ -329,7 +383,7 @@ class RunUpdateViewTests(TestCase):
                 "form-INITIAL_FORMS": 0,
                 "form-0-kind": Run.Kind.BUS,
                 "form-1-kind": Run.Kind.BOAT,
-                "form-2-kind": Run.Kind.BREAK,
+                "form-2-kind": Run.Kind.FLIGHT,
                 "form-0-id": self.guest_run.pk,
                 "form-1-id": self.guest_2_run.pk,
                 "form-2-id": self.orga_run.pk,
@@ -349,7 +403,7 @@ class RunUpdateViewTests(TestCase):
                 "form-INITIAL_FORMS": 0,
                 "form-0-kind": Run.Kind.BUS,
                 "form-1-kind": Run.Kind.BOAT,
-                "form-2-kind": Run.Kind.BREAK,
+                "form-2-kind": Run.Kind.FLIGHT,
                 "form-0-id": self.guest_run.pk,
                 "form-1-id": self.guest_2_run.pk,
                 "form-2-id": self.orga_run.pk,
@@ -367,7 +421,7 @@ class RunUpdateViewTests(TestCase):
         self.guest_2_run.refresh_from_db()
         self.assertEqual(Run.Kind.BOAT, self.guest_2_run.kind)
         self.orga_run.refresh_from_db()
-        self.assertEqual(Run.Kind.BREAK, self.orga_run.kind)
+        self.assertEqual(Run.Kind.FLIGHT, self.orga_run.kind)
 
     def test_run_with_changed_number_of_pilots_cannot_be_deleted(self):
         response = self.client.post(

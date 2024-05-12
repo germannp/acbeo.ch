@@ -21,16 +21,27 @@
                             </tr>
                         </thead>
                         <tbody class="table-group-divider">
+                            {% if bill.num_flights_with_bus %}
                             <tr>
-                                <td>Flüge</td>
-                                <td>{{ bill.num_flights }}</td>
-                                <td>{{ bill.costs_flights }}</td>
+                                <td>Flüge mit Clubbus 🚐</td>
+                                <td>{{ bill.num_flights_with_bus }}</td>
+                                <td>{{ bill.costs_flights_with_bus }}</td>
                             </tr>
+                            {% endif %}
+                            {% if bill.num_flights_with_postbus %}
+                            <tr>
+                                <td>Flüge mit Postauto 📯</td>
+                                <td>{{ bill.num_flights_with_postbus }}</td>
+                                <td>{{ bill.costs_flights_with_postbus }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if bill.num_services %}
                             <tr>
                                 <td>Dienste</td>
                                 <td>{{ bill.num_services }}</td>
                                 <td>-{{ bill.revenue_services }}</td>
                             </tr>
+                            {% endif %}
                             {% if 0 < bill.num_prepaid_flights %}
                             <tr>
                                 <td>Mit Abo bezahlt</td>
@@ -46,17 +57,17 @@
                             {% endif %}
                         </tbody>
                         {% if bill.signup.purchases.all %}
-                            <tbody class="table-group-divider">
-                            {% for purchase in bill.signup.purchases.all %}
-                                <tr>
-                                    <td>{{ purchase.description }} <a
-                                        href="{% url 'delete_purchase' date=bill.signup.training.date.isoformat pk=purchase.pk %}"
-                                        class="ba bi-trash text-danger"></a></td>
-                                        <td></td>
-                                    <td>{{ purchase.price }}</td>
-                                </tr>
-                            {% endfor %}
-                            </tbody>
+                        <tbody class="table-group-divider">
+                        {% for purchase in bill.signup.purchases.all %}
+                            <tr>
+                                <td>{{ purchase.description }} <a
+                                    href="{% url 'delete_purchase' date=bill.signup.training.date.isoformat pk=purchase.pk %}"
+                                    class="ba bi-trash text-danger"></a></td>
+                                    <td></td>
+                                <td>{{ purchase.price }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
                         {% endif %}
                         <tfoot class="table-group-divider">
                             <td>Zu bezahlen</td>

@@ -21,16 +21,27 @@
                             </tr>
                         </thead>
                         <tbody class="table-group-divider">
+                            {% if bill.num_flights_with_bus %}
                             <tr>
-                                <td>Flüge</td>
-                                <td>{{ bill.num_flights }}</td>
-                                <td>{{ bill.costs_flights }}</td>
+                                <td>Flüge mit Clubbus 🚐</td>
+                                <td>{{ bill.num_flights_with_bus }}</td>
+                                <td>{{ bill.costs_flights_with_bus }}</td>
                             </tr>
+                            {% endif %}
+                            {% if bill.num_flights_with_postbus %}
+                            <tr>
+                                <td>Flüge mit Postauto 📯</td>
+                                <td>{{ bill.num_flights_with_postbus }}</td>
+                                <td>{{ bill.costs_flights_with_postbus }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if bill.num_services %}
                             <tr>
                                 <td>Dienste</td>
                                 <td>{{ bill.num_services }}</td>
                                 <td>-{{ bill.revenue_services }}</td>
                             </tr>
+                            {% endif %}
                             {% if 0 < bill.prepaid_flights %}
                             <tr>
                                 <td>Mit Abo bezahlt</td>

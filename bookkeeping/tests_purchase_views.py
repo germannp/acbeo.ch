@@ -37,18 +37,14 @@ class PurchaseCreateViewTests(TestCase):
         guest = get_user_model().objects.create(email="guest@example.com")
         self.client.force_login(guest)
         response = self.client.get(
-            reverse(
-                "create_purchase", kwargs={"date": TODAY, "signup": self.signup.pk}
-            )
+            reverse("create_purchase", kwargs={"date": TODAY, "signup": self.signup.pk})
         )
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
         self.assertTemplateUsed(response, "403.html")
 
     def test_pilot_and_date_shown_and_items_listed(self):
         response = self.client.get(
-            reverse(
-                "create_purchase", kwargs={"date": TODAY, "signup": self.signup.pk}
-            )
+            reverse("create_purchase", kwargs={"date": TODAY, "signup": self.signup.pk})
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/purchase_create.html")
@@ -108,9 +104,7 @@ class PurchaseCreateViewTests(TestCase):
     def test_report_not_found_404(self):
         Report.objects.all().delete()
         response = self.client.get(
-            reverse(
-                "create_purchase", kwargs={"date": TODAY, "signup": self.signup.pk}
-            )
+            reverse("create_purchase", kwargs={"date": TODAY, "signup": self.signup.pk})
         )
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.assertTemplateUsed(response, "404.html")
@@ -137,18 +131,14 @@ class PurchaseDeleteViewTests(TestCase):
         guest = get_user_model().objects.create(email="guest@example.com")
         self.client.force_login(guest)
         response = self.client.get(
-            reverse(
-                "delete_purchase", kwargs={"date": TODAY, "pk": self.purchase.pk}
-            )
+            reverse("delete_purchase", kwargs={"date": TODAY, "pk": self.purchase.pk})
         )
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
         self.assertTemplateUsed(response, "403.html")
 
     def test_pilot_and_desciption_shown(self):
         response = self.client.get(
-            reverse(
-                "delete_purchase", kwargs={"date": TODAY, "pk": self.purchase.pk}
-            )
+            reverse("delete_purchase", kwargs={"date": TODAY, "pk": self.purchase.pk})
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/purchase_confirm_delete.html")
@@ -161,9 +151,7 @@ class PurchaseDeleteViewTests(TestCase):
 
     def test_delete_purchase(self):
         response = self.client.post(
-            reverse(
-                "delete_purchase", kwargs={"date": TODAY, "pk": self.purchase.pk}
-            ),
+            reverse("delete_purchase", kwargs={"date": TODAY, "pk": self.purchase.pk}),
             follow=True,
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
@@ -204,9 +192,7 @@ class PurchaseDeleteViewTests(TestCase):
             method=PaymentMethods.CASH,
         ).save()
         response = self.client.post(
-            reverse(
-                "delete_purchase", kwargs={"date": TODAY, "pk": self.purchase.pk}
-            ),
+            reverse("delete_purchase", kwargs={"date": TODAY, "pk": self.purchase.pk}),
             follow=True,
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
@@ -246,7 +232,9 @@ class DatabaseCallsTests(TestCase):
     def test_purchase_create_view(self):
         with self.assertNumQueries(7):
             response = self.client.get(
-                reverse("create_purchase", kwargs={"date": TODAY, "signup": self.signup.pk})
+                reverse(
+                    "create_purchase", kwargs={"date": TODAY, "signup": self.signup.pk}
+                )
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/purchase_create.html")
@@ -266,9 +254,7 @@ class DatabaseCallsTests(TestCase):
         purchase = Purchase.save_day_pass(signup=self.signup, report=self.report)
         with self.assertNumQueries(6):
             response = self.client.post(
-                reverse(
-                    "delete_purchase", kwargs={"date": TODAY, "pk": purchase.pk}
-                ),
+                reverse("delete_purchase", kwargs={"date": TODAY, "pk": purchase.pk}),
                 follow=False,
             )
         self.assertEqual(response.status_code, HTTPStatus.FOUND)
