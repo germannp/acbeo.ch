@@ -38,9 +38,10 @@
                                 {% for run in runs %}
                                 <td>
                                     {% if run.get_kind_display == 'Flight' %}🪂
-                                    {% elif run.get_kind_display == 'Flight With Postbus' %}📯
                                     {% elif run.get_kind_display == 'Bus' %}🚐
                                     {% elif run.get_kind_display == 'Boat' %}🚢
+                                    {% elif run.get_kind_display == 'Flight With Postbus' %}📯
+                                    {% elif run.get_kind_display == 'Flight With Lift' %}🪂
                                     {% else %}❌{% endif %}
                                 </td>
                                 {% endfor %}
@@ -81,14 +82,14 @@
                             <tbody>
                                 <tr>
                                     <td>Einnahmen</td>
-                                    <td>{{ report.cash_revenue }}</td>
+                                    <td class="text-end">{{ report.cash_revenue | floatformat:"2u" }}</td>
                                 </tr>
                                 {% for expense in report.expenses.all %}
                                 <tr>
                                     <td>{{ expense.reason }} 
                                         <a href="{% url 'update_expense' date=report.training.date.isoformat pk=expense.pk %}"
                                             class="bi bi-pencil-square"></a></td>
-                                    <td>- {{ expense.amount }}</td>
+                                    <td class="text-end">- {{ expense.amount | floatformat:"2u" }}</td>
                                 </tr>
                                 {% endfor %}
                                 {% for absorption in report.absorptions.all %}
@@ -96,7 +97,7 @@
                                     <td>{{ absorption.reason }} 
                                         <a href="{% url 'update_absorption' date=report.training.date.isoformat pk=absorption.pk %}"
                                             class="bi bi-pencil-square"></a></td>
-                                    <td>- {{ absorption.amount }}</td>
+                                    <td class="text-end">- {{ absorption.amount | floatformat:"2u" }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>

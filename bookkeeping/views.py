@@ -570,14 +570,23 @@ class RunCreateView(OrgaRequiredMixin, generic.TemplateView):
         for form, signup in zip(formset, active_signups):
             form.signup = signup
         context["formset"] = formset
+        if "transport_form" not in context:
+            context["transport_form"] = forms.TransportForm()
         return context
 
     def post(self, request, *args, **kwargs):
         formset = forms.RunFormset(request.POST)
-        if formset.is_valid():
-            return self.formset_valid(formset)
+        transport_form = forms.TransportForm(request.POST)
+        if not formset.is_valid() or not transport_form.is_valid():
+            return self.render_to_response(
+                self.get_context_data(formset=formset, transport_form=transport_form)
+            )
 
-        return self.render_to_response(self.get_context_data(formset=formset))
+        if transport_form.cleaned_data["by_lift"]:
+            for form in formset:
+                if form.instance.kind == Run.Kind.FLIGHT:
+                    form.instance.kind = Run.Kind.FLIGHT_WITH_LIFT
+        return self.formset_valid(formset)
 
     def formset_valid(self, formset):
         training = get_object_or_404(
@@ -631,20 +640,35 @@ class RunUpdateView(OrgaRequiredMixin, generic.TemplateView):
             formset = context["formset"]
         else:
             formset = forms.RunFormset(queryset=runs)
+        if "transport_form" not in context:
+            by_lift = any(run.kind == Run.Kind.FLIGHT_WITH_LIFT for run in runs)
+            context["transport_form"] = forms.TransportForm({"by_lift": by_lift})
         for form, run in zip(formset, runs):
             form.signup = run.signup
+            if form.instance.kind == Run.Kind.FLIGHT_WITH_LIFT:
+                form.instance.kind = Run.Kind.FLIGHT
         context["formset"] = formset
         return context
 
     def post(self, request, *args, **kwargs):
         formset = forms.RunFormset(request.POST)
-        if formset.is_valid() and "delete" in request.POST:
+        transport_form = forms.TransportForm(request.POST)
+        if not formset.is_valid() or not transport_form.is_valid():
+            return self.render_to_response(
+                self.get_context_data(formset=formset, transport_form=transport_form)
+            )
+
+        if "delete" in request.POST:
             return self.delete_run(formset)
 
-        if formset.is_valid():
-            return self.formset_valid(formset)
+        if transport_form.cleaned_data["by_lift"]:
+            for form in formset:
+                if form.instance.kind == Run.Kind.FLIGHT:
+                    form.instance.kind = Run.Kind.FLIGHT_WITH_LIFT
+                    # ⚠️ this fugly hack is not covered by the tests.
+                    form.has_changed = lambda: True
 
-        return self.render_to_response(self.get_context_data(formset=formset))
+        return self.formset_valid(formset)
 
     def formset_valid(self, formset):
         training = get_object_or_404(Training.objects, date=timezone.now().date())

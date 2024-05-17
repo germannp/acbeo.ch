@@ -402,7 +402,7 @@ class BalanceViewTests(TestCase):
         self.assertContains(response, self.first_report.cash_at_start)
         total_difference = self.first_report.difference + self.last_report.difference
         self.assertContains(
-            response, f"{self.last_report.cash_at_end} ({total_difference})"
+            response, f"{self.last_report.cash_at_end} ({int(total_difference)})"
         )
         self.assertContains(response, reverse("reports"))
 

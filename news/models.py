@@ -60,8 +60,8 @@ class Pilot(AbstractBaseUser):
     phone = models.CharField(max_length=20, validators=[validate_phone])
     date_joined = models.DateTimeField(auto_now_add=True)
     role = models.IntegerField(choices=Role.choices, default=Role.GUEST)
-    prepaid_flights = models.SmallIntegerField(
-        validators=[MinValueValidator(0)], default=0
+    prepaid_flights = models.DecimalField(
+        max_digits=5, decimal_places=2, validators=[MinValueValidator(0)], default=0
     )
     is_new = models.BooleanField(default=True)
     is_active = models.BooleanField(default=True)

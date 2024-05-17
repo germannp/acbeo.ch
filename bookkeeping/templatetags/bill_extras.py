@@ -18,3 +18,8 @@ def price_of_10_prepaid_flights():
 @register.simple_tag
 def price_of_day_pass():
     return Purchase.DAY_PASS_PRICE
+
+
+@register.filter(name="abs")
+def absolute(value):
+    return abs(value)

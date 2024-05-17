@@ -33,9 +33,9 @@
                                 <td class="text-nowrap">{{ bill.signup.training.date | date:"D., j. M." }}</td>
                                 <td>{{ bill.detailed_flights }}</td>
                                 <td>{{ bill.num_services }}</td>
-                                <td>{{ bill.prepaid_flights }}</td>
+                                <td>{{ bill.prepaid_flights | floatformat }}</td>
                                 <td>{{ bill.purchases }}</td>
-                                <td>{{ bill.amount }}</td>
+                                <td class="text-end">{{ bill.amount | floatformat:"2u" }}</td>
                                 <td>{{ bill.get_method_display }}</td>
                             </tr>
                             {% endfor %}
@@ -44,7 +44,7 @@
                 </div>
                 <p class="card-text">
                     {% if request.user.prepaid_flights %}
-                    Du hast noch {{ request.user.prepaid_flights }} Flüge aus Abos zugute.
+                    Du hast noch {{ request.user.prepaid_flights | floatformat }} Flüge aus Abos zugute.
                     {% else %}
                     Du hast im Moment keine Flüge aus Abos zugute.
                     {% endif %}

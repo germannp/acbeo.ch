@@ -22,7 +22,7 @@ TOMORROW = TODAY + timedelta(days=1)
 class BillListViewTests(TestCase):
     def setUp(self):
         self.guest = get_user_model().objects.create(
-            email="guest@example.com", prepaid_flights=1337
+            email="guest@example.com", prepaid_flights=12
         )
         self.client.force_login(self.guest)
 
@@ -39,7 +39,7 @@ class BillListViewTests(TestCase):
         self.bill = Bill.objects.create(
             signup=signup,
             report=report,
-            prepaid_flights=1312,
+            prepaid_flights=13,
             amount=420,
             method=PaymentMethods.CASH,
         )
@@ -425,8 +425,8 @@ class BillCreateViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/bill_create.html")
         bill = Bill(signup=self.guest_signup, report=self.report)
-        self.assertContains(response, f'value="{bill.num_prepaid_flights}"')
-        self.assertContains(response, f'value="{bill.to_pay}"')
+        self.assertContains(response, f'value="{bill.num_prepaid_flights}')
+        self.assertContains(response, f'value="{int(bill.to_pay)}')
         self.assertNotContains(response, "<td>Mit Abo bezahlt</td>")
         self.assertNotContains(response, "<td>Flüge gutgeschrieben</td>")
 
@@ -441,8 +441,8 @@ class BillCreateViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/bill_create.html")
         bill = Bill(signup=self.guest_signup, report=self.report)
-        self.assertContains(response, f'value="{bill.num_prepaid_flights}"')
-        self.assertContains(response, f'value="{bill.to_pay}"')
+        self.assertContains(response, f'value="{int(bill.num_prepaid_flights)}')
+        self.assertContains(response, f'value="{int(bill.to_pay)}')
         self.assertContains(response, "<td>Mit Abo bezahlt</td>")
 
         for run in Run.objects.all():
@@ -457,8 +457,8 @@ class BillCreateViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/bill_create.html")
         bill = Bill(signup=self.guest_signup, report=self.report)
-        self.assertContains(response, f'value="{bill.num_prepaid_flights}"')
-        self.assertContains(response, f'value="{bill.to_pay}"')
+        self.assertContains(response, f'value="{int(bill.num_prepaid_flights)}')
+        self.assertContains(response, f'value="{int(bill.to_pay)}')
         self.assertContains(response, "<td>Flüge gutgeschrieben</td>")
 
     def test_purchase_shown(self):
@@ -555,7 +555,7 @@ class BillCreateViewTests(TestCase):
         self.assertTemplateUsed(response, "bookkeeping/bill_create.html")
         bill = Bill(signup=self.guest_signup, report=self.report)
         self.assertContains(response, f'value="{bill.num_prepaid_flights}"')
-        self.assertContains(response, f'value="{bill.to_pay}"')
+        self.assertContains(response, f'value="{int(bill.to_pay)}"')
         self.assertNotContains(response, "<td>Mit Abo bezahlt</td>")
         self.assertContains(
             response,
@@ -579,7 +579,7 @@ class BillCreateViewTests(TestCase):
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/bill_create.html")
-        self.assertContains(response, f"{self.guest} muss Fr. {to_pay} bezahlen.")
+        self.assertContains(response, f"{self.guest} muss Fr. {to_pay}.00 bezahlen.")
         self.guest_signup.refresh_from_db()
 
     def test_make_orga(self):
@@ -950,8 +950,10 @@ class BillUpdateViewTests(TestCase):
         self.assertTemplateUsed(response, "bookkeeping/bill_update.html")
         self.assertNotContains(response, "<td>Mit Abo bezahlt</td>")
         self.assertNotContains(response, "<td>Flüge gutgeschrieben</td>")
-        self.assertContains(response, f'value="{self.bill.prepaid_flights}"')
-        self.assertContains(response, f"<td>{self.bill.to_pay}</td>")
+        self.assertContains(response, f'value="{int(self.bill.prepaid_flights)}')
+        self.assertContains(
+            response, f'<td class="text-end">{self.bill.to_pay}.00</td>'
+        )
 
         self.bill.prepaid_flights = 1
         self.bill.save()
@@ -961,9 +963,11 @@ class BillUpdateViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/bill_update.html")
         self.assertContains(response, "<td>Mit Abo bezahlt</td>")
-        self.assertContains(response, f'value="{self.bill.prepaid_flights}"')
+        self.assertContains(response, f'value="{int(self.bill.prepaid_flights)}')
         self.assertContains(response, f"<td>{self.bill.prepaid_flights}</td>")
-        self.assertContains(response, f"<td>{self.bill.to_pay}</td>")
+        self.assertContains(
+            response, f'<td class="text-end">{self.bill.to_pay}.00</td>'
+        )
 
         self.bill.prepaid_flights = -3
         self.bill.save()
@@ -974,9 +978,11 @@ class BillUpdateViewTests(TestCase):
         self.assertTemplateUsed(response, "bookkeeping/bill_update.html")
         self.assertNotContains(response, "<td>Mit Abo bezahlt</td>")
         self.assertContains(response, "<td>Flüge gutgeschrieben</td>")
-        self.assertContains(response, f'value="{self.bill.prepaid_flights}"')
+        self.assertContains(response, f'value="{int(self.bill.prepaid_flights)}')
         self.assertContains(response, f"<td>{-self.bill.prepaid_flights}</td>")
-        self.assertContains(response, f"<td>{self.bill.to_pay}</td>")
+        self.assertContains(
+            response, f'<td class="text-end">{self.bill.to_pay}.00</td>'
+        )
 
     def test_purchase_shown(self):
         response = self.client.get(
@@ -1004,7 +1010,7 @@ class BillUpdateViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/bill_update.html")
         self.assertContains(response, f'value="{self.bill.num_prepaid_flights}"')
-        self.assertContains(response, f'value="{self.bill.amount}"')
+        self.assertContains(response, f'value="{int(self.bill.amount)}')
         self.assertNotContains(response, "<td>Mit Abo bezahlt</td>")
         self.assertContains(
             response,
@@ -1025,7 +1031,7 @@ class BillUpdateViewTests(TestCase):
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/bill_update.html")
-        self.assertContains(response, f"{self.orga} muss Fr. {to_pay} bezahlen.")
+        self.assertContains(response, f"{self.orga} muss Fr. {to_pay}.00 bezahlen.")
         self.assertEqual(1, len(Bill.objects.all()))
 
     def test_update_bill(self):

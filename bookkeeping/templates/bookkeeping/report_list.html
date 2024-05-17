@@ -39,16 +39,16 @@
                                 <td>{{ report.num_runs }}</td>
                                 <td>{{ report.num_unpaid_signups }} / {{ report.num_selected_signups }}</td>
                                 <td>{{ report.cash_at_start }}{% if report.difference_between_reports %} ({{ report.difference_between_reports }}){% endif %}</td>
-                                <td>{{ report.cash_revenue }}</td>
+                                <td>{{ report.cash_revenue | floatformat:0 }}</td>
                                 <td>{{ report.cash_expediture }}</td>
                                 <td>
                                     {% if report.cash_at_end %}
-                                    {{ report.cash_at_end }} {% if report.difference %}({{ report.difference }}){% endif %}
+                                    {{ report.cash_at_end }} {% if report.difference %}({{ report.difference | floatformat:0 }}){% endif %}
                                     {% else %}
                                     ❓
                                     {% endif %}
                                 </td>
-                                <td>{{ report.other_revenue }}</td>
+                                <td>{{ report.other_revenue | floatformat:0 }}</td>
                                 <td>{{ report.remarks }}</td>
                             </tr>
                             {% endfor %}

@@ -106,6 +106,10 @@ RunFormset = modelformset_factory(
 )
 
 
+class TransportForm(forms.Form):
+    by_lift = forms.BooleanField(initial=True, required=False)
+
+
 class BillForm(forms.ModelForm):
     method = forms.ChoiceField(
         choices=Bill.PAYMENT_CHOICES,

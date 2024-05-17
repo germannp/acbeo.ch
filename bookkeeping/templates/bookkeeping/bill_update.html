@@ -6,6 +6,8 @@
 
 {% block content %}
 
+{% load bill_extras %}
+
 <div class="row mt-2">
     <div class="col-xl-4 col-lg-5">
         <div class="card mb-4">
@@ -17,7 +19,7 @@
                             <tr>
                                 <th scope="col"></th>
                                 <th scope="col">Anzahl</th>
-                                <th scope="col">Betrag</th>
+                                <th scope="col" class="text-end">Betrag</th>
                             </tr>
                         </thead>
                         <tbody class="table-group-divider">
@@ -25,34 +27,41 @@
                             <tr>
                                 <td>Flüge mit Clubbus 🚐</td>
                                 <td>{{ bill.num_flights_with_bus }}</td>
-                                <td>{{ bill.costs_flights_with_bus }}</td>
+                                <td class="text-end">{{ bill.costs_flights_with_bus | floatformat:"2u" }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if bill.num_flights_with_lift %}
+                            <tr>
+                                <td>Flüge mit Sessellift 🚡</td>
+                                <td>{{ bill.num_flights_with_lift }}</td>
+                                <td class="text-end">{{ bill.costs_flights_with_lift | floatformat:"2u" }}</td>
                             </tr>
                             {% endif %}
                             {% if bill.num_flights_with_postbus %}
                             <tr>
                                 <td>Flüge mit Postauto 📯</td>
                                 <td>{{ bill.num_flights_with_postbus }}</td>
-                                <td>{{ bill.costs_flights_with_postbus }}</td>
+                                <td class="text-end">{{ bill.costs_flights_with_postbus | floatformat:"2u" }}</td>
                             </tr>
                             {% endif %}
                             {% if bill.num_services %}
                             <tr>
                                 <td>Dienste</td>
                                 <td>{{ bill.num_services }}</td>
-                                <td>-{{ bill.revenue_services }}</td>
+                                <td class="text-end">-{{ bill.revenue_services | floatformat:"2u" }}</td>
                             </tr>
                             {% endif %}
                             {% if 0 < bill.prepaid_flights %}
                             <tr>
                                 <td>Mit Abo bezahlt</td>
                                 <td>{{ bill.prepaid_flights }}</td>
-                                <td>-{{ bill.costs_prepaid_flights }}</td>
+                                <td class="text-end">-{{ bill.costs_prepaid_flights | floatformat:"2u" }}</td>
                             </tr>
                             {% elif bill.prepaid_flights < 0 %}
                             <tr>
                                 <td>Flüge gutgeschrieben</td>
-                                <td>{{ bill.prepaid_flights | stringformat:"+d"|slice:"1:" }}</td>
-                                <td>{{ bill.costs_prepaid_flights | stringformat:"+d"|slice:"1:" }}</td>
+                                <td>{{ bill.num_prepaid_flights | abs | floatformat }}</td>
+                                <td class="text-end">{{ bill.costs_prepaid_flights | abs | floatformat:"2u" }}</td>
                             </tr>
                             {% endif %}
                         </tbody>
@@ -62,7 +71,7 @@
                             <tr>
                                 <td>{{ purchase.description }}</td>
                                     <td></td>
-                                    <td>{{ purchase.price }}</td>
+                                    <td class="text-end">{{ purchase.price | floatformat:"2u" }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -70,14 +79,14 @@
                         <tfoot class="table-group-divider">
                             <td>Zu bezahlen</td>
                             <td></td>
-                            <td>{{ bill.to_pay }}</td>
+                            <td class="text-end">{{ bill.to_pay | floatformat:"2u" }}</td>
                         </tfoot>
                     </table>
                 </div>
                 <main class="form">
                     <form method="post">
                         {% csrf_token %}
-                        <input type="hidden" name="prepaid_flights" value="{{ bill.prepaid_flights }}">
+                        <input type="hidden" name="prepaid_flights" value="{{ bill.prepaid_flights | floatformat:'u' }}">
                         <div class="mb-3">
                             <label>Zahlungsart</label>
                             {% for method in form.method %}
@@ -91,7 +100,7 @@
                         </div>
                         <div class="form-floating mb-3">
                             <input type="number" min="{{ bill.to_pay }}" name="amount" class="form-control"
-                                placeholder="text" value="{{ form.amount.value }}">
+                                placeholder="text" value="{{ form.amount.value | floatformat:'u' }}">
                             <label>Betrag</label>
                         </div>
                         <div class="mb-3">Um Runs oder Einkäufe zu bearbeiten, muss die Abrechnung gelöscht werden.</div>

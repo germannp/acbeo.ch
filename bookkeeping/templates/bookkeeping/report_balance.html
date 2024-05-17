@@ -42,7 +42,7 @@
                             </tr>
                             <tr>
                                 <td>Letzter Kassenstand</td>
-                                <td>{{ latest_cash }}{% if amount %} ({{ amount }}){% endif %}</td>
+                                <td>{{ latest_cash }}{% if amount %} ({{ amount | floatformat:0 }}){% endif %}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -87,7 +87,7 @@
                             <tr>
                                 <td>Flüge</td>
                                 {% for amount in revenue_from_flights.values %}
-                                <td>{{ amount }}</td>
+                                <td>{{ amount | floatformat:0 }}</td>
                                 {% endfor %}
                             </tr>
                             <tr>
@@ -100,7 +100,7 @@
                         <tfoot class="table-group-divider">
                             <td>Total</td>
                             {% for amount in total_revenue.values %}
-                            <td>{{ amount }}</td>
+                            <td>{{ amount | floatformat:0 }}</td>
                             {% endfor %}
                         </tfoot>
                     </table>

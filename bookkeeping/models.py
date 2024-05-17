@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
@@ -116,7 +118,9 @@ class Absorption(models.Model):
 
 
 class Run(models.Model):
-    Kind = models.IntegerChoices("Kind", "FLIGHT BREAK BUS BOAT FLIGHT_WITH_POSTBUS")
+    Kind = models.IntegerChoices(
+        "Kind", "FLIGHT BREAK BUS BOAT FLIGHT_WITH_POSTBUS FLIGHT_WITH_LIFT"
+    )
 
     signup = models.ForeignKey(
         "trainings.Signup", on_delete=models.CASCADE, related_name="runs"
@@ -139,11 +143,19 @@ class Run(models.Model):
 
     @property
     def is_flight(self):
-        return self.kind in (self.Kind.FLIGHT, self.Kind.FLIGHT_WITH_POSTBUS)
+        return self.kind in (
+            self.Kind.FLIGHT,
+            self.Kind.FLIGHT_WITH_POSTBUS,
+            self.Kind.FLIGHT_WITH_LIFT,
+        )
 
     @property
     def with_bus(self):
         return self.kind == self.Kind.FLIGHT
+
+    @property
+    def with_lift(self):
+        return self.kind == self.Kind.FLIGHT_WITH_LIFT
 
     @property
     def with_postbus(self):
@@ -173,8 +185,10 @@ class Bill(models.Model):
     report = models.ForeignKey(Report, on_delete=models.CASCADE, related_name="bills")
     # Rather than handing money out, we add extra services to pilot.prepaid_flights,
     # thus bill.prepaid_flights can be negative.
-    prepaid_flights = models.SmallIntegerField()
-    amount = models.SmallIntegerField(validators=[MinValueValidator(0)])
+    prepaid_flights = models.DecimalField(max_digits=5, decimal_places=2)
+    amount = models.DecimalField(
+        max_digits=5, decimal_places=2, validators=[MinValueValidator(0)]
+    )
     method = models.SmallIntegerField(choices=PAYMENT_CHOICES)
 
     class Meta:
@@ -200,6 +214,8 @@ class Bill(models.Model):
         details = []
         if self.num_flights_with_bus:
             details.append(str(self.num_flights_with_bus) + "x🚐")
+        if self.num_flights_with_lift:
+            details.append(str(self.num_flights_with_lift) + "x🚡")
         if self.num_flights_with_postbus:
             details.append(str(self.num_flights_with_postbus) + "x📯")
         return str(self.num_flights) + " (" + ", ".join(details) + ")"
@@ -212,6 +228,15 @@ class Bill(models.Model):
     @property
     def costs_flights_with_bus(self):
         return self.num_flights_with_bus * self.PRICE_OF_FLIGHT
+
+    @property
+    def num_flights_with_lift(self):
+        runs = self.signup.runs.all()
+        return len([run for run in runs if run.with_lift])
+
+    @property
+    def costs_flights_with_lift(self):
+        return self.num_flights_with_lift * self.PRICE_OF_FLIGHT / 2
 
     @property
     def num_flights_with_postbus(self):
@@ -240,7 +265,9 @@ class Bill(models.Model):
             return self.prepaid_flights
 
         return min(
-            self.num_flights_with_bus - self.num_services,
+            self.num_flights_with_bus
+            + self.num_flights_with_lift / 2
+            - self.num_services,
             self.signup.pilot.prepaid_flights,
         )
 
@@ -250,7 +277,12 @@ class Bill(models.Model):
 
     @property
     def num_flights_to_pay(self):
-        return self.num_flights_with_bus - self.num_services - self.num_prepaid_flights
+        return (
+            self.num_flights_with_bus
+            + Decimal(self.num_flights_with_lift / 2)
+            - self.num_services
+            - Decimal(self.num_prepaid_flights)
+        )
 
     @property
     def costs_flights_to_pay(self):

@@ -1,4 +1,6 @@
+from dataclasses import dataclass
 from datetime import timedelta
+from decimal import Decimal
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -163,37 +165,76 @@ class BillTests(TestCase):
         self.report = Report.objects.create(training=self.training, cash_at_start=1337)
 
     def test_bookkeeping(self):
-        for (
-            num_flights_with_bus,
-            num_flights_with_postbus,
-            num_buses,
-            num_boats,
-            num_breaks,
-            price_of_purchase,
-            initial_prepaid_flights,
-            num_flights_to_pay,
-            final_prepaid_flights,
-        ) in [
-            (5, 0, 1, 0, 0, 0, 7, 0, 3),  # Training with all flights prepaid
-            (5, 0, 1, 0, 0, 0, 2, 2, 0),  # Training with some flights prepaid
-            (4, 1, 1, 0, 0, 0, 2, 1, 0),  # Training with final run using postbus
-            (5, 0, 1, 0, 0, 0, 0, 4, 0),  # Training w/o prepaid flights
-            (1, 0, 3, 1, 1, 36, 7, 0, 10),  # Rescue on the first run
+        @dataclass
+        class BookkeepingTestCase:
+            num_flights_with_bus: int = 0
+            num_flights_with_lift: int = 0
+            num_flights_with_postbus: int = 0
+            num_buses: int = 0
+            num_boats: int = 0
+            num_breaks: int = 0
+            price_of_purchase: int = 0
+            initial_prepaid_flights: int = 0
+            num_flights_to_pay: Decimal = 0
+            final_prepaid_flights: Decimal = 0
+
+        for test in [
+            # Training w/o prepaid flights
+            BookkeepingTestCase(
+                num_flights_with_bus=5, num_boats=1, num_flights_to_pay=4
+            ),
+            # Training with all flights prepaid
+            BookkeepingTestCase(
+                num_flights_with_bus=5,
+                num_buses=1,
+                initial_prepaid_flights=7,
+                final_prepaid_flights=3,
+            ),
+            # Training with all flights prepaid using lift
+            BookkeepingTestCase(
+                num_flights_with_lift=5,
+                initial_prepaid_flights=7,
+                final_prepaid_flights=4.5,
+            ),
+            # Training with some flights prepaid
+            BookkeepingTestCase(
+                num_flights_with_bus=5,
+                num_buses=1,
+                initial_prepaid_flights=2,
+                num_flights_to_pay=2,
+                final_prepaid_flights=0,
+            ),
+            # Training with lift, except over lunch
+            BookkeepingTestCase(
+                num_flights_with_lift=5,
+                num_flights_with_bus=1,
+                initial_prepaid_flights=2,
+                num_flights_to_pay=1.5,
+                final_prepaid_flights=0,
+            ),
+            # Training with final run using postbus
+            BookkeepingTestCase(
+                num_flights_with_bus=4,
+                num_flights_with_postbus=1,
+                initial_prepaid_flights=2,
+                num_flights_to_pay=2,
+                final_prepaid_flights=0,
+            ),
+            # Rescue on the first run
+            BookkeepingTestCase(
+                num_flights_with_bus=1,
+                num_boats=3,
+                num_buses=1,
+                num_breaks=1,
+                price_of_purchase=36,
+                initial_prepaid_flights=7,
+                final_prepaid_flights=10,
+            ),
         ]:
-            with self.subTest(
-                num_flights_with_bus=num_flights_with_bus,
-                num_flights_with_postbus=num_flights_with_postbus,
-                num_buses=num_buses,
-                num_boats=num_boats,
-                num_breaks=num_breaks,
-                price_of_purchase=price_of_purchase,
-                initial_prepaid_flights=initial_prepaid_flights,
-                num_flights_to_pay=num_flights_to_pay,
-                final_prepaid_flights=final_prepaid_flights,
-            ):
+            with self.subTest(test=test):
                 signup = Signup.objects.create(pilot=self.pilot, training=self.training)
                 now = timezone.now()
-                for _ in range(num_flights_with_bus):
+                for _ in range(test.num_flights_with_bus):
                     now += timedelta(hours=1)
                     Run(
                         signup=signup,
@@ -201,7 +242,15 @@ class BillTests(TestCase):
                         kind=Run.Kind.FLIGHT,
                         created_on=now,
                     ).save()
-                for _ in range(num_flights_with_postbus):
+                for _ in range(test.num_flights_with_lift):
+                    now += timedelta(hours=1)
+                    Run(
+                        signup=signup,
+                        report=self.report,
+                        kind=Run.Kind.FLIGHT_WITH_LIFT,
+                        created_on=now,
+                    ).save()
+                for _ in range(test.num_flights_with_postbus):
                     now += timedelta(hours=1)
                     Run(
                         signup=signup,
@@ -209,7 +258,7 @@ class BillTests(TestCase):
                         kind=Run.Kind.FLIGHT_WITH_POSTBUS,
                         created_on=now,
                     ).save()
-                for _ in range(num_buses):
+                for _ in range(test.num_buses):
                     now += timedelta(hours=1)
                     Run(
                         signup=signup,
@@ -217,7 +266,7 @@ class BillTests(TestCase):
                         kind=Run.Kind.BUS,
                         created_on=now,
                     ).save()
-                for _ in range(num_boats):
+                for _ in range(test.num_boats):
                     now += timedelta(hours=1)
                     Run(
                         signup=signup,
@@ -225,7 +274,7 @@ class BillTests(TestCase):
                         kind=Run.Kind.BOAT,
                         created_on=now,
                     ).save()
-                for _ in range(num_breaks):
+                for _ in range(test.num_breaks):
                     now += timedelta(hours=1)
                     Run(
                         signup=signup,
@@ -234,43 +283,50 @@ class BillTests(TestCase):
                         created_on=now,
                     ).save()
 
-                self.pilot.prepaid_flights = initial_prepaid_flights
+                self.pilot.prepaid_flights = test.initial_prepaid_flights
                 self.pilot.save()
 
-                if price_of_purchase:
+                if test.price_of_purchase:
                     Purchase(
                         signup=signup,
                         report=self.report,
                         description="Description",
-                        price=price_of_purchase,
+                        price=test.price_of_purchase,
                     ).save()
 
                 bill = Bill(
                     signup=signup, report=self.report, method=PaymentMethods.CASH
                 )
                 self.assertEqual(
-                    bill.num_flights, num_flights_with_bus + num_flights_with_postbus
+                    bill.num_flights,
+                    test.num_flights_with_bus
+                    + test.num_flights_with_lift
+                    + test.num_flights_with_postbus,
                 )
-                self.assertEqual(bill.num_flights_with_bus, num_flights_with_bus)
+                self.assertEqual(bill.num_flights_with_bus, test.num_flights_with_bus)
+                self.assertEqual(bill.num_flights_with_lift, test.num_flights_with_lift)
                 self.assertEqual(
-                    bill.num_flights_with_postbus, num_flights_with_postbus
+                    bill.num_flights_with_postbus, test.num_flights_with_postbus
                 )
-                self.assertEqual(bill.num_services, num_buses + num_boats)
+                self.assertEqual(bill.num_services, test.num_buses + test.num_boats)
                 self.assertEqual(
                     bill.to_pay,
-                    num_flights_to_pay * Bill.PRICE_OF_FLIGHT + price_of_purchase,
+                    test.num_flights_to_pay * Bill.PRICE_OF_FLIGHT
+                    + test.price_of_purchase,
                 )
 
                 bill.prepaid_flights = bill.num_prepaid_flights
                 to_pay_before_save = bill.to_pay
                 bill.amount = to_pay_before_save
                 bill.save()
-                self.assertEqual(final_prepaid_flights, self.pilot.prepaid_flights)
+                self.assertEqual(test.final_prepaid_flights, self.pilot.prepaid_flights)
                 self.assertEqual(to_pay_before_save, bill.to_pay)
                 self.assertEqual(bill.prepaid_flights, bill.num_prepaid_flights)
 
                 bill.delete()
-                self.assertEqual(initial_prepaid_flights, self.pilot.prepaid_flights)
+                self.assertEqual(
+                    test.initial_prepaid_flights, self.pilot.prepaid_flights
+                )
 
                 # Tear down sub test.
                 signup.delete()
@@ -334,6 +390,7 @@ class BillTests(TestCase):
             ((Run.Kind.FLIGHT,), "1 (1x🚐)"),
             ((Run.Kind.FLIGHT, Run.Kind.FLIGHT), "2 (2x🚐)"),
             ((Run.Kind.FLIGHT, Run.Kind.FLIGHT_WITH_POSTBUS), "2 (1x🚐, 1x📯)"),
+            ((Run.Kind.FLIGHT_WITH_LIFT, Run.Kind.FLIGHT_WITH_POSTBUS), "2 (1x🚡, 1x📯)"),
         ]:
             with self.subTest(runs=runs, expected_flights=expected_flights):
                 signup = Signup.objects.create(pilot=self.pilot, training=self.training)

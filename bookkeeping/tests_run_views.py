@@ -72,6 +72,8 @@ class RunCreateViewTests(TestCase):
         self.assertTemplateUsed(response, "bookkeeping/run_create.html")
         self.assertContains(response, f'value="{Run.Kind.FLIGHT}" checked')
         self.assertNotContains(response, f'value="{Run.Kind.FLIGHT}" \\n')
+        self.assertContains(response, f'value="True" required checked')
+        self.assertNotContains(response, f'value="False" required checked')
 
     def test_pilots_listed_alphabetically(self):
         response = self.client.get(reverse("create_run"))
@@ -136,6 +138,7 @@ class RunCreateViewTests(TestCase):
                 "form-0-kind": Run.Kind.BUS,
                 "form-1-kind": Run.Kind.BUS,
                 "form-2-kind": Run.Kind.FLIGHT,
+                "by_lift": False,
             },
             follow=True,
         )
@@ -149,6 +152,8 @@ class RunCreateViewTests(TestCase):
         )
         self.assertNotContains(response, f'value="{Run.Kind.BOAT}" checked')
         self.assertNotContains(response, f'value="{Run.Kind.BREAK}" checked')
+        self.assertNotContains(response, f'value="True" required checked')
+        self.assertContains(response, f'value="False" required checked')
         self.assertEqual(0, len(Run.objects.all()))
 
     def test_no_bus_allowed_if_noone_uses_it(self):
@@ -250,6 +255,7 @@ class RunCreateViewTests(TestCase):
                 "form-0-kind": Run.Kind.BUS,
                 "form-1-kind": Run.Kind.FLIGHT,
                 "form-2-kind": Run.Kind.BOAT,
+                "by_lift": True,
             },
             follow=True,
         )
@@ -260,6 +266,10 @@ class RunCreateViewTests(TestCase):
         self.assertContains(response, "🪂")
         self.assertContains(response, "🚢")
         self.assertEqual(3, len(Run.objects.all()))
+        self.assertEqual(
+            {Run.Kind.BUS, Run.Kind.BOAT, Run.Kind.FLIGHT_WITH_LIFT},
+            {run.kind for run in Run.objects.all()},
+        )
 
     def test_recently_created_run_warning(self):
         Run(
@@ -408,6 +418,7 @@ class RunUpdateViewTests(TestCase):
                 "form-1-id": self.guest_2_run.pk,
                 "form-2-id": self.orga_run.pk,
                 "save": "",
+                "by_lift": True,
             },
             follow=True,
         )
@@ -421,7 +432,7 @@ class RunUpdateViewTests(TestCase):
         self.guest_2_run.refresh_from_db()
         self.assertEqual(Run.Kind.BOAT, self.guest_2_run.kind)
         self.orga_run.refresh_from_db()
-        self.assertEqual(Run.Kind.FLIGHT, self.orga_run.kind)
+        self.assertEqual(Run.Kind.FLIGHT_WITH_LIFT, self.orga_run.kind)
 
     def test_run_with_changed_number_of_pilots_cannot_be_deleted(self):
         response = self.client.post(
