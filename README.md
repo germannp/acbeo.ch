@@ -42,3 +42,12 @@ To customize Bootstrap, it's source code and [SASS](https://sass-lang.com/) are 
 These can be installed using `$ nmp i bootstrap@5.2.0 sass`. Then the stylesheets can be
 compiled using `sass news/static/news/custom.scss news/static/news/custom.css`. The 
 resulting files need to be versioned for the site to work.
+
+To build push to [github.com/germannp/acbeo.ch](https://github.com/germannp/acbeo.ch).
+The new container will be deployed, if the unit tests pass. To back up the database use
+e.g.:
+```
+$ fly ssh console
+# python manage.py dumpdata > acbeo-db_2024-05-17.json
+$ fly sftp get /app/acbeo-db_2024-05-17.json
+```
