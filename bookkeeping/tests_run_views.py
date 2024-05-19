@@ -85,6 +85,17 @@ class RunCreateViewTests(TestCase):
         self.assertTrue("Guest" in response_before_guest_2)
         self.assertTrue("Orga" in response_after_guest_2)
 
+    def test_short_names_shown(self):
+        self.guest.first_name = "Maximilian"
+        self.guest.last_name = "Mustermann"
+        self.guest.save()
+
+        response = self.client.get(reverse("create_run"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/run_create.html")
+        self.assertContains(response, self.guest.short_name)
+        self.assertNotContains(response, self.guest)
+
     def test_pilot_who_paid_is_hidden(self):
         Bill(
             signup=self.guest_2_signup,
@@ -375,6 +386,17 @@ class RunUpdateViewTests(TestCase):
         )
         self.assertTrue("Guest" in response_before_guest_2)
         self.assertTrue("Orga" in response_after_guest_2)
+
+    def test_short_names_shown(self):
+        self.guest.first_name = "Maximilian"
+        self.guest.last_name = "Mustermann"
+        self.guest.save()
+
+        response = self.client.get(reverse("create_run"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/run_create.html")
+        self.assertContains(response, self.guest.short_name)
+        self.assertNotContains(response, self.guest)
 
     def test_paid_run_cannot_be_updated(self):
         Bill(

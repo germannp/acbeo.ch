@@ -103,10 +103,36 @@ class Pilot(AbstractBaseUser):
         return self.role == self.Role.STAFF
 
     @property
+    def short_name(self):
+        MAX_LENGTH = 15
+        if len(name := str(self)) <= MAX_LENGTH:
+            return name
+
+        first, *middle_names, last = name.split()
+        for i, name in enumerate(middle_names):
+            if name in ["von", "Von"]:
+                middle_names[i] = "v."
+        
+        short_name = " ".join([first] + middle_names + [last])
+        if len(short_name) <= MAX_LENGTH:
+            return short_name
+        
+        short_name = short_name[:MAX_LENGTH - 1] + "."
+        if short_name.endswith("-."):
+            return short_name[:-2] + "."
+
+        if short_name.endswith(" ."):
+            return short_name[:-2]
+
+        return short_name
+
+    @property
     def day_passes_of_this_season(self):
-        signups_of_this_season = self.signups.filter(
-            **{"training__date__gte": f"{now().year}-1-1"}
-        ).select_related("training").prefetch_related("purchases")
+        signups_of_this_season = (
+            self.signups.filter(**{"training__date__gte": f"{now().year}-1-1"})
+            .select_related("training")
+            .prefetch_related("purchases")
+        )
         purchases = [
             purchase
             for signup in signups_of_this_season

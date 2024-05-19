@@ -33,6 +33,25 @@ class PilotTests(TestCase):
                 pilot = Pilot(email="pilot@example.com", role=role)
                 self.assertEqual(pilot.is_staff, role == Pilot.Role.STAFF)
 
+    def test_short_name(self):
+        for first_name, last_name, short_name in [
+            ("Max", "Mustermann", "Max Mustermann"),
+            ("Maximilian", "Mustermann", "Maximilian Mus."),
+            ("Max", "von Mustermann", "Max v. Musterm."),
+            ("Max", "de Mustermann", "Max de Musterm."),
+            ("Andrea", "Muster-Meier", "Andrea Muster."),
+            ("Andrea", "Garcia Lopez", "Andrea Garcia"),
+        ]:
+            with self.subTest(
+                first_name=first_name, last_name=last_name, short_name=short_name
+            ):
+                pilot = Pilot(
+                    email="pilot@example.com",
+                    first_name=first_name,
+                    last_name=last_name,
+                )
+                self.assertEqual(pilot.short_name, short_name)
+
     def test_day_passes(self):
         pilot = Pilot.objects.create(email="pilot@example.com")
         today = timezone.now().date()
