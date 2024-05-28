@@ -623,9 +623,7 @@ class RunUpdateView(OrgaRequiredMixin, generic.TemplateView):
     template_name = "bookkeeping/run_update.html"
     success_url = reverse_lazy("create_report")
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["Kind"] = Run.Kind
+    def get_object(self):
         training = get_object_or_404(Training, date=timezone.now().date())
         report = get_object_or_404(Report, training=training)
         times_of_runs = sorted(set(run.created_on for run in report.runs.all()))
@@ -633,8 +631,15 @@ class RunUpdateView(OrgaRequiredMixin, generic.TemplateView):
             raise Http404(f"Kein {num_run}. Run gefunden.")
 
         time_of_run = times_of_runs[num_run]
+        return time_of_run, report, report.runs.filter(created_on=time_of_run)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["Kind"] = Run.Kind
+
+        time_of_run, _, runs = self.get_object()
         context["time_of_run"] = time_of_run
-        runs = report.runs.filter(created_on=time_of_run)
+
         prefetch_related_objects(runs, "signup__pilot")
         if "formset" in context:
             formset = context["formset"]
@@ -643,8 +648,8 @@ class RunUpdateView(OrgaRequiredMixin, generic.TemplateView):
         if "transport_form" not in context:
             by_lift = any(run.kind == Run.Kind.FLIGHT_WITH_LIFT for run in runs)
             context["transport_form"] = forms.TransportForm({"by_lift": by_lift})
-        for form, run in zip(formset, runs):
-            form.signup = run.signup
+        # In the template, a FLIGHT_WITH_LIFT should be rendered as FLIGHT
+        for form in formset:
             if form.instance.kind == Run.Kind.FLIGHT_WITH_LIFT:
                 form.instance.kind = Run.Kind.FLIGHT
         context["formset"] = formset
@@ -658,67 +663,56 @@ class RunUpdateView(OrgaRequiredMixin, generic.TemplateView):
                 self.get_context_data(formset=formset, transport_form=transport_form)
             )
 
-        if "delete" in request.POST:
-            return self.delete_run(formset)
+        # Fill in the fields excluded in the forms
+        time_of_run, report, runs = self.get_object()
+        if len(formset) != len(runs):
+            messages.warning(self.request, "Run hat sich verändert!")
+            return HttpResponseRedirect(self.success_url)
 
-        if transport_form.cleaned_data["by_lift"]:
-            for form in formset:
-                if form.instance.kind == Run.Kind.FLIGHT:
-                    form.instance.kind = Run.Kind.FLIGHT_WITH_LIFT
-                    # ⚠️ this fugly hack is not covered by the tests.
-                    form.has_changed = lambda: True
-
-        return self.formset_valid(formset)
-
-    def formset_valid(self, formset):
-        training = get_object_or_404(Training.objects, date=timezone.now().date())
-        report = get_object_or_404(Report, training=training)
-        times_of_runs = sorted(set(run.created_on for run in report.runs.all()))
-        num_run = self.kwargs["run"] - 1
-        runs = (
-            Run.objects.filter(created_on=times_of_runs[num_run])
-            .prefetch_related("signup__bill")
-            .prefetch_related("signup__pilot")
-        )
+        prefetch_related_objects(runs, "signup__bill")
+        prefetch_related_objects(runs, "signup__pilot")
         for form, run in zip(formset, runs):
-            if run.signup.is_paid and run.kind != form.instance.kind:
-                messages.warning(
-                    self.request, f"{run.signup.pilot} hat bereits bezahlt."
-                )
-                return self.render_to_response(self.get_context_data(formset=formset))
-
             form.instance.pk = run.pk
             form.instance.signup = run.signup
             form.instance.report = report
-            form.instance.created_on = times_of_runs[num_run]
+            form.instance.created_on = time_of_run
+
+        # In the template, a FLIGHT_WITH_LIFT was rendered as FLIGHT
+        if transport_form.cleaned_data["by_lift"]:
+            for form, run in zip(formset, runs):
+                if form.instance.kind == Run.Kind.FLIGHT:
+                    form.instance.kind = Run.Kind.FLIGHT_WITH_LIFT
+                    # ⚠️ this fugly hack is not covered by the tests.
+                    if form.instance.kind == run.kind:
+                        form.changed_data.remove("kind")
+                    else:
+                        form.changed_data.append("kind")
+
+        if "delete" in request.POST:
+            return self.delete_run(formset, runs)
+
+        return self.formset_valid(formset, runs)
+
+    def formset_valid(self, formset, runs):
+        for form, run in zip(formset, runs):
+            # form.has_changed() would be nicer, but form.inital is not set in tests 🤷
+            if form.instance.signup.is_paid and form.instance.kind != run.kind:
+                messages.warning(
+                    self.request, f"{form.instance.signup.pilot} hat bereits bezahlt."
+                )
+                return self.render_to_response(self.get_context_data(formset=formset))
+
         formset.save()
         messages.success(self.request, "Run bearbeitet.")
         return HttpResponseRedirect(self.success_url)
 
-    def delete_run(self, formset):
-        training = get_object_or_404(Training, date=timezone.now().date())
-        report = get_object_or_404(Report, training=training)
-        times_of_runs = sorted(set(run.created_on for run in report.runs.all()))
-        num_run = self.kwargs["run"] - 1
-        runs = (
-            Run.objects.filter(created_on=times_of_runs[num_run])
-            .prefetch_related("signup__bill")
-            .prefetch_related("signup__pilot")
-        )
-
-        for run in runs:
-            if not run.signup.is_paid:
+    def delete_run(self, formset, runs):
+        for form in formset:
+            if not form.instance.signup.is_paid:
                 continue
             messages.warning(
                 self.request,
-                f"{run.signup.pilot} hat bereits bezahlt, Run wurde nicht gelöscht!",
-            )
-            return HttpResponseRedirect(self.success_url)
-
-        # Pedestrian sanity checks to reduce risk of deleting runs in parallel
-        if len(formset) != len(runs):
-            messages.warning(
-                self.request, "Run hat sich verändert und wurde nicht gelöscht!"
+                f"{form.instance.signup.pilot} hat bereits bezahlt, Run wurde nicht gelöscht!",
             )
             return HttpResponseRedirect(self.success_url)
 

@@ -369,6 +369,10 @@ class RunUpdateViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.assertTemplateUsed(response, "404.html")
 
+        response = self.client.post(reverse("update_run", kwargs={"run": 2}))
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
+        self.assertTemplateUsed(response, "404.html")
+
     def test_forms_are_prefilled(self):
         response = self.client.get(reverse("update_run", kwargs={"run": 1}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
@@ -470,9 +474,7 @@ class RunUpdateViewTests(TestCase):
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/report_update.html")
-        self.assertContains(
-            response, "Run hat sich verändert und wurde nicht gelöscht!"
-        )
+        self.assertContains(response, "Run hat sich verändert!")
         self.assertEqual(3, len(Run.objects.all()))
 
     def test_run_with_changed_kind_cannot_be_deleted(self):
@@ -514,6 +516,7 @@ class RunUpdateViewTests(TestCase):
                 "form-0-kind": Run.Kind.FLIGHT,
                 "form-1-kind": Run.Kind.FLIGHT,
                 "form-2-kind": Run.Kind.FLIGHT,
+                "by_lift": True,
                 "delete": "",
             },
             follow=True,
@@ -534,6 +537,7 @@ class RunUpdateViewTests(TestCase):
                 "form-0-kind": Run.Kind.FLIGHT,
                 "form-1-kind": Run.Kind.FLIGHT,
                 "form-2-kind": Run.Kind.FLIGHT,
+                "by_lift": False,
                 "delete": "",
             },
             follow=True,
