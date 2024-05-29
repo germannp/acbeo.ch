@@ -708,7 +708,10 @@ class RunUpdateView(OrgaRequiredMixin, generic.TemplateView):
 
     def delete_run(self, formset, runs):
         for form in formset:
-            if not form.instance.signup.is_paid:
+            if (
+                not form.instance.signup.is_paid
+                or not form.instance.is_relevant_for_bill
+            ):
                 continue
             messages.warning(
                 self.request,

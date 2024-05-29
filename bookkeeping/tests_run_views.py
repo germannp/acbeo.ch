@@ -547,6 +547,41 @@ class RunUpdateViewTests(TestCase):
         self.assertContains(response, "Run gelöscht.")
         self.assertEqual(0, len(Run.objects.all()))
 
+    def test_paid_break_can_be_deleted(self):
+        self.guest_run.kind = Run.Kind.BREAK
+        self.guest_run.save()
+
+        Bill(
+            signup=self.guest_signup,
+            report=self.report,
+            prepaid_flights=0,
+            amount=420,
+            method=PaymentMethods.CASH,
+        ).save()
+        self.assertTrue(self.guest_signup.is_paid)
+        self.assertEqual(3, len(Run.objects.all()))
+
+        response = self.client.post(
+            reverse("update_run", kwargs={"run": 1}),
+            data={
+                "form-TOTAL_FORMS": 3,
+                "form-INITIAL_FORMS": 0,
+                "form-0-kind": Run.Kind.BREAK,
+                "form-1-kind": Run.Kind.FLIGHT,
+                "form-2-kind": Run.Kind.FLIGHT,
+                "form-0-id": self.guest_run.pk,
+                "form-1-id": self.guest_2_run.pk,
+                "form-2-id": self.orga_run.pk,
+                "by_lift": False,
+                "delete": "",
+            },
+            follow=True,
+        )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/report_update.html")
+        self.assertContains(response, "Run gelöscht.")
+        self.assertEqual(0, len(Run.objects.all()))
+
 
 class DatabaseCallsTests(TestCase):
     def setUp(self):
