@@ -907,7 +907,7 @@ class BillCreateView(OrgaRequiredMixin, generic.CreateView):
         form.instance.report = report
         if form.instance.amount < form.instance.to_pay:
             form.add_error(
-                None, f"{signup.pilot} muss Fr. {form.instance.to_pay} bezahlen."
+                None, f"{signup.pilot} muss Fr. {form.instance.to_pay:.2f} bezahlen."
             )
             return super().form_invalid(form)
 
@@ -961,7 +961,7 @@ class BillUpdateView(OrgaRequiredMixin, generic.UpdateView):
         if form.instance.amount < form.instance.to_pay:
             form.add_error(
                 None,
-                f"{form.instance.signup.pilot} muss Fr. {form.instance.to_pay} bezahlen.",
+                f"{form.instance.signup.pilot} muss Fr. {form.instance.to_pay:.2f} bezahlen.",
             )
             return super().form_invalid(form)
 

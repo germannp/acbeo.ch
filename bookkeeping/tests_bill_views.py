@@ -580,7 +580,6 @@ class BillCreateViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/bill_create.html")
         self.assertContains(response, f"{self.guest} muss Fr. {to_pay}.00 bezahlen.")
-        self.guest_signup.refresh_from_db()
 
     def test_make_orga(self):
         amount = 42

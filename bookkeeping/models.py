@@ -261,7 +261,7 @@ class Bill(models.Model):
 
     @property
     def num_prepaid_flights(self):
-        if self.prepaid_flights:
+        if self.prepaid_flights is not None:
             return self.prepaid_flights
 
         return min(

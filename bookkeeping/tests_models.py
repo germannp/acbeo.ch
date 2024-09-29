@@ -358,6 +358,30 @@ class BillTests(TestCase):
         bill.save()
         self.assertEqual(8, self.pilot.prepaid_flights)
 
+    def test_prepaid_flights_do_not_affect_paid_bills(self):
+        self.pilot.prepaid_flights = 0
+        self.pilot.save()
+        signup = Signup.objects.create(pilot=self.pilot, training=self.training)
+        Run(
+            signup=signup,
+            report=self.report,
+            kind=Run.Kind.FLIGHT,
+            created_on=timezone.now(),
+        ).save()
+
+        bill = Bill.objects.create(
+            signup=signup,
+            report=self.report,
+            prepaid_flights=0,
+            amount=Bill.PRICE_OF_FLIGHT,
+            method=PaymentMethods.CASH,
+        )
+        self.assertEqual(Bill.PRICE_OF_FLIGHT, bill.to_pay)
+
+        self.pilot.prepaid_flights = 10
+        self.pilot.save()
+        self.assertEqual(Bill.PRICE_OF_FLIGHT, bill.to_pay)
+
     def test_create_bill_marks_pilot_not_new(self):
         self.assertTrue(self.pilot.is_new)
         signup = Signup.objects.create(pilot=self.pilot, training=self.training)
