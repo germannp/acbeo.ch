@@ -210,7 +210,7 @@ class TrainingListViewTests(TestCase):
         response = self.client.get(reverse("trainings"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "trainings/training_list.html")
-        self.assertEquals(2, str(response.content).count(reverse("create_report")))
+        self.assertEqual(2, str(response.content).count(reverse("create_report")))
 
 
 class TrainingCreateViewTests(TestCase):
