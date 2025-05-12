@@ -235,7 +235,7 @@ class BalanceView(OrgaRequiredMixin, YearArchiveView):
             for transaction in transactions
             if transaction.method == PaymentMethods.TWINT and transaction.amount
         ]
-        by_week = lambda expediture: int(expediture.report.training.date.strftime("%W"))
+        by_week = lambda expediture: expediture.report.training.date.isocalendar().week
         twint_by_week = {
             week: sorted(transactions_in_week, key=by_date)
             for week, transactions_in_week in groupby(
