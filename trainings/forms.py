@@ -147,9 +147,6 @@ class EmergencyMailForm(forms.ModelForm):
             "<b>Was</b>: Information über Gleitschirm Sicherheitstraining über dem "
             "Brienzersee<br>\n<br>\n"
 
-            "<b>Geht an</b>: Einsatzzentrale der Kantonspolizei in Thun. Bitte weiterleiten "
-            "an die Polizeiwachen Brienz und Meiringen, und die Seepolizei Brienzersee.<br>\n<br>\n"
-
             "<b>Wo</b>: Östliches Seebecken Brienzersee<br>\n"
             "Start: Axalp<br>\n"
             "Landung: Aaregg, Forsthaus<br>\n<br>\n"
