@@ -23,7 +23,7 @@ class TrainingCreateForm(forms.Form):
     last_day = forms.DateField(initial=lambda: date_relative_to_next_august(8, 31))
     priority_date = forms.DateField(initial=lambda: date_relative_to_next_august(4, 15))
     max_pilots = forms.IntegerField(
-        initial=10, validators=[MinValueValidator(6), MaxValueValidator(21)]
+        initial=11, validators=[MinValueValidator(6), MaxValueValidator(33)]
     )
     info = forms.CharField(max_length=300, initial="Axalpwochen")
 

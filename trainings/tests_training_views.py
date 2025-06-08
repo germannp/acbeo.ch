@@ -253,7 +253,7 @@ class TrainingCreateViewTests(TestCase):
         self.assertContains(response, 'value="1984-08-31"')
         self.assertContains(response, 'value="1984-04-15"')
         self.assertContains(response, 'value="Axalpwochen"')
-        self.assertContains(response, 'name="max_pilots" value=10')
+        self.assertContains(response, 'name="max_pilots" value=11')
 
         mocked_now.date.return_value = date(1984, 8, 1)
         response = self.client.get(reverse("create_trainings"))

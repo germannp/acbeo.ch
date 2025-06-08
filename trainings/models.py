@@ -14,7 +14,7 @@ class Training(models.Model):
         default=11,
         blank=False,
         null=False,
-        validators=[MinValueValidator(6), MaxValueValidator(21)],
+        validators=[MinValueValidator(6), MaxValueValidator(33)],
     )
     min_orgas = 2
     priority_date = models.DateField(
