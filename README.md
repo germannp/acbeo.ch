@@ -1,12 +1,11 @@
 New ACBeo website 🪂
 ===================
 
-Unfortunately, our current website is built on a Joomla extension that seems no longer 
-under development. Therefore, eventually we will need a new homepage. Here, we develop 
-a prototype in Python. Having no strong opinions ourselves, we use the opinionated web 
-framework [Django](https://www.djangoproject.com/) for the backend. For the frontend we 
-use [Bootstrap 5](https://getbootstrap.com/), as it feels like LaTeX for mobile (in the 
-good, the bad, and the ugly way 🤷).
+Unfortunately, our former website was built on a Joomla extension that seems no longer 
+under development. Therefore, eventually we needed a new homepage. Having no strong
+opinions, we use the opinionated web framework [Django](https://www.djangoproject.com/)
+for the backend. For the frontend we use [Bootstrap 5](https://getbootstrap.com/), as it
+feels like LaTeX for mobile (in the good, the bad, and the ugly way 🤷).
 
 To download the code, install the necessary packages, and set up a local database run:
 ```
