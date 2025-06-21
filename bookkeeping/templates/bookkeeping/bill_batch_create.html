@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Mit Abos abrechnen{% endblock title %}
+
+{% block headline %}Mit Abos abrechnen{% endblock headline %}
+
+{% block content %}
+
+<div class="row mt-2">
+
+    <div class="col-xl-4 col-lg-5">
+
+        <div class="card mb-4">
+            <div class="card-body">
+                {% if abo_only_signups %}
+                <p class="card-text">Die folgenden Pilot·innen können direkt mit ihren Abos abgerechnet werden:</p>
+                <ul>
+                    {% for signup in abo_only_signups %}
+                    <li>{{ signup.pilot }}</li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="card-text">Es können keine Pilot·innen (mehr) mit ihren Abos abgerechnet werden.</p>
+                {% endif %}
+                <main class="form">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-grid gap-2 d-block">
+                            {% if abo_only_signups %}
+                            <button class="btn btn-secondary" type="submit">Abrechnen</button>
+                            {% endif %}
+                            <a href="{{ view.get_report_url }}" class="btn btn-outline-dark">Abbrechen</a>
+                        </div>
+                    </form>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <div class="col float-right">
+        {% include 'bookkeeping/explanations.html' %}
+    </div>
+
+</div>
+
+{% endblock content %}

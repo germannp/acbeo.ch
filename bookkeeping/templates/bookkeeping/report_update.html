@@ -30,9 +30,11 @@
                                 {# signup.pilot and signup.is_paid generate DB calls #}
                                 <td class="text-nowrap">{{ signup.pilot }}
                                     {% if signup.is_paid %}
-                                        <a href="{% url 'update_bill' date=report.training.date.isoformat pk=signup.bill.pk %}" class="bi bi-pencil-square"></a>
+                                    <a href="{% url 'update_bill' date=report.training.date.isoformat pk=signup.bill.pk %}"
+                                        class="bi bi-pencil-square"></a>
                                     {% else %}
-                                        <a href="{% url 'create_bill' date=report.training.date.isoformat signup=signup.pk %}" class="bi bi-cart3 link-secondary"></a>
+                                    <a href="{% url 'create_bill' date=report.training.date.isoformat signup=signup.pk %}"
+                                        class="bi bi-cart3 link-secondary"></a>
                                     {% endif %}
                                 </td>
                                 {% for run in runs %}
@@ -60,7 +62,7 @@
                     </table>
                 </div>
                 {% if report.training.date == today %}
-                    <a href="{% url 'create_run' %}" class="btn btn-secondary">Run hinzufügen</a>
+                <a href="{% url 'create_run' %}" class="btn btn-secondary">Run hinzufügen</a>
                 {% endif %}
             </div>
         </div>
@@ -86,17 +88,19 @@
                                 </tr>
                                 {% for expense in report.expenses.all %}
                                 <tr>
-                                    <td>{{ expense.reason }} 
+                                    <td>{{ expense.reason }}
                                         <a href="{% url 'update_expense' date=report.training.date.isoformat pk=expense.pk %}"
-                                            class="bi bi-pencil-square"></a></td>
+                                            class="bi bi-pencil-square"></a>
+                                    </td>
                                     <td class="text-end">- {{ expense.amount | floatformat:"2u" }}</td>
                                 </tr>
                                 {% endfor %}
                                 {% for absorption in report.absorptions.all %}
                                 <tr>
-                                    <td>{{ absorption.reason }} 
+                                    <td>{{ absorption.reason }}
                                         <a href="{% url 'update_absorption' date=report.training.date.isoformat pk=absorption.pk %}"
-                                            class="bi bi-pencil-square"></a></td>
+                                            class="bi bi-pencil-square"></a>
+                                    </td>
                                     <td class="text-end">- {{ absorption.amount | floatformat:"2u" }}</td>
                                 </tr>
                                 {% endfor %}
@@ -104,7 +108,7 @@
                         </table>
                         <div class="form-floating mb-3">
                             <input type="number" min="0" name="cash_at_end" class="form-control" placeholder="text"
-                                {% if form.cash_at_end.value %}value="{{ form.cash_at_end.value }}"{% endif %}>
+                            {% if form.cash_at_end.value %}value="{{ form.cash_at_end.value }}" {% endif %}>
                             <label>Kassenstand nach dem Training</label>
                         </div>
                         <label for="id_orgas" class="form-label">Tagesleiter·innen:</label>
@@ -123,12 +127,16 @@
                             <label for="floatingInput">Bemerkungen</label>
                         </div>
                         <div class="d-grid gap-2">
-                            <a href="{% url 'create_expense' date=report.training.date.isoformat %}" class="btn btn-primary">Ausgabe erfassen</a>
-                            <a href="{% url 'create_absorption' date=report.training.date.isoformat %}" class="btn btn-primary">Abschöpfen</a>
+                            <a href="{% url 'batch_create_bills' date=report.training.date.isoformat %}"
+                                class="btn btn-primary {% if all_signups_paid %} disabled{% endif %}">Abos abrechnen</a>
+                            <a href="{% url 'create_expense' date=report.training.date.isoformat %}"
+                                class="btn btn-primary">Ausgabe erfassen</a>
+                            <a href="{% url 'create_absorption' date=report.training.date.isoformat %}"
+                                class="btn btn-primary">Abschöpfen</a>
                             {% if report.cash_at_end %}
-                                <button class="btn btn-primary" type="submit">Kasse Speichern</button>
+                            <button class="btn btn-primary" type="submit">Kasse Speichern</button>
                             {% else %}
-                                <button class="btn btn-secondary" type="submit">Kasse Speichern</button>
+                            <button class="btn btn-secondary" type="submit">Kasse Speichern</button>
                             {% endif %}
                             <a href="javascript:history.back()" class="btn btn-outline-dark">Abbrechen</a>
                         </div>

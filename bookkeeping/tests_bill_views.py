@@ -338,6 +338,156 @@ class PilotListViewTests(TestCase):
         self.assertTemplateUsed(response, "404.html")
 
 
+class BillBatchCreateViewTests(TestCase):
+    def setUp(self):
+        self.orga = get_user_model().objects.create(
+            first_name="Orga", email="orga@example.com", role=get_user_model().Role.ORGA
+        )
+        self.client.force_login(self.orga)
+        self.guest = get_user_model().objects.create(
+            first_name="Guest", email="guest@example.com", prepaid_flights=10
+        )
+
+        self.training = Training.objects.create(date=TODAY)
+        now = timezone.now()
+        self.orga_signup = Signup.objects.create(
+            pilot=self.orga, training=self.training, signed_up_on=now
+        )
+        now += timedelta(hours=1)
+        self.guest_signup = Signup.objects.create(
+            pilot=self.guest, training=self.training, signed_up_on=now
+        )
+
+        self.report = Report.objects.create(training=self.training, cash_at_start=1337)
+        Run(
+            signup=self.guest_signup,
+            report=self.report,
+            kind=Run.Kind.FLIGHT,
+            created_on=now,
+        ).save()
+        now += timedelta(hours=1)
+        Run(
+            signup=self.guest_signup,
+            report=self.report,
+            kind=Run.Kind.FLIGHT,
+            created_on=now,
+        ).save()
+
+    def test_orga_required_to_see(self):
+        self.client.force_login(self.guest)
+        response = self.client.get(
+            reverse("batch_create_bills", kwargs={"date": TODAY})
+        )
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
+        self.assertTemplateUsed(response, "403.html")
+
+    def test_no_batch_bill_for_paid_signup(self):
+        Bill(
+            signup=self.orga_signup,
+            report=self.report,
+            prepaid_flights=0,
+            amount=0,
+            method=PaymentMethods.CASH,
+        ).save()
+
+        response = self.client.get(
+            reverse("batch_create_bills", kwargs={"date": TODAY})
+        )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/bill_batch_create.html")
+        self.assertNotContains(response, f"<li>{self.orga}</li>")
+        self.assertContains(response, f"<li>{self.guest}</li>")
+
+    def test_no_batch_bill_for_signup_with_not_enough_abo(self):
+        Run(
+            signup=self.orga_signup,
+            report=self.report,
+            kind=Run.Kind.FLIGHT,
+            created_on=timezone.now() + timedelta(hours=1),
+        ).save()
+
+        response = self.client.get(
+            reverse("batch_create_bills", kwargs={"date": TODAY})
+        )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/bill_batch_create.html")
+        self.assertNotContains(response, f"<li>{self.orga}</li>")
+        self.assertContains(response, f"<li>{self.guest}</li>")
+
+    def test_no_batch_bill_for_signup_with_purchase(self):
+        Purchase(
+            signup=self.guest_signup,
+            report=self.report,
+            description="Description",
+            price=42,
+        ).save()
+        response = self.client.get(
+            reverse("batch_create_bills", kwargs={"date": TODAY})
+        )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/bill_batch_create.html")
+        self.assertContains(response, f"<li>{self.orga}</li>")
+        self.assertNotContains(response, f"<li>{self.guest}</li>")
+
+    def test_no_batch_bill_for_signup_requiring_day_pass(self):
+        Run(
+            signup=self.guest_signup,
+            report=self.report,
+            kind=Run.Kind.FLIGHT,
+            created_on=timezone.now() + timedelta(hours=1),
+        ).save()
+        self.assertTrue(self.guest_signup.needs_day_pass)
+
+        response = self.client.get(
+            reverse("batch_create_bills", kwargs={"date": TODAY})
+        )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/bill_batch_create.html")
+        self.assertContains(response, f"<li>{self.orga}</li>")
+        self.assertNotContains(response, f"<li>{self.guest}</li>")
+
+    def test_button_not_shown_if_there_are_no_batch_bills(self):
+        now = timezone.now() + timedelta(hours=1)
+        for signup in [self.orga_signup, self.guest_signup]:
+            Run(
+                signup=signup,
+                report=self.report,
+                kind=Run.Kind.FLIGHT,
+                created_on=now,
+            ).save()
+
+        response = self.client.get(
+            reverse("batch_create_bills", kwargs={"date": TODAY})
+        )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/bill_batch_create.html")
+        self.assertNotContains(response, f"<li>{self.orga}</li>")
+        self.assertNotContains(response, f"<li>{self.guest}</li>")
+        self.assertNotContains(
+            response,
+            '<button class="btn btn-secondary" type="submit">Abrechnen</button>',
+        )
+
+    def test_create_batch_bills(self):
+        self.assertEqual(len(Bill.objects.all()), 0)
+
+        response = self.client.post(
+            reverse("batch_create_bills", kwargs={"date": TODAY}), follow=True
+        )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/report_update.html")
+        self.assertContains(response, "Abos abgerechnet.")
+
+        self.assertEqual(len(Bill.objects.all()), 2)
+
+    def test_report_not_fround_404(self):
+        response = self.client.get(
+            reverse("batch_create_bills", kwargs={"date": YESTERDAY})
+        )
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
+        self.assertTemplateUsed(response, "404.html")
+
+
 class BillCreateViewTests(TestCase):
     def setUp(self):
         self.orga = get_user_model().objects.create(
@@ -1097,7 +1247,7 @@ class BillUpdateViewTests(TestCase):
 
 class DatabaseCallsTests(TestCase):
     def setUp(self):
-        num_pilots = randint(5, 10)
+        self.num_guests = randint(5, 10)
         num_days = randint(5, 10)
         num_flights = randint(5, 10)
 
@@ -1110,7 +1260,7 @@ class DatabaseCallsTests(TestCase):
             get_user_model().objects.create(
                 email=f"pilot_{i}@example.com", first_name=f"Pilot {i}"
             )
-            for i in range(num_pilots)
+            for i in range(self.num_guests)
         ]
 
         self.signups = []
@@ -1152,6 +1302,18 @@ class DatabaseCallsTests(TestCase):
             response = self.client.get(reverse("pilots"))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "bookkeeping/pilot_list.html")
+
+    def test_bill_batch_create_view(self):
+        Bill.objects.all().delete()
+
+        # signup.needs_day_pass costs three extra queries per selected guest. Beware, two
+        # spot are reserved for organizers, thus there are at most 9 selected guests.
+        with self.assertNumQueries(13 + 3 * min(self.num_guests, 9)):
+            response = self.client.get(
+                reverse("batch_create_bills", kwargs={"date": TODAY})
+            )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed(response, "bookkeeping/bill_batch_create.html")
 
     def test_bill_create_view(self):
         Bill.objects.all().delete()

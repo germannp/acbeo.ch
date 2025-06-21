@@ -856,6 +856,27 @@ class ReportUpdateViewTests(TestCase):
             response, reverse("create_expense", kwargs={"date": TODAY})
         )
 
+    def test_batch_create_bills_button_inactive_when_all_paid(self):
+        response = self.client.get(reverse("update_report", kwargs={"date": TODAY}))
+        self.assertNotContains(response, "disabled")
+
+        Bill(
+            signup=self.orga_signup,
+            report=self.report,
+            prepaid_flights=0,
+            amount=10,
+            method=PaymentMethods.CASH,
+        ).save()
+        Bill(
+            signup=self.guest_signup,
+            report=self.report,
+            prepaid_flights=0,
+            amount=2,
+            method=PaymentMethods.CASH,
+        ).save()
+        response = self.client.get(reverse("update_report", kwargs={"date": TODAY}))
+        self.assertContains(response, "disabled")
+
     def test_pilots_listed_alphabetically(self):
         response = self.client.get(reverse("update_report", kwargs={"date": TODAY}))
         self.assertEqual(response.status_code, HTTPStatus.OK)

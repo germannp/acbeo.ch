@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from decimal import Decimal
 from itertools import groupby
 
 from django.contrib import messages
@@ -362,6 +363,7 @@ class ReportUpdateView(OrgaRequiredMixin, generic.UpdateView):
                     )
                 )
         context["runs_by_signup"] = runs_by_signup
+        context["all_signups_paid"] = all(signup.is_paid for signup in signups)
         return context
 
     def form_valid(self, form):
@@ -790,13 +792,62 @@ class PilotListView(OrgaRequiredMixin, YearArchiveView):
         )
         return context
 
+class BillBatchCreateView(OrgaRequiredMixin, generic.TemplateView):
+    """Create all bills that can be paid with abos"""
+
+    template_name = "bookkeeping/bill_batch_create.html"
+
+    def get_abo_only_signups_and_report(self, date):
+        training = get_object_or_404(Training, date=date)
+        report = get_object_or_404(Report, training=training)
+
+        active_signups = training.active_signups
+
+        prefetch_related_objects(active_signups, "purchases")
+        prefetch_related_objects(active_signups, "runs")
+        abo_only_signups = [
+            signup
+            for signup in active_signups
+            if not signup.is_paid
+            and not signup.needs_day_pass
+            and Bill(signup=signup, report=report).to_pay <= 0
+        ]
+        return abo_only_signups, report
+
+    def get_context_data(self, **kwargs):
+        """Find signups that can be paid with abo"""
+        context = super().get_context_data(**kwargs)
+        context["abo_only_signups"] = self.get_abo_only_signups_and_report(
+            self.kwargs["date"]
+        )[0]
+        return context
+
+    def post(self, request, *args, **kwargs):
+        abo_only_signups, report = self.get_abo_only_signups_and_report(
+            self.kwargs["date"]
+        )
+        for signup in abo_only_signups:
+            bill = Bill(
+                signup=signup, report=report, amount=0, method=PaymentMethods.CASH
+            )
+            bill.prepaid_flights = Decimal(bill.num_prepaid_flights)
+            bill.save()
+        messages.success(request, "Abos abgerechnet.")
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_success_url(self):
+        return reverse_lazy("update_report", kwargs={"date": self.kwargs["date"]})
+
+    def get_report_url(self):
+        return reverse_lazy("update_report", kwargs={"date": self.kwargs["date"]})
+
 
 class BillCreateView(OrgaRequiredMixin, generic.CreateView):
     form_class = forms.BillForm
     template_name = "bookkeeping/bill_create.html"
 
     def get(self, *args, **kwargs):
-        """Redirect if paid"""
+        """Redirect if paid and warn if there is an earlier unpaid signup"""
         signup = get_object_or_404(
             Signup.objects.select_related("bill"), pk=self.kwargs["signup"]
         )
