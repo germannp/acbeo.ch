@@ -1,46 +1,84 @@
 {% load static %}
-
 {% load bill_extras %}
+{% load i18n %}
 
 <div class="card mb-4">
-    <h5 class="card-header">Praktische Infos</h5>
+    <h5 class="card-header">{% translate "Praktische Informationen" %}</h5>
     <div class="card-body">
         <p class="card-text">
-            Trainingsablauf und Materialempfehlungen stehen im <a
-                href="{% static 'news/sicherheitskonzept.pdf' %}">Sicherheitskonzept</a>. Hier folgen weitere praktische
-            Informationen, die nicht direkt sicherheitsrelevant sind.</p>
+            {% static 'news/sicherheitskonzept.pdf' as safety_concept_url %}
+            {% blocktrans trimmed with safety_concept_url=safety_concept_url %}
+            Trainingsablauf und Materialempfehlungen stehen im <a href="{{ safety_concept_url }}">Sicherheitskonzept</a>.
+            Hier folgen weitere praktische Informationen.
+            {% endblocktrans %}
+        </p>
+
         <p class="card-text">
-            Unsere Saison beginnt Mitte Mai, Anfang Juni, sobald die Axalpstrasse schneefrei ist. Danach fliegen wir am
-            Wochendende, sofern das Wetter passt, genügend Leute eingeschrieben sind und uns das Militär fliegen lässt.
-            Im August ist der Flugplatz Meiringen normalerweise zum Reparieren der Landebahn geschlossen und wir fliegen
-            für ein paar Wochen durchgehend. Wir fliegen bis Ende Oktober, spätestens Mitte November an der Axalp, dann
-            werden die Tage zu kurz und der See zu kalt.</p>
+            {% blocktrans trimmed %}
+            Unsere Saison beginnt Mitte Mai, Anfang Juni, sobald die Axalpstrasse schneefrei ist.
+            Danach fliegen wir am Wochenende, sofern das Wetter passt, genügend Leute eingeschrieben sind
+            und uns das Militär fliegen lässt. Im August ist der Flugplatz Meiringen normalerweise zum Reparieren
+            der Landebahn geschlossen und wir fliegen für ein paar Wochen durchgehend.
+            Wir fliegen bis Ende Oktober, spätestens Mitte November an der Axalp,
+            dann werden die Tage zu kurz und der See zu kalt.
+            {% endblocktrans %}
+        </p>
+
         <p class="card-text">
-            Ob ein Training statt findet entscheiden die eingeschriebenen Leiter·innen aufgrund des Wetters und der
-            eingeschriebenen Pilot·innen. Der Entscheid wird direkt bei den jeweiligen <a
-                href="{% url 'trainings' %}">Trainings</a> veröffentlicht. Wir versuchen den Entscheid spätestens um 19
-            Uhr am Vorabend zu veröffentlichen.</p>
+            {% with trainings_url='/'|add:request.LANGUAGE_CODE|add:'/trainings/' %}
+            {% blocktrans trimmed with trainings_url=trainings_url %}
+            Ob ein Training stattfindet, entscheiden die eingeschriebenen Leiter·innen aufgrund des Wetters und der eingeschriebenen Pilot·innen.
+            Der Entscheid wird direkt bei den jeweiligen <a href="{{ trainings_url }}">Trainings</a> veröffentlicht.
+            Wir versuchen, den Entscheid spätestens um 19 Uhr am Vorabend zu veröffentlichen.
+            {% endblocktrans %}
+            {% endwith %}
+        </p>
+
+
         <p class="card-text">
+            {% blocktrans trimmed %}
             Wir treffen uns jeweils am Landeplatz bei der Aaregg. Die nächste Postautohaltestelle ist Brienz BE, im
             Brunnen. Leider sind die Verbindungen schlecht, meist findet sich aber eine Mitfahrgelegenheit, am besten
             beim Einschreiben einen Kommentar schreiben. In der Regel sind genügend Parkplätze vorhanden, bezahlen kann
-            man mit Münz, Karte oder App.</p>
+            man mit Münz, Karte oder App.
+            {% endblocktrans %}
+        </p>
+
         <p class="card-text">
+            {% blocktrans trimmed %}
             Am Landeplatz hat es eine Toilette mit Trinkwasser. Es gibt in der Regel keine Möglichkeit, sich mit
             Nahrungsmitteln zu versorgen. Wir machen auch keine Mittagspause, da sich im Bus und am Start- oder
-            Landeplatz immer wieder kleinere Pausen ergeben.</p>
+            Landeplatz immer wieder kleinere Pausen ergeben.
+            {% endblocktrans %}
+        </p>
+
         <p class="card-text">
-            Ein Flug kostet Fr. {% price_of_flight %}, ein 10er Abo Fr. {% price_of_10_prepaid_flights %}. Wer eine
-            Runde Bus oder Boot macht, kriegt einen Flug gutgeschrieben. Wir benutzen den <a
-                href="https://www.axalp.ch/">Sessellift</a> wenn er fährt und die Verhältnisse einen Start oben
-            zulassen. Die Fahrt mit dem Clubbus bis zum Sessellift kostet die Hälfte, für Tageskarte oder Magic Pass
-            sind die Teilnehmenden selber verantwortlich.</p>
+            {% with link_text=_("Sessellift") %}
+            {% with sessellift_link='<a href="https://www.axalp.ch/">'|add:link_text|add:'</a>'|safe %}
+            {% blocktrans trimmed with price=price_of_flight tenpack=price_of_10_prepaid_flights link=sessellift_link %}
+            Ein Flug kostet Fr. {{ price }}, ein 10er Abo Fr. {{ tenpack }}.
+            Wer eine Runde Bus oder Boot macht, kriegt einen Flug gutgeschrieben.
+            Wir benutzen den {{ link }}, wenn er fährt und die Verhältnisse einen Start oben zulassen.
+            Die Fahrt mit dem Clubbus bis zum Sessellift kostet die Hälfte,
+            für Tageskarte oder Magic Pass sind die Teilnehmenden selber verantwortlich.
+            {% endblocktrans %}
+            {% endwith %}
+            {% endwith %}
+        </p>
+
         <p class="card-text">
-            Gäste müssen die ersten vier Trainings im Jahr eine Tagesmitgliedschaft für Fr. {% price_of_day_pass %}
-            lösen. Bezahlen kann man in Bar oder mit Twint.</p>
+            {% blocktrans trimmed %}
+            Gäste müssen die ersten vier Trainings im Jahr eine Tagesmitgliedschaft für Fr. {{ price_of_day_pass }} lösen.
+            Bezahlen kann man in Bar oder mit Twint.
+            {% endblocktrans %}
+        </p>
+
         <p class="card-text">
-            In der Nähe vom Landeplatz gibt es drei Zeltplätze und selbst wenn diese Zeltplätze ausgebucht sind, ist
-            wildes Campieren in der Gemeinde Brienz verboten. In den umliegenden Gemeinden ist im Auto schlafen kein
-            Problem.</p>
+            {% blocktrans trimmed %}
+            In der Nähe vom Landeplatz gibt es drei Zeltplätze und selbst wenn diese Zeltplätze ausgebucht sind,
+            ist wildes Campieren in der Gemeinde Brienz verboten.
+            In den umliegenden Gemeinden ist im Auto schlafen kein Problem.
+            {% endblocktrans %}
+        </p>
     </div>
 </div>

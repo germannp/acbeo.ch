@@ -1,8 +1,9 @@
 {% extends "base.html" %}
+{% load i18n %}
 
-{% block title %}Anmelden{% endblock title %}
+{% block title %}{% translate "Anmelden" %}{% endblock title %}
 
-{% block headline %}Anmelden{% endblock headline %}
+{% block headline %}{% translate "Anmelden" %}{% endblock headline %}
 
 {% block content %}
 
@@ -18,14 +19,18 @@
                     </div>
                     <div class="form-floating mb-3">
                         <input type="password" name="password" class="form-control" placeholder="password">
-                        <label for="floatingPassword">Passwort</label>
+                        <label for="floatingPassword">{% translate "Passwort" %}</label>
                     </div>
-                    <button class="btn btn-primary mb-2" type="submit">Anmelden</button>
-                    <a href="javascript:history.back()" class="btn btn-outline-dark mb-2">Abbrechen</a>
+                    <button class="btn btn-primary mb-2" type="submit">{% translate "Anmelden" %}</button>
+                    <a href="javascript:history.back()" class="btn btn-outline-dark mb-2">{% translate "Abbrechen" %}</a>
                 </form>
             </main>
-            <a href="{% url 'register' %}?next={{ next }}">Noch kein Konto</a> oder <a href="{% url 'password_reset' %}">Passwort
-                vergessen</a>?
+
+            {% url 'register' as register_url %}
+            {% url 'password_reset' as password_reset_url %}
+            {% blocktrans with register_link='<a href="'|add:register_url|add:'">'|safe password_reset_link='<a href="'|add:password_reset_url|add:'">'|safe %}
+            {{ register_link }}Noch kein Konto</a> oder {{ password_reset_link }}Passwort vergessen</a>?
+            {% endblocktrans %}
         </div>
     </div>
 </div>

@@ -9,6 +9,7 @@ from django.db import models
 from django.utils import timezone
 from django.utils.formats import date_format
 from django.utils.html import strip_tags
+from django.utils.translation import gettext_lazy as _
 from .models import Training, Signup
 
 
@@ -25,13 +26,13 @@ class TrainingCreateForm(forms.Form):
     max_pilots = forms.IntegerField(
         initial=11, validators=[MinValueValidator(6), MaxValueValidator(33)]
     )
-    info = forms.CharField(max_length=300, initial="Axalpwochen")
+    info = forms.CharField(max_length=300, initial=_("Axalpwochen"))
 
     def clean_first_day(self):
         first_day = self.cleaned_data["first_day"]
         if first_day < timezone.now().date():
             raise ValidationError(
-                "Es können keine Trainings in der Vergangenheit erstellt werden."
+                _("Es können keine Trainings in der Vergangenheit erstellt werden.")
             )
         return first_day
 
@@ -39,7 +40,7 @@ class TrainingCreateForm(forms.Form):
         last_day = self.cleaned_data["last_day"]
         if last_day > timezone.now().date() + timedelta(days=365):
             raise ValidationError(
-                "Trainings können höchstens ein Jahr im Voraus erstellt werden."
+                _("Trainings können höchstens ein Jahr im Voraus erstellt werden.")
             )
         return last_day
 
@@ -51,11 +52,11 @@ class TrainingCreateForm(forms.Form):
             return
 
         if first_day > last_day:
-            raise ValidationError("Der erste Tag muss vor dem Letzten liegen.")
+            raise ValidationError(_("Der erste Tag muss vor dem Letzten liegen."))
 
         if last_day - first_day > timedelta(days=31):
             raise ValidationError(
-                "Es können höchstens 31 Trainings auf einmal erstellt werden."
+                _("Es können höchstens 31 Trainings auf einmal erstellt werden.")
             )
 
         priority_date = cleaned_data.get("priority_date")
@@ -64,7 +65,7 @@ class TrainingCreateForm(forms.Form):
 
         if priority_date > last_day:
             raise ValidationError(
-                "Das Vorrang-Datum kann nicht nach dem letzten Tag sein."
+                _("Das Vorrang-Datum kann nicht nach dem letzten Tag sein.")
             )
 
     def create_trainings(self):
@@ -94,7 +95,7 @@ class TrainingUpdateForm(forms.ModelForm):
 
         if priority_date > self.instance.date:
             raise ValidationError(
-                "Das Vorrang-Datum kann nicht nach dem Training sein."
+                _("Das Vorrang-Datum kann nicht nach dem Training sein.")
             )
 
 
@@ -126,14 +127,14 @@ class EmergencyMailForm(forms.ModelForm):
     def clean_emergency_contacts(self):
         emergency_contacts = self.cleaned_data["emergency_contacts"]
         if len(emergency_contacts) != 2:
-            raise ValidationError("Bitte genau zwei Notfallkontakte auswählen.")
+            raise ValidationError(_("Bitte genau zwei Notfallkontakte auswählen."))
         return emergency_contacts
 
     def clean_ctr_inactive(self):
         ctr_inactive = self.cleaned_data["ctr_inactive"]
         if not ctr_inactive:
             raise ValidationError(
-                "Wir dürfen nur mit Absprache fliegen, wenn CTR/TMA Meiringen aktiv ist."
+                _("Wir dürfen nur mit Absprache fliegen, wenn CTR/TMA Meiringen aktiv ist.")
             )
         return ctr_inactive
 
@@ -191,11 +192,11 @@ class SignupCreateForm(forms.ModelForm):
         today = timezone.now().date()
         if training_date < today:
             raise ValidationError(
-                "Einschreiben ist nur für kommende Trainings möglich."
+                _("Einschreiben ist nur für kommende Trainings möglich.")
             )
         if training_date > today + timedelta(days=365):
             raise ValidationError(
-                "Einschreiben ist höchstens ein Jahr im Voraus möglich."
+                _("Einschreiben ist höchstens ein Jahr im Voraus möglich.")
             )
         return training_date
 

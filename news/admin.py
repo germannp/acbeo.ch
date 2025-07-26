@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import Group
+from django.utils.translation import gettext_lazy as _
 
 from .models import Post, Pilot
 
@@ -14,12 +15,12 @@ class PostAdmin(admin.ModelAdmin):
 admin.site.register(Post, PostAdmin)
 
 
-@admin.action(description="Ausgewählte zu Mitgliedern machen")
+@admin.action(description=_("Ausgewählte zu Mitgliedern machen"))
 def make_member(modeladmin, request, queryset):
     queryset.update(role=Pilot.Role.MEMBER)
 
 
-@admin.action(description="Ausgewählte zu Leiter·innen machen")
+@admin.action(description=_("Ausgewählte zu Leiter·innen machen"))
 def make_orga(modeladmin, request, queryset):
     queryset.update(role=Pilot.Role.ORGA)
 

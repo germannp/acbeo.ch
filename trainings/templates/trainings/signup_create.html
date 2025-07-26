@@ -1,8 +1,9 @@
 {% extends "base.html" %}
+{% load i18n %}
 
-{% block title %}Einschreiben{% endblock title %}
+{% block title %}{% translate "Einschreiben" %}{% endblock title %}
 
-{% block headline %}Einschreiben{% endblock headline %}
+{% block headline %}{% translate "Einschreiben" %}{% endblock headline %}
 
 {% block content %}
 
@@ -15,33 +16,33 @@
                         {% csrf_token %}
                         <div class="form-floating mb-3">
                             <input type="date" name="date" class="form-control" value="{{ form.date.value }}" required>
-                            <label>Datum</label>
+                            <label>{% translate "Datum" %}</label>
                         </div>
                         <div class="mb-3">
-                            <label>Verbindlichkeit</label>
+                            <label>{% translate "Verbindlichkeit" %}</label>
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="is_certain" id="certain"
                                     value="True" required {% if form.instance.is_certain %}checked{% endif %}>
                                 <label class="form-check-label" for="certain">
-                                    Ich komme sicher (100%)
+                                    {% translate "Ich komme sicher (100%)" %}
                                 </label>
                             </div>
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="is_certain" id="uncertain"
                                     value="False" required {% if not form.instance.is_certain %}checked{% endif %}>
                                 <label class="form-check-label" for="uncertain">
-                                    Ich habe vor zu kommen (75%)
+                                    {% translate "Ich habe vor zu kommen (75%)" %}
                                 </label>
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label>Zeitplan</label>
+                            <label>{% translate "Zeitplan" %}</label>
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="duration" id="whole-day"
                                     value="{{ form.instance.Duration.ALL_DAY }}" required 
                                     {% if form.instance.duration == form.instance.Duration.ALL_DAY %}checked{% endif %}>
                                 <label class="form-check-label" for="whole-day">
-                                    Ich komme den ganzen Tag
+                                    {% translate "Ich komme den ganzen Tag" %}
                                 </label>
                             </div>
                             <div class="form-check">
@@ -49,7 +50,7 @@
                                     value="{{ form.instance.Duration.ARRIVING_LATE }}" required
                                     {% if form.instance.duration == form.instance.Duration.ARRIVING_LATE %}checked{% endif %}>
                                 <label class="form-check-label" for="arrive-late">
-                                    Ich komme später
+                                    {% translate "Ich komme später" %}
                                 </label>
                             </div>
                             <div class="form-check">
@@ -57,7 +58,7 @@
                                     value="{{ form.instance.Duration.LEAVING_EARLY }}" required
                                     {% if form.instance.duration == form.instance.Duration.LEAVING_EARLY %}checked{% endif %}>
                                 <label class="form-check-label" for="leave-early">
-                                    Ich gehe früher
+                                    {% translate "Ich gehe früher" %}
                                 </label>
                             </div>
                             <div class="form-check">
@@ -65,34 +66,34 @@
                                     value="{{ form.instance.Duration.INDIVIDUALLY }}" required
                                     {% if form.instance.duration == form.instance.Duration.INDIVIDUALLY %}checked{% endif %}>
                                 <label class="form-check-label" for="INDIVIDUALLY">
-                                    Ich komme und gehe individuell
+                                    {% translate "Ich komme und gehe individuell" %}
                                 </label>
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label>Wetterwunsch</label>
+                            <label>{% translate "Wetterwunsch" %}</label>
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="for_sketchy_weather" id="sketchy-weather-too" value="True"
                                     required {% if form.instance.for_sketchy_weather %}checked{% endif %}>
                                 <label class="form-check-label" for="sketchy-weather-too">
-                                    Auch bei kleiner Chance <i class="bi bi-cloud-haze2-fill"></i>
+                                    {% translate "Auch bei kleiner Chance" %} <i class="bi bi-cloud-haze2-fill"></i>
                                 </label>
                             </div>
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="for_sketchy_weather" id="good-weather-only" value="False"
                                     required {% if not form.instance.for_sketchy_weather %}checked{% endif %}>
                                 <label class="form-check-label" for="good-weather-only">
-                                    Nur bei sicher gutem Wetter <i class="bi bi-sun"></i>
+                                    {% translate "Nur bei sicher gutem Wetter" %} <i class="bi bi-sun"></i>
                                 </label>
                             </div>
                         </div>
                         <div class="form-floating mb-3">
                             <input type="text" name="comment" class="form-control" placeholder="text"
                                 value="{{ form.comment.value }}">
-                            <label>Kommentar</label>
+                            <label>{% translate "Kommentar" %}</label>
                         </div>
-                        <button class="btn btn-primary" type="submit">Einschreiben</button>
-                        <a href="{{ view.get_cancel_url }}" class="btn btn-outline-dark">Abbrechen</a>
+                        <button class="btn btn-primary" type="submit">{% translate "Einschreiben" %}</button>
+                        <a href="{{ view.get_cancel_url }}" class="btn btn-outline-dark">{% translate "Abbrechen" %}</a>
                     </form>
                 </main>
             </div>

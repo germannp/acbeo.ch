@@ -1,8 +1,9 @@
 {% extends "base.html" %}
+{% load i18n %}
 
-{% block title %}Seepolizeimail{% endblock title %}
+{% block title %}{% translate "Seepolizeimail" %}{% endblock title %}
 
-{% block headline %}Seepolizeimail{% endblock headline %}
+{% block headline %}{% translate "Seepolizeimail" %}{% endblock headline %}
 
 {% block content %}
 
@@ -15,21 +16,22 @@
                     {% csrf_token %}
                     <div class="row">
                         <div class="col-6">
-                            <label for="cc-expiration" class="form-label">Anfang</label>
+                            <label for="cc-expiration" class="form-label">{% translate "Anfang" %}</label>
                             <select class="form-select mb-3" name="start" id="id_start">
                                 {% for option in form.start %}{{ option }}{% endfor %}
                             </select>
                         </div>
                         <div class="col-6">
-                            <label for="cc-expiration" class="form-label">Ende</label>
+                            <label for="cc-expiration" class="form-label">{% translate "Ende" %}</label>
                             <select class="form-select mb-3" name="end" id="id_end">
                                 {% for option in form.end %}{{ option }}{% endfor %}
                             </select>
                         </div>
                     </div>
 
-                    <label for="id_emergency_contacts" class="form-label">Notfallkontakte (bitte zwei
-                        auswählen)</label>
+                    <label
+                        for="id_emergency_contacts" class="form-label">{% translate "Notfallkontakte (bitte zwei auswählen)" %}
+                    </label>
                     {% for pk, choice in form.emergency_contacts.field.widget.choices %}
                     <div class="form-check" id="id_emergency_contacts">
                         <input class="form-check-input" type="checkbox"
@@ -40,18 +42,21 @@
                     </div>
                     {% endfor %}
 
-                    <label for="ctrInactive" class="form-label mt-3">Militärflugplatz</label>
+                    <label for="ctrInactive" class="form-label mt-3">{% translate Militärflugplatz %}</label>
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" name="ctr_inactive" id="ctrInactive"
                             {% if form.ctr_inactive.value %}checked{% endif %}>
                         <label class="form-check-label" for="ctrInactive">
-                            CTR/TMA Meiringen ist laut <a href="tel:+41800496347">0800 HX MEIR</a> nicht
-                            aktiv (oder wir fliegen mit Flugfunk o. Ä.).
+                            {% blocktrans trimmed with phone='<a href="tel:+41800496347">0800 HX MEIR</a>'|safe %}
+                            CTR/TMA Meiringen ist laut {{ phone }} nicht aktiv (oder wir fliegen mit Flugfunk o. Ä.).
+                            {% endblocktrans %}
                         </label>
                     </div>
 
-                    <button class="btn btn-primary mt-3" type="submit" {% if form.instance.emergency_mail_sender %}disabled{% endif %}>Senden</button>
-                    <a href="{% url 'trainings' %}" class="btn btn-outline-dark mt-3">Abbrechen</a>
+                    <button class="btn btn-primary mt-3" type="submit" {% if form.instance.emergency_mail_sender %}disabled{% endif %}>
+                        {% translate "Senden" %}
+                    </button>
+                    <a href="{% url 'trainings' %}" class="btn btn-outline-dark mt-3">{% translate "Abbrechen" %}</a>
                 </form>
             </main>
         </div>

@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils.timezone import now
+from django.utils.translation import gettext_lazy as _
 
 
 class Post(models.Model):
@@ -47,7 +48,7 @@ def validate_phone(phone):
     for character in phone:
         if character not in "0123456789+() ":
             raise ValidationError(
-                f"{phone} ist keine Telefonnummer.", params={"phone": phone}
+                _("%(phone)s ist keine Telefonnummer."), params={"phone": phone}
             )
 
 

@@ -1,72 +1,87 @@
 {% extends "base.html" %}
+{% load i18n %}
 
-{% block title %}Mitglied werden{% endblock title %}
+{% block title %}{% translate "Mitglied werden" %}{% endblock title %}
 
-{% block headline %}Mitglied werden{% endblock headline %}
+{% block headline %}{% translate "Mitglied werden" %}{% endblock headline %}
 
 {% block content %}
 
 {% load static %}
 
 <div class="row mt-2">
-
     <div class="col-md-4">
         <div class="card mb-4">
             <div class="card-body">
                 <main class="form">
                     <form method="post">
                         {% csrf_token %}
+                        {% url 'update_pilot' as update_url %}
                         <p class="card-text">
-                            Bitte überprüfe deine Kontaktdaten und <a
-                                href="{% url 'update_pilot' %}?next={{ request.path }}">korrigiere</a> sie, falls etwas
-                            nicht stimmt:</p>
+                            {% blocktrans trimmed with url=update_url %}
+                                Bitte überprüfe deine Kontaktdaten und <a href="{{ url }}">korrigiere</a> sie, falls etwas nicht stimmt:
+                            {% endblocktrans %}
+                        </p>
                         <p class="card-text">
-                            <strong>Name, Vorname</strong><br>
-                            {{ request.user }}</p>
+                            <strong>{% translate "Name, Vorname" %}</strong><br>
+                            {{ request.user }}
+                        </p>
                         <p class="card-text">
                             <strong>Email</strong><br>
-                            {{ request.user.email }}</p>
+                            {{ request.user.email }}
+                        </p>
                         <p class="card-text">
-                            <strong>Telefonnummer</strong><br>
-                            {{ request.user.phone }}</p>
+                            <strong>{% translate "Telefonnummer" %}</strong><br>
+                            {{ request.user.phone }}
+                        </p>
                         <div class="form-floating mb-3">
-                            <input type="text" name="street" class="form-control" placeholder="text" 
+                            <input type="text" name="street" class="form-control" placeholder="text"
                                 {% if form.street.value %}value="{{ form.street.value }}" {% endif %}>
-                            <label for="floatingInput">Strasse, Hausnummer</label>
+                            <label for="floatingInput">{% translate "Strasse, Hausnummer" %}</label>
                         </div>
                         <div class="form-floating mb-3">
-                            <input type="text" name="town" class="form-control" placeholder="text" 
+                            <input type="text" name="town" class="form-control" placeholder="text"
                                 {% if form.town.value %}value="{{ form.town.value }}" {% endif %}>
-                            <label for="floatingInput">Ort, Postleitzahl</label>
+                            <label for="floatingInput">{% translate "Ort, Postleitzahl" %}</label>
                         </div>
                         <div class="form-floating mb-3">
-                            <input type="text" name="country" class="form-control" placeholder="text" 
+                            <input type="text" name="country" class="form-control" placeholder="text"
                                 value="{{ form.country.value | default:'Schweiz' }}">
-                            <label for="floatingInput">Land</label>
-                            <small class="text-muted">Wir versenden die Rechnung per Email, zum Ausstellen einer
-                                Rechnung ist jedoch eine Postadresse nötig. Die Adresse wird nicht in der Webseite 
-                                gespeichert, da auf der Webseite ggf. Ferienpläne ersichtlich sind.</small>
+                            <label for="floatingInput">{% translate "Land" %}</label>
+                            <small class="text-muted">
+                                {% blocktrans trimmed %}
+                                    Wir versenden die Rechnung per Email, zum Ausstellen einer Rechnung ist jedoch eine
+                                    Postadresse nötig. Die Adresse wird nicht in der Webseite gespeichert, da auf der
+                                    Webseite ggf. Ferienpläne ersichtlich sind.
+                                {% endblocktrans %}
+                            </small>
                         </div>
                         <div class="form-check mb-3">
                             <input class="form-check-input" type="checkbox" name="request_membership" id="requestMembership">
                             <label class="form-check-label" for="requestMembership">
-                                Ich will Mitglied werden. Um als Gast mit uns zu fliegen, reicht dein Benutzerkonto und
-                                du kannst das Beantragen der Mitgliedschaft <a href="{% url 'home' %}">abbrechen</a>.
+                                {% url 'home' as home_url %}
+                                {% blocktrans trimmed with home_url=home_url %}
+                                    Ich will Mitglied werden. Um als Gast mit uns zu fliegen, reicht dein Benutzerkonto
+                                    und du kannst das Beantragen der Mitgliedschaft <a href="{{ home_url }}">abbrechen</a>.
+                                {% endblocktrans %}
                             </label>
                         </div>
                         <div class="form-check mb-3">
                             <input class="form-check-input" type="checkbox" name="accept_statutes" id="acceptStatutes">
                             <label class="form-check-label" for="acceptStatutes">
-                                Ich bin mit den <a href="{% static 'news/statuten.pdf' %}">Statuten</a> einverstanden.
+                                {% load static %}
+                                {% static 'news/statuten.pdf' as statutes_url %}
+                                {% blocktrans trimmed with statutes_url=statutes_url %}
+                                    Ich bin mit den <a href="{{ statutes_url }}">Statuten</a> einverstanden.
+                                {% endblocktrans %}
                             </label>
                         </div>
                         <div class="form-floating mb-3">
-                            <textarea class="form-control" placeholder="text" name="comment" style="height: 200px">
-                                {% if form.comment.value %}{{ form.comment.value }}{% endif %}</textarea>
-                            <label for="message">Kommentar</label>
+                            <textarea class="form-control" placeholder="text" name="comment" style="height: 200px">{% if form.comment.value %}{{ form.comment.value }}{% endif %}</textarea>
+                            <label for="message">{% translate "Kommentar" %}</label>
                         </div>
-                        <button class="btn btn-primary" type="submit">Absenden</button>
-                        <a href="{% url 'home' %}" class="btn btn-outline-dark">Abbrechen</a>
+                        <button class="btn btn-primary" type="submit">{% translate "Absenden" %}</button>
+                        <a href="{% url 'home' %}" class="btn btn-outline-dark">{% translate "Abbrechen" %}</a>
                     </form>
                 </main>
             </div>
@@ -75,23 +90,30 @@
 
     <div class="col float-right">
         <div class="card mb-4">
-            <h5 class="card-header">Rechte und Pflichten</h5>
+            <h5 class="card-header">{% translate "Rechte und Pflichten" %}</h5>
             <div class="card-body">
                 <p class="card-text">
-                    Du musst nicht Mitglied sein, um mit uns zu fliegen. Als Mitglied hast du aber an unseren
-                    Trainings bei rechtzeitigem Einschreiben Vorrang und kannst dich aktiv im Club einbringen.</p>
+                    {% blocktrans trimmed %}
+                        Du musst nicht Mitglied sein, um mit uns zu fliegen. Als Mitglied hast du aber an unseren
+                        Trainings bei rechtzeitigem Einschreiben Vorrang und kannst dich aktiv im Club einbringen.
+                    {% endblocktrans %}
+                </p>
                 <p class="card-text">
-                    Dafür ist ein jährlicher Mitgliederbeitrag fällig, unabhängig davon an wievielen Trainings du teil
-                    nimmst. Der Mitgliederbeitrag ist bis zum Ausscheiden aus dem Club fällig, wobei der Austritt
-                    jeweils bis zur Mitgliederversammlung anfangs Saison möglich ist. Die Höhe des Mitgliederbeitrags
-                    wird von der Mitgliederversammlung festgelegt.</p>
+                    {% blocktrans trimmed %}
+                        Dafür ist ein jährlicher Mitgliederbeitrag fällig, unabhängig davon an wievielen Trainings du
+                        teilnimmst. Der Mitgliederbeitrag ist bis zum Ausscheiden aus dem Club fällig, wobei der
+                        Austritt jeweils bis zur Mitgliederversammlung anfangs Saison möglich ist. Die Höhe des
+                        Mitgliederbeitrags wird von der Mitgliederversammlung festgelegt.
+                    {% endblocktrans %}
+                </p>
                 <p class="card-text">
-                    Die genauen Regelungen sind in unseren <a href="{% static 'news/statuten.pdf' %}">Statuten</a> fest
-                    gelegt.</p>
+                    {% static 'news/statuten.pdf' as statutes_url %}
+                    {% blocktrans %}
+                        Die genauen Regelungen sind in unseren <a href="{{ statutes_url }}">Statuten</a> festgelegt.
+                    {% endblocktrans %}
+                </p>
             </div>
         </div>
     </div>
-
 </div>
-
 {% endblock content %}
