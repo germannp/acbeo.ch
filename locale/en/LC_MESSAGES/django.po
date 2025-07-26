@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-07-26 17:24+0200\n"
+"POT-Creation-Date: 2025-07-26 20:22+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -26,7 +26,7 @@ msgstr "Make selected users members"
 msgid "Ausgewählte zu Leiter·innen machen"
 msgstr "Make selected users organizers"
 
-#: news/forms.py:22 news/tests.py:185
+#: news/forms.py:22
 msgid "Nachricht konnte nicht gesendet werden."
 msgstr "Message could not be sent."
 
@@ -34,15 +34,15 @@ msgstr "Message could not be sent."
 msgid "Du musst JavaScript aktivieren."
 msgstr "You need to enable JavaScript."
 
-#: news/forms.py:34 news/tests.py:140
+#: news/forms.py:34
 msgid "Kontaktformular: "
 msgstr "Contact form: "
 
-#: news/forms.py:53 news/tests.py:442
+#: news/forms.py:53
 msgid "Du musst Mitglied werden wollen."
 msgstr "You must want to become a member."
 
-#: news/forms.py:59 news/tests.py:456
+#: news/forms.py:59
 msgid "Du musst mit unseren Statuten einverstanden sein."
 msgstr "You have to agree with our Statutes."
 
@@ -88,7 +88,7 @@ msgstr "You must agree to our Safety Concept."
 msgid "Passwörter müssen gleich sein."
 msgstr "Passwords must match."
 
-#: news/forms.py:127 news/tests.py:272
+#: news/forms.py:127
 msgid "Konto konnte nicht angelegt werden."
 msgstr "Account could not be created."
 
@@ -168,8 +168,7 @@ msgstr ""
 "            "
 
 #: news/templates/news/membership.html:4 news/templates/news/membership.html:6
-#: news/templates/news/sidebar.html:25 news/tests.py:490 news/tests.py:496
-#: templates/base.html:121
+#: news/templates/news/sidebar.html:25 templates/base.html:121
 msgid "Mitglied werden"
 msgstr "Become a Member"
 
@@ -444,7 +443,7 @@ msgstr ""
 "website’s database, as weekend and vacation plans are also saved here.\n"
 "                            "
 
-#: news/templates/news/pilot_update.html:71 news/tests.py:310 news/tests.py:314
+#: news/templates/news/pilot_update.html:71
 msgid "Adressänderung melden"
 msgstr "Update address"
 
@@ -503,25 +502,17 @@ msgstr ""
 msgid "Anfrage Demoschirme"
 msgstr "Request demo wings"
 
-#: news/tests.py:137 news/views.py:25
+#: news/views.py:25
 msgid "Nachricht abgesendet."
 msgstr "Message sent."
-
-#: news/tests.py:262
-msgid "Pilot mit diesem Email existiert bereits."
-msgstr "Pilot with this email already exists."
-
-#: news/tests.py:350 news/tests.py:362 news/views.py:60
-msgid "Änderungen gespeichert."
-msgstr "Changes saved."
-
-#: news/tests.py:484
-msgid "2 Tagesmitgliedschaft(en) bezahlt"
-msgstr "2 day membership(s) paid"
 
 #: news/views.py:48
 msgid "Konto angelegt."
 msgstr "Account created."
+
+#: news/views.py:60
+msgid "Änderungen gespeichert."
+msgstr "Changes saved."
 
 #: news/views.py:83
 msgid ""
@@ -735,11 +726,11 @@ msgstr ""
 "generally no possibility to buy food. We also don’t take a lunch break, as "
 "there are always small breaks on the bus and at the takeoff or landing site."
 
-#: trainings/templates/trainings/infos.html:56
+#: trainings/templates/trainings/infos.html:58
 msgid "Sessellift"
 msgstr "chairlift"
 
-#: trainings/templates/trainings/infos.html:58
+#: trainings/templates/trainings/infos.html:60
 #, python-format
 msgid ""
 "Ein Flug kostet Fr. %(price)s, ein 10er Abo Fr. %(tenpack)s. Wer eine Runde "
@@ -754,7 +745,7 @@ msgstr ""
 "club bus ride to the chairlift costs half price, and participants are "
 "responsible for their own day pass or Magic Pass."
 
-#: trainings/templates/trainings/infos.html:70
+#: trainings/templates/trainings/infos.html:73
 #, python-format
 msgid ""
 "Gäste müssen die ersten vier Trainings im Jahr eine Tagesmitgliedschaft für "
@@ -763,7 +754,7 @@ msgstr ""
 "Guests must purchase a day membership for CHF %(price_of_day_pass)s for the "
 "first four trainings of the year. Payment can be made in cash or with Twint."
 
-#: trainings/templates/trainings/infos.html:77
+#: trainings/templates/trainings/infos.html:80
 msgid ""
 "In der Nähe vom Landeplatz gibt es drei Zeltplätze und selbst wenn diese "
 "Zeltplätze ausgebucht sind, ist wildes Campieren in der Gemeinde Brienz "

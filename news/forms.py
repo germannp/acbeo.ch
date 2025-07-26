@@ -68,7 +68,7 @@ class MembershipForm(forms.Form):
                 self.cleaned_data["country"],
                 self.sender.email,
                 self.sender.phone,
-                _("\nMöchte Mitglied werden."),
+                str(_("\nMöchte Mitglied werden.")),
             ]
         )
         if day_passes := self.sender.day_passes_of_this_season:

@@ -53,9 +53,11 @@
         </p>
 
         <p class="card-text">
+            {% price_of_flight as price %}
+            {% price_of_10_prepaid_flights as tenpack %}
             {% with link_text=_("Sessellift") %}
             {% with sessellift_link='<a href="https://www.axalp.ch/">'|add:link_text|add:'</a>'|safe %}
-            {% blocktrans trimmed with price=price_of_flight tenpack=price_of_10_prepaid_flights link=sessellift_link %}
+            {% blocktrans trimmed with price=price tenpack=tenpack link=sessellift_link %}
             Ein Flug kostet Fr. {{ price }}, ein 10er Abo Fr. {{ tenpack }}.
             Wer eine Runde Bus oder Boot macht, kriegt einen Flug gutgeschrieben.
             Wir benutzen den {{ link }}, wenn er fährt und die Verhältnisse einen Start oben zulassen.
@@ -67,7 +69,8 @@
         </p>
 
         <p class="card-text">
-            {% blocktrans trimmed %}
+            {% price_of_day_pass as price_of_day_pass %}
+            {% blocktrans trimmed with price_of_day_pass=price_of_day_pass %}
             Gäste müssen die ersten vier Trainings im Jahr eine Tagesmitgliedschaft für Fr. {{ price_of_day_pass }} lösen.
             Bezahlen kann man in Bar oder mit Twint.
             {% endblocktrans %}
