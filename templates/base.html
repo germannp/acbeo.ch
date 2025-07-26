@@ -127,6 +127,19 @@
                     <a class="nav-link" href="{% url 'login' %}?next={{ request.path }}">Anmelden</a>
                     {% endif %}
                     </li>
+
+                    {% get_current_language as CURRENT_LANG %}
+                    <li class="nav-link">
+                        <form action="{% url 'set_language' %}" method="post" class="m-0 p-0">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.path }}">
+                            <button type="submit" name="language" value="{% if CURRENT_LANG == 'de-ch' %}en{% else %}de-ch{% endif %}"
+                                    class="btn btn-link nav-link p-0 m-0">
+                                {% if CURRENT_LANG == "de-ch" %}EN{% else %}DE{% endif %}
+                            </button>
+                        </form>
+                    </li>
+
                 </ul>
             </div>
         </div>
