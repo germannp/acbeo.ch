@@ -1,27 +1,30 @@
 {% block sidebar %}
-
+{% load i18n %}
 {% load static %}
 
 <div class="col-xxl-4 col-md-5 float-right">
     <div class="card mb-4">
         <img class="card-img-top" src="{% static 'news/smile.jpeg' %}" alt="Fullstall über dem Brienzersee">
-        <h5 class="card-header">Über uns<span style="float:right;">
+        <h5 class="card-header">{% translate "Über uns" %}<span style="float:right;">
                 <a href="https://instagram.com/acbeo.ch"><i class="bi bi-instagram"></i></a>
                 <a href="https://facebook.com/acbeo.ch"><i class="bi bi-facebook"></i></a>
             </span></h5>
         <div class="card-body">
             <p class="card-text">
+            {% static 'news/sicherheitskonzept.pdf' as safety_concept_url %}
+            {% blocktrans trimmed with safety_concept_url=safety_concept_url %}
                 Wir sind ein Verein von Gleitschirm- und Deltapilot·innen, die gemeinsam in einer sicheren Umgebung ihr
                 fliegerisches Können verbessern wollen. Dazu organisieren wir seit 2010 Trainings mit Boot an der Axalp.
-                Unsere Trainings stehen allen offen, die unser <a
-                    href="{% static 'news/sicherheitskonzept.pdf' %}">Sicherheitskonzept</a> akzeptieren; die
-                Teilnehmerzahl ist jedoch begrenzt und Mitglieder haben bei rechtzeitigem Einschreiben Vorrang.</p>
+                Unsere Trainings stehen allen offen, die unser <a href="{{ safety_concept_url }}">Sicherheitskonzept</a>
+                akzeptieren; die Teilnehmerzahl ist jedoch begrenzt und Mitglieder haben bei rechtzeitigem Einschreiben Vorrang.
+            {% endblocktrans %}
+            </p>
             <div class="d-grid gap-2 d-xl-block">
-                <a href="{% url 'signup' %}" class="btn btn-secondary">Einschreiben</a>
+                <a href="{% url 'signup' %}" class="btn btn-secondary">{% translate "Einschreiben" %}</a>
                 {% if not request.user.is_member %}
-                <a href="{% url 'membership' %}" class="btn btn-secondary">Mitglied werden</a>
+                <a href="{% url 'membership' %}" class="btn btn-secondary">{% translate "Mitglied werden" %}</a>
                 {% endif %}
-                <a href="{% url 'contact' %}" class="btn btn-secondary">Kontakt</a>
+                <a href="{% url 'contact' %}" class="btn btn-secondary">{% translate "Kontakt" %}</a>
             </div>
         </div>
     </div>
@@ -29,13 +32,16 @@
         <img class="card-img-top" src="{% static 'news/synchro.jpeg' %}" alt="FlugGeil an der SM 2012 an der Aaregg">
         <h5 class="card-header">Partner</h5>
         <div class="card-body">
+            {% blocktrans trimmed %}
             <p class="card-text">Wir werden von <a href="https://www.birdwing.ch/">Birdwing</a>, der Flugschule im
                 Haslital, unterstützt. Vom Generalimporteur <a href="https://www.basisrausch.ch/">Basisrausch</a> können
                 Demoschirme von <a href="http://u-turn.de/">U-Turn</a> bei uns getestet werden und von <a
                     href="https://airg.family/">airG</a> haben wir auch welche. Wir organisieren Flosstrainings und
-                Wettkämpfe mit der <a href="https://www.swissleague.ch/acro-league">Swiss Acro League</a>.</p>
+                Wettkämpfe mit der <a href="https://www.swissleague.ch/acro-league">Swiss Acro League</a>.
+            </p>
+            {% endblocktrans %}
             <div class="d-grid gap-2 d-xl-block">
-                <a href="{% url 'contact' %}?subject=Demoschirme" class="btn btn-secondary">Anfrage Demoschirme</a>
+                <a href="{% url 'contact' %}?subject=Demoschirme" class="btn btn-secondary">{% translate "Anfrage Demoschirme" %}</a>
             </div>
         </div>
     </div>

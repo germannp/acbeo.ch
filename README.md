@@ -50,3 +50,63 @@ $ fly ssh console
 # python manage.py dumpdata > acbeo-db_2024-05-17.json
 $ fly sftp get /app/acbeo-db_2024-05-17.json
 ```
+
+## Translation
+_https://docs.djangoproject.com/en/5.2/topics/i18n/translation/_  
+To translate the site to english, default is german. Translations are defined in the `locale/en/LC_MESSAGES/django.po` file.
+### 1. Mark strings to be translated  
+In Python:
+```python
+from django.utils.translation import gettext_lazy as _
+
+message = _(
+    "%(first_name)s %(last_name)s hat folgende Änderungen am Konto gemacht:\n\n"
+) % {
+    "first_name": self.cleaned_data["first_name"],
+    "last_name": self.cleaned_data["last_name"],
+}
+```
+In HTML templates:
+```html
+{% load i18n %}
+
+{% translate "Kontakt" %}
+
+{% url 'login' as login_url %}
+{% blocktrans trimmed with url=login_url %}
+    Falls du bereits ein Konto hast, bitte <a href="{{ url }}?next={{ next }}">einloggen</a>.
+{% endblocktrans %}
+```
+
+### 2. Generate translation `.po` file
+Run this to extract strings into the `.po` file:
+```
+django-admin makemessages -l en
+```
+
+### 3. Translate content in the `.po` file
+After running `makemessages`, your `.po` file will include entries like this:
+```
+#: trainings/templates/trainings/emergency_mail.html:57
+#, fuzzy
+#| msgid "Absenden"
+msgid "Senden"
+msgstr ""
+```
+The `#, fuzzy` flag means this translation was auto-guessed and must be confirmed manually. Fuzzy translations are ignored during `compilemessages` unless you remove the `fuzzy` flag.
+Remove `#, fuzzy` and add a valid `msgstr` to activate the translation:
+```
+#: trainings/templates/trainings/emergency_mail.html:57
+msgid "Senden"
+msgstr "Submit"
+```
+
+### 4. Check `.po` file for formatting errors (optional)
+```
+msgfmt -c -v -o /dev/null locale/en/LC_MESSAGES/django.po
+```
+
+### 5. Compile translated content
+```
+django-admin compilemessages
+```

@@ -1,0 +1,1134 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-07-26 20:22+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: news/admin.py:18
+msgid "Ausgewählte zu Mitgliedern machen"
+msgstr "Make selected users members"
+
+#: news/admin.py:23
+msgid "Ausgewählte zu Leiter·innen machen"
+msgstr "Make selected users organizers"
+
+#: news/forms.py:22
+msgid "Nachricht konnte nicht gesendet werden."
+msgstr "Message could not be sent."
+
+#: news/forms.py:28 news/forms.py:133
+msgid "Du musst JavaScript aktivieren."
+msgstr "You need to enable JavaScript."
+
+#: news/forms.py:34
+msgid "Kontaktformular: "
+msgstr "Contact form: "
+
+#: news/forms.py:53
+msgid "Du musst Mitglied werden wollen."
+msgstr "You must want to become a member."
+
+#: news/forms.py:59
+msgid "Du musst mit unseren Statuten einverstanden sein."
+msgstr "You have to agree with our Statutes."
+
+#: news/forms.py:71
+msgid ""
+"\n"
+"Möchte Mitglied werden."
+msgstr ""
+"\n"
+"Want to become a Member."
+
+#: news/forms.py:79
+#, python-format
+msgid ""
+"\n"
+"\n"
+"%(name)s hat diese Saison %(count)d Tagesmitgliedschaft(en) bezahlt "
+"(%(dates)s)."
+msgstr ""
+"\n"
+"\n"
+"%(name)s has paid for %(count)d daily membership(s) this season (%(dates)s)."
+
+#: news/forms.py:86
+msgid ""
+"\n"
+"\n"
+"Kommentar:\n"
+msgstr ""
+"\n"
+"\n"
+"Comment:\n"
+
+#: news/forms.py:88
+msgid "Antrag ACBeo-Mitgliedschaft"
+msgstr "ACBeo Membership Application"
+
+#: news/forms.py:113
+msgid "Du musst mit unserem Sicherheitskonzept einverstanden sein."
+msgstr "You must agree to our Safety Concept."
+
+#: news/forms.py:121
+msgid "Passwörter müssen gleich sein."
+msgstr "Passwords must match."
+
+#: news/forms.py:127
+msgid "Konto konnte nicht angelegt werden."
+msgstr "Account could not be created."
+
+#: news/forms.py:154
+#, python-format
+msgid ""
+"%(first)s %(last)s hat folgende Änderungen am Konto gemacht:\n"
+"\n"
+msgstr ""
+"%(first)s %(last)s made following changes to the account:\n"
+"\n"
+
+#: news/forms.py:162
+msgid "Änderung an Konto"
+msgstr "Change on Account"
+
+#: news/models.py:51
+#, python-format
+msgid "%(phone)s ist keine Telefonnummer."
+msgstr "%(phone)s is not a phone number."
+
+#: news/templates/news/contact.html:4 news/templates/news/contact.html:6
+#: news/templates/news/sidebar.html:27
+msgid "Kontakt"
+msgstr "Contact"
+
+#: news/templates/news/contact.html:20 news/templates/news/pilot_create.html:20
+msgid "Leer lassen!"
+msgstr "Leave empty!"
+
+#: news/templates/news/contact.html:30
+msgid "Betreff"
+msgstr "Subject"
+
+#: news/templates/news/contact.html:35
+msgid "Nachricht"
+msgstr "Message"
+
+#: news/templates/news/contact.html:38 news/templates/news/membership.html:83
+msgid "Absenden"
+msgstr "Submit"
+
+#: news/templates/news/contact.html:39 news/templates/news/login.html:25
+#: news/templates/news/membership.html:84
+#: news/templates/news/password_reset.html:21
+#: news/templates/news/password_reset_confirm.html:25
+#: news/templates/news/pilot_create.html:72
+#: news/templates/news/pilot_update.html:52
+#: trainings/templates/trainings/emergency_mail.html:59
+#: trainings/templates/trainings/signup_create.html:96
+#: trainings/templates/trainings/signup_update.html:101
+#: trainings/templates/trainings/training_create.html:56
+#: trainings/templates/trainings/training_update.html:61
+msgid "Abbrechen"
+msgstr "Cancel"
+
+#: news/templates/news/login.html:4 news/templates/news/login.html:6
+#: news/templates/news/login.html:24 templates/base.html:127
+msgid "Anmelden"
+msgstr "Login"
+
+#: news/templates/news/login.html:22 news/templates/news/pilot_create.html:53
+msgid "Passwort"
+msgstr "Password"
+
+#: news/templates/news/login.html:31
+#, python-format
+msgid ""
+"\n"
+"            %(register_link)sNoch kein Konto</a> oder "
+"%(password_reset_link)sPasswort vergessen</a>?\n"
+"            "
+msgstr ""
+"\n"
+"            %(register_link)sNo account yet</a> or "
+"%(password_reset_link)sforgot your password</a>?\n"
+"            "
+
+#: news/templates/news/membership.html:4 news/templates/news/membership.html:6
+#: news/templates/news/sidebar.html:25 templates/base.html:121
+msgid "Mitglied werden"
+msgstr "Become a Member"
+
+#: news/templates/news/membership.html:21
+#, python-format
+msgid ""
+"Bitte überprüfe deine Kontaktdaten und <a href=\"%(url)s\">korrigiere</a> "
+"sie, falls etwas nicht stimmt:"
+msgstr ""
+"Please check your contact details and <a href=\"%(url)s\">correct</a> them "
+"if anything is incorrect:"
+
+#: news/templates/news/membership.html:26
+msgid "Name, Vorname"
+msgstr "Last name, First name"
+
+#: news/templates/news/membership.html:34
+msgid "Telefonnummer"
+msgstr "Phone number"
+
+#: news/templates/news/membership.html:40
+msgid "Strasse, Hausnummer"
+msgstr "Street, House number"
+
+#: news/templates/news/membership.html:45
+msgid "Ort, Postleitzahl"
+msgstr "City, Postal code"
+
+#: news/templates/news/membership.html:50
+msgid "Land"
+msgstr "Country"
+
+#: news/templates/news/membership.html:52
+msgid ""
+"Wir versenden die Rechnung per Email, zum Ausstellen einer Rechnung ist "
+"jedoch eine Postadresse nötig. Die Adresse wird nicht in der Webseite "
+"gespeichert, da auf der Webseite ggf. Ferienpläne ersichtlich sind."
+msgstr ""
+"We send the invoice by email, but a postal address is required to issue it. "
+"The address is not stored on the website, as vacation schedules may be "
+"visible there."
+
+#: news/templates/news/membership.html:63
+#, python-format
+msgid ""
+"Ich will Mitglied werden. Um als Gast mit uns zu fliegen, reicht dein "
+"Benutzerkonto und du kannst das Beantragen der Mitgliedschaft <a "
+"href=\"%(home_url)s\">abbrechen</a>."
+msgstr ""
+"I want to become a member. To fly with us as a guest, your user account is "
+"sufficient, and you can <a href=\"%(home_url)s\">cancel</a> the membership "
+"application."
+
+#: news/templates/news/membership.html:74
+#, python-format
+msgid ""
+"Ich bin mit den <a href=\"%(statutes_url)s\">Statuten</a> einverstanden."
+msgstr "I agree to the <a href=\"%(statutes_url)s\">Statutes</a>."
+
+#: news/templates/news/membership.html:81
+#: trainings/templates/trainings/signup_create.html:93
+#: trainings/templates/trainings/signup_list.html:31
+#: trainings/templates/trainings/signup_update.html:90
+#: trainings/templates/trainings/training_list.html:48
+msgid "Kommentar"
+msgstr "Comment"
+
+#: news/templates/news/membership.html:93
+msgid "Rechte und Pflichten"
+msgstr "Rights and Responsibilities"
+
+#: news/templates/news/membership.html:96
+msgid ""
+"Du musst nicht Mitglied sein, um mit uns zu fliegen. Als Mitglied hast du "
+"aber an unseren Trainings bei rechtzeitigem Einschreiben Vorrang und kannst "
+"dich aktiv im Club einbringen."
+msgstr ""
+"You don't need to be a member to fly with us. However, as a member, you have "
+"priority in our trainings if you sign up in time and you can actively "
+"contribute to the club."
+
+#: news/templates/news/membership.html:102
+msgid ""
+"Dafür ist ein jährlicher Mitgliederbeitrag fällig, unabhängig davon an "
+"wievielen Trainings du teilnimmst. Der Mitgliederbeitrag ist bis zum "
+"Ausscheiden aus dem Club fällig, wobei der Austritt jeweils bis zur "
+"Mitgliederversammlung anfangs Saison möglich ist. Die Höhe des "
+"Mitgliederbeitrags wird von der Mitgliederversammlung festgelegt."
+msgstr ""
+"A yearly membership fee is required, regardless of how many trainings you "
+"attend. The membership fee is due until you leave the club, and leaving is "
+"only possible at the annual general meeting at the beginning of the season. "
+"The amount of the membership fee is determined by the general meeting."
+
+#: news/templates/news/membership.html:111
+#, python-format
+msgid ""
+"\n"
+"                        Die genauen Regelungen sind in unseren <a "
+"href=\"%(statutes_url)s\">Statuten</a> festgelegt.\n"
+"                    "
+msgstr ""
+"\n"
+"                        The exact regulations are defined in our <a "
+"href=\"%(statutes_url)s\">statutes</a>.\n"
+"                    "
+
+#: news/templates/news/password_reset.html:4
+#: news/templates/news/password_reset.html:6
+msgid "Passwort zurücksetzen"
+msgstr "Reset password"
+
+#: news/templates/news/password_reset.html:20
+msgid "Zurücksetzen"
+msgstr "Reset"
+
+#: news/templates/news/password_reset.html:24
+msgid "Noch kein Konto"
+msgstr "Don't have an account yet"
+
+#: news/templates/news/password_reset_confirm.html:4
+#: news/templates/news/password_reset_confirm.html:6
+#: news/templates/news/password_reset_confirm.html:24
+msgid "Passwort ändern"
+msgstr "Change password"
+
+#: news/templates/news/password_reset_confirm.html:18
+msgid "Neues Passwort"
+msgstr "New password"
+
+#: news/templates/news/password_reset_confirm.html:22
+msgid "Passwort bestätigen"
+msgstr "Confirm password"
+
+#: news/templates/news/password_reset_email.html:3
+#, python-format
+msgid "Hallo %(first_name)s"
+msgstr "Hello %(first_name)s"
+
+#: news/templates/news/password_reset_email.html:5
+#, python-format
+msgid ""
+"\n"
+"Um das Passwort von %(email)s für %(domain)s zurückzusetzen, bitte diesen "
+"Link verwenden:\n"
+msgstr ""
+"\n"
+"To reset the password for %(email)s on %(domain)s, please use the following "
+"link:\n"
+
+#: news/templates/news/password_reset_email.html:10
+msgid ""
+"Bitte ignoriere diese Nachricht, falls du dein Passwort nicht zurücksetzen "
+"willst."
+msgstr "Please ignore this message if you did not request a password reset."
+
+#: news/templates/news/password_reset_email.html:12
+msgid "Gruss"
+msgstr "Regards"
+
+#: news/templates/news/pilot_create.html:4
+#: news/templates/news/pilot_create.html:6
+#: news/templates/news/pilot_create.html:71
+msgid "Konto erstellen"
+msgstr "Create Account"
+
+#: news/templates/news/pilot_create.html:25
+#: news/templates/news/pilot_update.html:26
+msgid "Vorname"
+msgstr "First name"
+
+#: news/templates/news/pilot_create.html:30
+#: news/templates/news/pilot_update.html:31
+msgid "Nachname"
+msgstr "Last name"
+
+#: news/templates/news/pilot_create.html:36
+#: news/templates/news/pilot_update.html:37
+msgid "Zum Anmelden und Passwort Zurücksetzen."
+msgstr "For login and password reset."
+
+#: news/templates/news/pilot_create.html:41
+#: news/templates/news/pilot_update.html:42
+msgid "Telefonnummer (z. B. 079 123 45 67)"
+msgstr "Phone number (e.g. 079 123 45 67)"
+
+#: news/templates/news/pilot_create.html:43
+msgid ""
+"\n"
+"                            Wir kontaktieren dich per Telefon, wenn wir z. "
+"B. spät ein Training\n"
+"                            absagen müssen, und wir senden nach Rücksprache "
+"pro Training zwei Nummern von\n"
+"                            Teilnehmenden an Notfalldienste.\n"
+"                            "
+msgstr ""
+"\n"
+"We contact you by phone if, for example, we have to cancel a training "
+"session late, and, after consultation, we provide two participants' phone "
+"numbers per training session to emergency services.\n"
+"                            "
+
+#: news/templates/news/pilot_create.html:58
+msgid "Passwort wiederholen"
+msgstr "Confirm password"
+
+#: news/templates/news/pilot_create.html:65
+#, python-format
+msgid ""
+"Ich bin mit dem <a href=\"%(safety_concept_url)s\">Sicherheitskonzept</a> "
+"einverstanden."
+msgstr "I agree to the <a href=\"%(safety_concept_url)s\">Safety Concept</a>."
+
+#: news/templates/news/pilot_create.html:76
+#, python-format
+msgid ""
+"Falls du bereits ein Konto hast, bitte <a href=\"%(url)s?"
+"next=%(next)s\">einloggen</a>."
+msgstr ""
+"If you already have an account, please <a href=\"%(url)s?next=%(next)s\">log "
+"in</a>."
+
+#: news/templates/news/pilot_update.html:4
+#: news/templates/news/pilot_update.html:6
+msgid "Konto bearbeiten"
+msgstr "Edit Account"
+
+#: news/templates/news/pilot_update.html:18 templates/base.html:114
+msgid "Konto"
+msgstr "Account"
+
+#: news/templates/news/pilot_update.html:44
+msgid ""
+"\n"
+"                                        Wir kontaktieren dich per Telefon, "
+"wenn wir z. B. spät ein Training\n"
+"                                        absagen müssen, und wir senden nach "
+"Rücksprache pro Training zwei Nummern von\n"
+"                                        Teilnehmenden an Notfalldienste.\n"
+"                                        "
+msgstr ""
+"\n"
+"We contact you by phone if, for example, we have to cancel a training "
+"session late, and, after consultation, we provide two participants' phone "
+"numbers per training session to emergency services.\n"
+"                                        "
+
+#: news/templates/news/pilot_update.html:51
+#: trainings/templates/trainings/signup_update.html:93
+#: trainings/templates/trainings/training_create.html:54
+#: trainings/templates/trainings/training_update.html:34
+msgid "Speichern"
+msgstr "Save"
+
+#: news/templates/news/pilot_update.html:62
+msgid "Postadresse"
+msgstr "Postal address"
+
+#: news/templates/news/pilot_update.html:65
+msgid ""
+"\n"
+"                            Wir bitten dich, uns Umzüge zu melden, falls wir "
+"z. B. Werbematerial versenden wollen. Wir speichern die\n"
+"                            Postadresse nicht in der Datenbank der Webseite "
+"ab, weil hier auch Wochenend- und Ferienpläne\n"
+"                            abgespeichert werden.\n"
+"                            "
+msgstr ""
+"\n"
+"We kindly ask you to inform us of any change of address, for example if we "
+"want to send promotional material. We do not store postal addresses in the "
+"website’s database, as weekend and vacation plans are also saved here.\n"
+"                            "
+
+#: news/templates/news/pilot_update.html:71
+msgid "Adressänderung melden"
+msgstr "Update address"
+
+#: news/templates/news/sidebar.html:8
+msgid "Über uns"
+msgstr "About"
+
+#: news/templates/news/sidebar.html:15
+#, python-format
+msgid ""
+"Wir sind ein Verein von Gleitschirm- und Deltapilot·innen, die gemeinsam in "
+"einer sicheren Umgebung ihr fliegerisches Können verbessern wollen. Dazu "
+"organisieren wir seit 2010 Trainings mit Boot an der Axalp. Unsere Trainings "
+"stehen allen offen, die unser <a "
+"href=\"%(safety_concept_url)s\">Sicherheitskonzept</a> akzeptieren; die "
+"Teilnehmerzahl ist jedoch begrenzt und Mitglieder haben bei rechtzeitigem "
+"Einschreiben Vorrang."
+msgstr ""
+"We are an association of paraglider and hang glider pilots who want to "
+"improve their flying skills together in a safe environment. Since 2010, we "
+"have been organizing boat-supported training at the Axalp. Our trainings are "
+"open to everyone who accepts our <a href=\"%(safety_concept_url)s\">Safety "
+"Concept</a>; however, the number of participants is limited, and members "
+"have priority if they sign up in time."
+
+#: news/templates/news/sidebar.html:23 templates/base.html:83
+#: trainings/templates/trainings/signup_create.html:4
+#: trainings/templates/trainings/signup_create.html:6
+#: trainings/templates/trainings/signup_create.html:95
+#: trainings/templates/trainings/signup_list.html:86
+#: trainings/templates/trainings/signup_list.html:93
+#: trainings/templates/trainings/training_list.html:110
+#: trainings/templates/trainings/training_list.html:119
+msgid "Einschreiben"
+msgstr "Sign up"
+
+#: news/templates/news/sidebar.html:35
+msgid ""
+"<p class=\"card-text\">Wir werden von <a href=\"https://www.birdwing.ch/"
+"\">Birdwing</a>, der Flugschule im Haslital, unterstützt. Vom "
+"Generalimporteur <a href=\"https://www.basisrausch.ch/\">Basisrausch</a> "
+"können Demoschirme von <a href=\"http://u-turn.de/\">U-Turn</a> bei uns "
+"getestet werden und von <a href=\"https://airg.family/\">airG</a> haben wir "
+"auch welche. Wir organisieren Flosstrainings und Wettkämpfe mit der <a "
+"href=\"https://www.swissleague.ch/acro-league\">Swiss Acro League</a>. </p>"
+msgstr ""
+"<p class=\"card-text\">We are supported by <a href=\"https://www.birdwing.ch/"
+"\">Birdwing</a>, the paragliding school in the Haslital. From the general "
+"importer <a href=\"https://www.basisrausch.ch/\">Basisrausch</a>, demo wings "
+"from <a href=\"http://u-turn.de/\">U-Turn</a> can be tested with us, and we "
+"also have some from <a href=\"https://airg.family/\">airG</a>. We organize "
+"water trainings and competitions together with the <a href=\"https://"
+"www.swissleague.ch/acro-league\">Swiss Acro League</a>.</p>"
+
+#: news/templates/news/sidebar.html:44
+msgid "Anfrage Demoschirme"
+msgstr "Request demo wings"
+
+#: news/views.py:25
+msgid "Nachricht abgesendet."
+msgstr "Message sent."
+
+#: news/views.py:48
+msgid "Konto angelegt."
+msgstr "Account created."
+
+#: news/views.py:60
+msgid "Änderungen gespeichert."
+msgstr "Changes saved."
+
+#: news/views.py:83
+msgid ""
+"Instruktionen zum Zurücksetzen des Passworts wurden an die angegebene Email "
+"geschickt."
+msgstr ""
+"Instructions to reset your password have been sent to the provided email "
+"address."
+
+#: news/views.py:91
+msgid "Passwort geändert."
+msgstr "Password changed."
+
+#: news/views.py:103
+msgid "Mitgliedschaft beantragt."
+msgstr "Membership requested."
+
+#: templates/base.html:84 trainings/templates/trainings/training_list.html:6
+#: trainings/templates/trainings/training_list.html:134
+msgid "Nächste Trainings"
+msgstr "Next Trainings"
+
+#: templates/base.html:85 trainings/templates/trainings/signup_list.html:4
+#: trainings/templates/trainings/signup_list.html:6
+msgid "Meine Trainings"
+msgstr "My Trainings"
+
+#: templates/base.html:87 trainings/templates/trainings/training_create.html:3
+#: trainings/templates/trainings/training_create.html:5
+msgid "Trainings erstellen"
+msgstr "Create Trainings"
+
+#: templates/base.html:89
+msgid "Praktische Infos"
+msgstr "How it works"
+
+#: templates/base.html:95 templates/base.html:101
+msgid "Berichte"
+msgstr "Reports"
+
+#: templates/base.html:99
+msgid "Heutiger Bericht"
+msgstr "Today's Report"
+
+#: templates/base.html:102
+msgid "Bilanz"
+msgstr "Balance"
+
+#: templates/base.html:103
+msgid "Aktive Pilot·innen"
+msgstr "Active Pilots"
+
+#: templates/base.html:117
+msgid "Rechnungen"
+msgstr "Bills"
+
+#: templates/base.html:119
+msgid "Bearbeiten"
+msgstr "Edit"
+
+#: templates/base.html:123 trainings/templates/trainings/signup_update.html:96
+msgid "Abmelden"
+msgstr "Logout"
+
+#: trainings/forms.py:29
+msgid "Axalpwochen"
+msgstr "Axalp Weeks"
+
+#: trainings/forms.py:35
+msgid "Es können keine Trainings in der Vergangenheit erstellt werden."
+msgstr "Trainings cannot be created in the past."
+
+#: trainings/forms.py:43
+msgid "Trainings können höchstens ein Jahr im Voraus erstellt werden."
+msgstr "Trainings can be created at most one year in advance."
+
+#: trainings/forms.py:55
+msgid "Der erste Tag muss vor dem Letzten liegen."
+msgstr "The first day must be before the last day."
+
+#: trainings/forms.py:59
+msgid "Es können höchstens 31 Trainings auf einmal erstellt werden."
+msgstr "You can create at most 31 trainings at once."
+
+#: trainings/forms.py:68
+msgid "Das Vorrang-Datum kann nicht nach dem letzten Tag sein."
+msgstr "The priority date cannot be after the last day."
+
+#: trainings/forms.py:98
+msgid "Das Vorrang-Datum kann nicht nach dem Training sein."
+msgstr "The priority date cannot be after the training."
+
+#: trainings/forms.py:130
+msgid "Bitte genau zwei Notfallkontakte auswählen."
+msgstr "Please select exactly two emergency contacts."
+
+#: trainings/forms.py:137
+msgid "Wir dürfen nur mit Absprache fliegen, wenn CTR/TMA Meiringen aktiv ist."
+msgstr ""
+"We may only fly with prior permission when CTR/TMA Meiringen is active."
+
+#: trainings/forms.py:195
+msgid "Einschreiben ist nur für kommende Trainings möglich."
+msgstr "Registration is only possible for upcoming trainings."
+
+#: trainings/forms.py:199
+msgid "Einschreiben ist höchstens ein Jahr im Voraus möglich."
+msgstr "Registration is possible at most one year in advance."
+
+#: trainings/templates/trainings/about.html:4
+#: trainings/templates/trainings/about.html:6
+#: trainings/templates/trainings/infos.html:6
+msgid "Praktische Informationen"
+msgstr "Useful Information"
+
+#: trainings/templates/trainings/emergency_mail.html:4
+#: trainings/templates/trainings/emergency_mail.html:6
+msgid "Seepolizeimail"
+msgstr "Lake Police Email"
+
+#: trainings/templates/trainings/emergency_mail.html:19
+msgid "Anfang"
+msgstr "Start"
+
+#: trainings/templates/trainings/emergency_mail.html:25
+msgid "Ende"
+msgstr "End"
+
+#: trainings/templates/trainings/emergency_mail.html:33
+msgid "Notfallkontakte (bitte zwei auswählen)"
+msgstr "Emergency contacts (please select two)"
+
+#: trainings/templates/trainings/emergency_mail.html:50
+#, python-format
+msgid ""
+"CTR/TMA Meiringen ist laut %(phone)s nicht aktiv (oder wir fliegen mit "
+"Flugfunk o. Ä.)."
+msgstr ""
+"CTR/TMA Meiringen is not active according to %(phone)s (or we are flying "
+"with radio communication or similar)."
+
+#: trainings/templates/trainings/emergency_mail.html:57
+msgid "Senden"
+msgstr "Submit"
+
+#: trainings/templates/trainings/infos.html:10
+#, python-format
+msgid ""
+"Trainingsablauf und Materialempfehlungen stehen im <a "
+"href=\"%(safety_concept_url)s\">Sicherheitskonzept</a>. Hier folgen weitere "
+"praktische Informationen."
+msgstr ""
+"Flight schedule and equipment tips are in <a "
+"href=\"%(safety_concept_url)s\">Safety Concept</a>. Here are some more "
+"useful details."
+
+#: trainings/templates/trainings/infos.html:17
+msgid ""
+"Unsere Saison beginnt Mitte Mai, Anfang Juni, sobald die Axalpstrasse "
+"schneefrei ist. Danach fliegen wir am Wochenende, sofern das Wetter passt, "
+"genügend Leute eingeschrieben sind und uns das Militär fliegen lässt. Im "
+"August ist der Flugplatz Meiringen normalerweise zum Reparieren der "
+"Landebahn geschlossen und wir fliegen für ein paar Wochen durchgehend. Wir "
+"fliegen bis Ende Oktober, spätestens Mitte November an der Axalp, dann "
+"werden die Tage zu kurz und der See zu kalt."
+msgstr ""
+"Our season begins in mid-May or early June, once the Axalp road is free of "
+"snow. After that, we fly on weekends, provided the weather is suitable, "
+"enough people are registered, and the military allows us to fly. In August, "
+"the Meiringen airfield is usually closed for runway repairs, and we fly "
+"continuously for a few weeks. We fly until the end of October, at the latest "
+"until mid-November at the Axalp, when the days become too short and the lake "
+"too cold."
+
+#: trainings/templates/trainings/infos.html:29
+#, python-format
+msgid ""
+"Ob ein Training stattfindet, entscheiden die eingeschriebenen Leiter·innen "
+"aufgrund des Wetters und der eingeschriebenen Pilot·innen. Der Entscheid "
+"wird direkt bei den jeweiligen <a href=\"%(trainings_url)s\">Trainings</a> "
+"veröffentlicht. Wir versuchen, den Entscheid spätestens um 19 Uhr am "
+"Vorabend zu veröffentlichen."
+msgstr ""
+"Whether a training takes place is decided by the registered organizers based "
+"on the weather and the registered pilots. The decision is published directly "
+"on the respective <a href=\"%(trainings_url)s\">Trainings</a>. We try to "
+"publish the decision by 7:00 pm the evening before."
+
+#: trainings/templates/trainings/infos.html:39
+msgid ""
+"Wir treffen uns jeweils am Landeplatz bei der Aaregg. Die nächste "
+"Postautohaltestelle ist Brienz BE, im Brunnen. Leider sind die Verbindungen "
+"schlecht, meist findet sich aber eine Mitfahrgelegenheit, am besten beim "
+"Einschreiben einen Kommentar schreiben. In der Regel sind genügend "
+"Parkplätze vorhanden, bezahlen kann man mit Münz, Karte oder App."
+msgstr ""
+"We usually meet at the landing site near the Aaregg. The nearest post bus "
+"stop is Brienz BE, in Brunnen. Unfortunately, public transport connections "
+"are poor, but carpooling is usually possible — it's best to leave a comment "
+"when signing up. There are usually enough parking spaces, and payment is "
+"possible with coins, card, or app."
+
+#: trainings/templates/trainings/infos.html:48
+msgid ""
+"Am Landeplatz hat es eine Toilette mit Trinkwasser. Es gibt in der Regel "
+"keine Möglichkeit, sich mit Nahrungsmitteln zu versorgen. Wir machen auch "
+"keine Mittagspause, da sich im Bus und am Start- oder Landeplatz immer "
+"wieder kleinere Pausen ergeben."
+msgstr ""
+"There is a toilet with drinking water at the landing site. There is "
+"generally no possibility to buy food. We also don’t take a lunch break, as "
+"there are always small breaks on the bus and at the takeoff or landing site."
+
+#: trainings/templates/trainings/infos.html:58
+msgid "Sessellift"
+msgstr "chairlift"
+
+#: trainings/templates/trainings/infos.html:60
+#, python-format
+msgid ""
+"Ein Flug kostet Fr. %(price)s, ein 10er Abo Fr. %(tenpack)s. Wer eine Runde "
+"Bus oder Boot macht, kriegt einen Flug gutgeschrieben. Wir benutzen den "
+"%(link)s, wenn er fährt und die Verhältnisse einen Start oben zulassen. Die "
+"Fahrt mit dem Clubbus bis zum Sessellift kostet die Hälfte, für Tageskarte "
+"oder Magic Pass sind die Teilnehmenden selber verantwortlich."
+msgstr ""
+"A flight costs CHF %(price)s, a 10-pack costs CHF %(tenpack)s. Anyone who "
+"does a round trip with the bus or boat gets one flight credited. We use the "
+"%(link)s if it’s running and conditions allow for a takeoff at the top. The "
+"club bus ride to the chairlift costs half price, and participants are "
+"responsible for their own day pass or Magic Pass."
+
+#: trainings/templates/trainings/infos.html:73
+#, python-format
+msgid ""
+"Gäste müssen die ersten vier Trainings im Jahr eine Tagesmitgliedschaft für "
+"Fr. %(price_of_day_pass)s lösen. Bezahlen kann man in Bar oder mit Twint."
+msgstr ""
+"Guests must purchase a day membership for CHF %(price_of_day_pass)s for the "
+"first four trainings of the year. Payment can be made in cash or with Twint."
+
+#: trainings/templates/trainings/infos.html:80
+msgid ""
+"In der Nähe vom Landeplatz gibt es drei Zeltplätze und selbst wenn diese "
+"Zeltplätze ausgebucht sind, ist wildes Campieren in der Gemeinde Brienz "
+"verboten. In den umliegenden Gemeinden ist im Auto schlafen kein Problem."
+msgstr ""
+"There are three campsites near the landing site, and even if those are fully "
+"booked, wild camping is prohibited in the municipality of Brienz. Sleeping "
+"in the car is generally not a problem in the surrounding communities."
+
+#: trainings/templates/trainings/rules.html:5
+msgid "Spielregeln"
+msgstr "Game Rules"
+
+#: trainings/templates/trainings/rules.html:8
+msgid ""
+"Für einen sinnvollen Trainingsbetrieb brauchen wir mindestens sechs "
+"Teilnehmende. Auf der anderen Seite ist die Teilnehmerzahl durch die Anzahl "
+"Plätze im Bus beschränkt. Damit gute Gruppen zusammen kommen, sind wir auf "
+"eure Fairness angewiesen."
+msgstr ""
+"For effective training sessions, we need at least six participants. On the "
+"other hand, the number of participants is limited by the number of seats on "
+"the bus. To ensure good group dynamics, we rely on your fairness."
+
+#: trainings/templates/trainings/rules.html:16
+#, python-format
+msgid ""
+"Unsere Trainings stehen allen offen, die unser <a "
+"href=\"%(safety_concept_url)s\">Sicherheitskonzept</a> akzeptieren. "
+"Mitglieder, die sich zu 100%% für den ganzen Tag einschreiben, haben bei "
+"rechtzeitigem Einschreiben Vorrang."
+msgstr ""
+"Our trainings are open to everyone who accepts our <a "
+"href=\"%(safety_concept_url)s\">Safety Concept</a>. Members who sign up "
+"100%% for the full day have priority if they register in time."
+
+#: trainings/templates/trainings/rules.html:23
+msgid ""
+"Bitte schreibt euch frühzeitig ein, damit alle ihr Wochenende und ihre "
+"Ferien planen können, viele von uns haben Familie oder eine lange Anreise. "
+"Bei normalen Trainings haben Mitglieder bis und mit Mittwoch Vorrang, bei "
+"den Axalpwochen bis Mitte April, danach gilt die Reihenfolge des "
+"Einschreibens."
+msgstr ""
+"Please sign up early so that everyone can plan their weekend and holidays — "
+"many of us have families or long travel times. For regular trainings, "
+"members have priority until and including Wednesday; for the Axalp Weeks, "
+"until mid-April. After that, it’s first come, first served."
+
+#: trainings/templates/trainings/rules.html:30
+#, python-format
+msgid ""
+"Die Option \"Ich habe vor zu kommen (75%%)\" ist ausschliesslich für Leute "
+"gedacht, die wegen ihrer beruflichen, familiären oder gesundheitlichen "
+"Situation nicht ganz sicher sind, ob sie kommen können. Falls du dir bis zur "
+"letzten Sekunde einen Streckenflugtag offen halten willst, kannst du "
+"selbstverständlich ohne Einschreiben und nach Absprache mit den Leitenden "
+"spontan zu einem Training dazu kommen, falls es Platz hat. Falls du von der "
+"75%% Option Gebrauch machen musst, schreibe dich bitte so früh wie möglich "
+"zu 100%% ein oder melde dich ab."
+msgstr ""
+"The \"I'm planning to come (75%%)\" option is intended only for those who "
+"are uncertain due to work, family, or health reasons. If you want to keep a "
+"cross-country flying day open until the last second, you are of course "
+"welcome to join a training spontaneously, without signing up, as long as "
+"you’ve cleared it with the leaders and there’s space. If you use the 75%% "
+"option, please either sign up 100%% or cancel as early as possible."
+
+#: trainings/templates/trainings/rules.html:40
+msgid ""
+"Man kann sich zwar von einem Training wieder abmelden, sollte dies "
+"insbesondere bei knapper Teilnehmerzahl nur im Notfall tun. Falls es eine "
+"Warteliste gibt, ist die Situation anders und man darf seinen Platz "
+"natürlich frühzeitig und nach Absprache frei geben."
+msgstr ""
+"You can cancel your registration for a training, but should only do so in "
+"emergencies, especially when participant numbers are tight. If there’s a "
+"waiting list, the situation is different, and of course you may give up your "
+"spot early after coordinating with the organizers."
+
+#: trainings/templates/trainings/rules.html:47
+msgid ""
+"Wir treffen uns in der Regel um 9 Uhr und fliegen, bis nicht mehr genügend "
+"Leute hoch fahren wollen. Wenn du dich für den ganzen Tag einschreibst, "
+"erwarten wir, dass du dir mindestens von 9 bis 19 Uhr Zeit nimmst."
+msgstr ""
+"We usually meet at 9 am and keep flying until not enough people want to head "
+"up again. If you sign up for the full day, we expect you to be available "
+"from at least 9 am to 7 pm"
+
+#: trainings/templates/trainings/rules.html:53
+msgid ""
+"Wir versuchen beim Ansagen der Trainings Wetterwünsche möglichst zu "
+"berücksichtigen. Wir erwarten aber, dass alle Angemeldeten den "
+"Durchführungsentscheid der Leiter·innen akzeptieren, unabhängig vom "
+"Wetterwunsch. Wir können es nicht immer allen recht machen und es gehört "
+"dazu, dass man ab und zu für die Gruppe in den sauren Apfel beisst."
+msgstr ""
+"We try to take weather preferences into account when announcing trainings. "
+"However, we expect all registered participants to accept the decision made "
+"by the organizers, regardless of weather preferences. We can't please "
+"everyone all the time — sometimes, you just have to take one for the team."
+
+#: trainings/templates/trainings/signup_create.html:19
+#: trainings/templates/trainings/signup_list.html:24
+msgid "Datum"
+msgstr "Date"
+
+#: trainings/templates/trainings/signup_create.html:22
+#: trainings/templates/trainings/signup_list.html:27
+#: trainings/templates/trainings/signup_update.html:19
+#: trainings/templates/trainings/training_list.html:45
+msgid "Verbindlichkeit"
+msgstr "Commitment"
+
+#: trainings/templates/trainings/signup_create.html:27
+#: trainings/templates/trainings/signup_update.html:24
+#, python-format
+msgid "Ich komme sicher (100%%)"
+msgstr "I'm definitely coming (100%%)"
+
+#: trainings/templates/trainings/signup_create.html:34
+#: trainings/templates/trainings/signup_update.html:31
+#, python-format
+msgid "Ich habe vor zu kommen (75%%)"
+msgstr "I'm planning to come (75%%)"
+
+#: trainings/templates/trainings/signup_create.html:39
+#: trainings/templates/trainings/signup_list.html:28
+#: trainings/templates/trainings/training_list.html:46
+msgid "Zeitplan"
+msgstr "Schedule"
+
+#: trainings/templates/trainings/signup_create.html:45
+#: trainings/templates/trainings/signup_update.html:42
+msgid "Ich komme den ganzen Tag"
+msgstr "I'm coming for the whole day"
+
+#: trainings/templates/trainings/signup_create.html:53
+#: trainings/templates/trainings/signup_update.html:50
+msgid "Ich komme später"
+msgstr "I'm coming later"
+
+#: trainings/templates/trainings/signup_create.html:61
+#: trainings/templates/trainings/signup_update.html:58
+msgid "Ich gehe früher"
+msgstr "I'm leaving earlier"
+
+#: trainings/templates/trainings/signup_create.html:69
+#: trainings/templates/trainings/signup_update.html:66
+msgid "Ich komme und gehe individuell"
+msgstr "I'll arrive and leave on my own schedule"
+
+#: trainings/templates/trainings/signup_create.html:74
+#: trainings/templates/trainings/signup_list.html:29
+#: trainings/templates/trainings/training_list.html:47
+msgid "Wetterwunsch"
+msgstr "Weather preference"
+
+#: trainings/templates/trainings/signup_create.html:79
+#: trainings/templates/trainings/signup_update.html:76
+msgid "Auch bei kleiner Chance"
+msgstr "Even if chances are low"
+
+#: trainings/templates/trainings/signup_create.html:86
+#: trainings/templates/trainings/signup_update.html:83
+msgid "Nur bei sicher gutem Wetter"
+msgstr "Only if the weather is clearly good"
+
+#: trainings/templates/trainings/signup_list.html:17
+msgid "Kommende Trainings"
+msgstr "Upcoming Trainings"
+
+#: trainings/templates/trainings/signup_list.html:25
+msgid "Pilot·innen"
+msgstr "Pilots"
+
+#: trainings/templates/trainings/signup_list.html:30
+msgid "Trainingsinfo"
+msgstr "Training info"
+
+#: trainings/templates/trainings/signup_list.html:65
+#: trainings/templates/trainings/training_list.html:87
+msgid "Ganzer Tag"
+msgstr "Whole day"
+
+#: trainings/templates/trainings/signup_list.html:66
+msgid "Komme später"
+msgstr "Coming later"
+
+#: trainings/templates/trainings/signup_list.html:67
+msgid "Gehe früher"
+msgstr "Leaving earlier"
+
+#: trainings/templates/trainings/signup_list.html:68
+#: trainings/templates/trainings/training_list.html:90
+msgid "Individuell"
+msgstr "Individual"
+
+#: trainings/templates/trainings/signup_list.html:92
+msgid "Du bist für kein kommendes Training eingeschrieben."
+msgstr "You are not signed up for any upcoming training."
+
+#: trainings/templates/trainings/signup_update.html:4
+#: trainings/templates/trainings/signup_update.html:6
+msgid "Anmeldung bearbeiten"
+msgstr "Edit registration"
+
+#: trainings/templates/trainings/signup_update.html:99
+msgid "Wieder anmelden"
+msgstr "Login again"
+
+#: trainings/templates/trainings/training_create.html:13
+msgid ""
+"Normale Trainings werden automatisch erstellt, sobald sich jemand "
+"einschreibt. Hier können mehrere Trainings auf einmal erstellt und z. B. mit "
+"der Information \"Axalpwochen\" versehen werden, ohne dass sich jemand "
+"einschreiben muss."
+msgstr ""
+"Regular trainings are created automatically as soon as someone signs up. "
+"Here, multiple trainings can be created at once and labeled, e.g., with "
+"\"Axalp Weeks\", without requiring anyone to sign up."
+
+#: trainings/templates/trainings/training_create.html:20
+msgid ""
+"Einstellungen bestehender Trainings (weil sich z. B. bereits jemand "
+"eingeschrieben hat) werden überschrieben, Anmeldungen bleiben erhalten."
+msgstr ""
+"Existing training settings (e.g. because someone has already signed up) will "
+"be overwritten, but registrations will be preserved."
+
+#: trainings/templates/trainings/training_create.html:31
+msgid "Erster Tag"
+msgstr "First day"
+
+#: trainings/templates/trainings/training_create.html:36
+msgid "Letzter Tag"
+msgstr "Last day"
+
+#: trainings/templates/trainings/training_create.html:41
+#: trainings/templates/trainings/training_update.html:20
+msgid "Infos"
+msgstr "Info"
+
+#: trainings/templates/trainings/training_create.html:44
+#: trainings/templates/trainings/training_update.html:23
+msgid "Max. Pilot·innen"
+msgstr "Max. Pilots"
+
+#: trainings/templates/trainings/training_create.html:52
+#: trainings/templates/trainings/training_update.html:31
+msgid "Datum Vorrang (bis und mit)"
+msgstr "Priority date (up to and including)"
+
+#: trainings/templates/trainings/training_list.html:41
+msgid "Pilot·in"
+msgstr "Pilots"
+
+#: trainings/templates/trainings/training_list.html:43
+msgid "Rolle"
+msgstr "Role"
+
+#: trainings/templates/trainings/training_list.html:44
+msgid "Einschreibedatum"
+msgstr "Signup date"
+
+#: trainings/templates/trainings/training_list.html:72
+msgid "Gast"
+msgstr "Guest"
+
+#: trainings/templates/trainings/training_list.html:74
+msgid "Mitglied"
+msgstr "Become a Member"
+
+#: trainings/templates/trainings/training_list.html:76
+msgid "Leiter·in"
+msgstr "Organizer"
+
+#: trainings/templates/trainings/training_list.html:88
+msgid "Kommt später"
+msgstr "Coming later"
+
+#: trainings/templates/trainings/training_list.html:89
+msgid "Geht früher"
+msgstr "Leaving earlier"
+
+#: trainings/templates/trainings/training_list.html:118
+msgid "Im Moment ist niemand für ein kommendes Training eingeschrieben."
+msgstr "No one is currently signed up for an upcoming training."
+
+#: trainings/templates/trainings/training_list.html:122
+#, python-format
+msgid ""
+"Du kannst dich auch direkt für einen beliebigen Tag <a "
+"href=\"%(signup_url)s\">einschreiben</a>."
+msgstr ""
+"You can also <a href=\"%(signup_url)s\">sign up</a> directly for any day."
+
+#: trainings/templates/trainings/training_update.html:4
+#: trainings/templates/trainings/training_update.html:6
+msgid "Training bearbeiten"
+msgstr "Edit Training"
+
+#: trainings/templates/trainings/training_update.html:41
+msgid "Training findet wegen schlechtem Wetter nicht statt."
+msgstr "Training is cancelled due to bad weather."
+
+#: trainings/templates/trainings/training_update.html:42
+msgid "Schlechtes Wetter"
+msgstr "Bad weather"
+
+#: trainings/templates/trainings/training_update.html:44
+msgid "Training findet nicht statt, zu viel Wind."
+msgstr "Training is cancelled due to strong winds."
+
+#: trainings/templates/trainings/training_update.html:45
+msgid "Zu viel Wind"
+msgstr "Too much wind"
+
+#: trainings/templates/trainings/training_update.html:47
+msgid "Training findet nicht statt, zu wenig Anmeldungen."
+msgstr "Training is cancelled due to insufficient registrations."
+
+#: trainings/templates/trainings/training_update.html:48
+msgid "Zu wenig Anmeldungen"
+msgstr "Too few registrations"
+
+#: trainings/templates/trainings/training_update.html:50
+msgid "Training findet nicht statt, CTR/TMA Meiringen aktiv."
+msgstr "Training is cancelled, CTR/TMA Meiringen is active."
+
+#: trainings/templates/trainings/training_update.html:51
+msgid "CTR/TMA aktiv"
+msgstr "CTR/TMA active"
+
+#: trainings/templates/trainings/training_update.html:56
+msgid "Training findet statt, Treffpunkt 9 Uhr Aaregg. Leiter·in:"
+msgstr "Training will take place. Meeting point: 9 am Aaregg. Organizer:"
+
+#: trainings/templates/trainings/training_update.html:57
+msgid "Ansagen"
+msgstr "Announcements"
+
+#: trainings/views.py:69
+msgid "Vergangene Trainings können nicht bearbeitet werden."
+msgstr "Past trainings cannot be edited."
+
+#: trainings/views.py:85
+msgid "Seepolizeimail abgesendet."
+msgstr "Lake police email sent."
+
+#: trainings/views.py:91
+msgid "Seepolizeimail kann nicht für vergangene Trainings versandt werden."
+msgstr "Lake police email cannot be sent for past trainings."
+
+#: trainings/views.py:95
+msgid "Seepolizeimail kann höchstens drei Tage im Voraus versandt werden."
+msgstr "Lake police email can only be sent up to three days in advance."
+
+#: trainings/views.py:104
+#, python-format
+msgid "%(sender)s hat bereits ein Seepolizeimail versandt."
+msgstr "%(sender)s already sent a lake police email."
+
+#: trainings/views.py:189
+#, python-format
+msgid "Du bist für <b>%(weekday)s</b>, den %(date)s, bereits eingeschrieben."
+msgstr "You are already signed up for <b>%(weekday)s</b>, %(date)s."
+
+#: trainings/views.py:212
+#, python-format
+msgid "Eingeschrieben für <b>%(weekday)s</b>, den %(date)s."
+msgstr "Signed up for <b>%(weekday)s</b>, %(date)s."
+
+#: trainings/views.py:233
+msgid "Vergangene Anmeldungen können nicht bearbeitet werden."
+msgstr "Past registrations cannot be edited."

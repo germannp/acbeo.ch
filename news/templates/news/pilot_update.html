@@ -1,8 +1,9 @@
 {% extends "base.html" %}
+{% load i18n %}
 
-{% block title %}Konto bearbeiten{% endblock title %}
+{% block title %}{% translate "Konto bearbeiten" %}{% endblock title %}
 
-{% block headline %}Konto bearbeiten{% endblock headline %}
+{% block headline %}{% translate "Konto bearbeiten" %}{% endblock headline %}
 
 {% block content %}
 
@@ -14,7 +15,7 @@
 
             <div class="col">
                 <div class="card mb-4">
-                    <h5 class="card-header">Konto</h5>
+                    <h5 class="card-header">{% translate "Konto" %}</h5>
                     <div class="card-body">
                         <main class="form">
                             <form method="post">
@@ -22,29 +23,33 @@
                                 <div class="form-floating mb-3">
                                     <input type="text" name="first_name" class="form-control" placeholder="text"
                                         {% if form.first_name.value %}value="{{ form.first_name.value }}"{% endif %}>
-                                    <label for="floatingInput">Vorname</label>
+                                    <label for="floatingInput">{% translate "Vorname" %}</label>
                                 </div>
                                 <div class="form-floating mb-3">
                                     <input type="text" name="last_name" class="form-control" placeholder="text"
                                         {% if form.last_name.value %}value="{{ form.last_name.value }}"{% endif %}>
-                                    <label for="floatingInput">Nachname</label>
+                                    <label for="floatingInput">{% translate "Nachname" %}</label>
                                 </div>
                                 <div class="form-floating mb-3">
                                     <input type="email" name="email" class="form-control" placeholder="name@example.com"
                                         {% if form.email.value %}value={{ form.email.value }}{% endif %}>
                                     <label for="floatingInput">Email</label>
-                                    <small class="text-muted">Zum Anmelden und Passwort Zurücksetzen.</small>
+                                    <small class="text-muted">{% translate "Zum Anmelden und Passwort Zurücksetzen." %}</small>
                                 </div>
                                 <div class="form-floating mb-3">
                                     <input type="tel" name="phone" class="form-control" placeholder="text"
                                         {% if form.phone.value %}value="{{ form.phone.value }}"{% endif %}>
-                                    <label for="floatingInput">Telefonnummer (z. B. 079 123 45 67)</label>
-                                    <small class="text-muted">Wir kontaktieren dich per Telefon, wenn wir z. B. spät ein Training
+                                    <label for="floatingInput">{% translate "Telefonnummer (z. B. 079 123 45 67)" %}</label>
+                                    <small class="text-muted">
+                                        {% blocktrans %}
+                                        Wir kontaktieren dich per Telefon, wenn wir z. B. spät ein Training
                                         absagen müssen, und wir senden nach Rücksprache pro Training zwei Nummern von
-                                        Teilnehmenden an Notfalldienste.</small>
+                                        Teilnehmenden an Notfalldienste.
+                                        {% endblocktrans %}
+                                    </small>
                                 </div>
-                                <button class="btn btn-primary" type="submit">Speichern</button>
-                                <a href="javascript:history.back()" class="btn btn-outline-dark">Abbrechen</a>
+                                <button class="btn btn-primary" type="submit">{% translate "Speichern" %}</button>
+                                <a href="javascript:history.back()" class="btn btn-outline-dark">{% translate "Abbrechen" %}</a>
                             </form>
                         </main>
                     </div>
@@ -54,13 +59,16 @@
             {% if request.user.is_member %}
             <div class="col">
                 <div class="card mb-4">
-                    <h5 class="card-header">Postadresse</h5>
+                    <h5 class="card-header">{% translate "Postadresse" %}</h5>
                     <div class="card-body">
                         <p class="card-text">
+                            {% blocktrans %}
                             Wir bitten dich, uns Umzüge zu melden, falls wir z. B. Werbematerial versenden wollen. Wir speichern die
                             Postadresse nicht in der Datenbank der Webseite ab, weil hier auch Wochenend- und Ferienpläne
-                            abgespeichert werden.</p>
-                        <a href="{% url 'contact' %}?subject=Neue%20Postadresse" class="btn btn-primary">Adressänderung melden</a>
+                            abgespeichert werden.
+                            {% endblocktrans %}
+                        </p>
+                        <a href="{% url 'contact' %}?subject=Neue%20Postadresse" class="btn btn-primary">{% translate "Adressänderung melden" %}</a>
                     </div>
                 </div>
             </div>

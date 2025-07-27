@@ -1,8 +1,9 @@
 {% extends "base.html" %}
+{% load i18n %}
 
-{% block title %}Kontakt{% endblock title %}
+{% block title %}{% translate "Kontakt" %}{% endblock title %}
 
-{% block headline %}Kontakt{% endblock headline %}
+{% block headline %}{% translate "Kontakt" %}{% endblock headline %}
 
 {% block content %}
 
@@ -16,7 +17,7 @@
                         {% csrf_token %}
                         <div class="form-floating md-3">
                             <input type="text" name="name" class="form-control" placeholder="text">
-                            <label for="floatingInput">Leer lassen!</label>
+                            <label for="floatingInput">{% translate "Leer lassen!" %}</label>
                         </div>
                         <div class="form-floating mb-3">
                             <input type="email" name="email" class="form-control" placeholder="text" 
@@ -26,16 +27,16 @@
                         <div class="form-floating mb-3">
                             <input type="text" name="subject" class="form-control" placeholder="text"
                             {% if form.subject.value %} value="{{ form.subject.value }}" {% endif %} required>
-                            <label for="floatingInput">Betreff</label>
+                            <label for="floatingInput">{% translate "Betreff" %}</label>
                         </div>
                         <div class="form-floating mb-3">
                             <textarea class="form-control" placeholder="text" name="message" style="height: 200px"
                             {% if form.message.value %} value="{{ form.message.value }}" {% endif %} required></textarea>
-                            <label for="message">Nachricht</label>
+                            <label for="message">{% translate "Nachricht" %}</label>
                         </div>
                         <input type="hidden" name="javascript" id="id_javascript">
-                        <button class="btn btn-primary" type="submit">Absenden</button>
-                        <a href="javascript:history.back()" class="btn btn-outline-dark">Abbrechen</a>
+                        <button class="btn btn-primary" type="submit">{% translate "Absenden" %}</button>
+                        <a href="javascript:history.back()" class="btn btn-outline-dark">{% translate "Abbrechen" %}</a>
                     </form>
                 </main>
             </div>

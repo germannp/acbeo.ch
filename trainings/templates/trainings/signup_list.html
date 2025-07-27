@@ -1,8 +1,9 @@
 {% extends "base.html" %}
+{% load i18n %}
 
-{% block title %}Meine Trainings{% endblock title %}
+{% block title %}{% translate "Meine Trainings" %}{% endblock title %}
 
-{% block headline %}Meine Trainings{% endblock headline %}
+{% block headline %}{% translate "Meine Trainings" %}{% endblock headline %}
 
 {% block content %}
 
@@ -13,21 +14,21 @@
         {% if signup_list %}
 
         <div class="card mb-4">
-            <h5 class="card-header">Kommende Trainings</h5>
+            <h5 class="card-header">{% translate "Kommende Trainings" %}</h5>
             <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-sm table-hover">
                         <thead>
                             <tr>
                                 <th scope="col">#</th>
-                                <th scope="col">Datum</th>
-                                <th scope="col">Pilot·innen</th>
+                                <th scope="col">{% translate "Datum" %}</th>
+                                <th scope="col">{% translate "Pilot·innen" %}</th>
                                 <th scope="col">Status</th>
-                                <th scope="col">Verbindlichkeit</th>
-                                <th scope="col">Zeitplan</th>
-                                <th scope="col">Wetterwunsch</th>
-                                <th scope="col" style="min-width: 300px">Trainingsinfo</th>
-                                <th scope="col" style="min-width: 300px">Kommentar</th>
+                                <th scope="col">{% translate "Verbindlichkeit" %}</th>
+                                <th scope="col">{% translate "Zeitplan" %}</th>
+                                <th scope="col">{% translate "Wetterwunsch" %}</th>
+                                <th scope="col" style="min-width: 300px">{% translate "Trainingsinfo" %}</th>
+                                <th scope="col" style="min-width: 300px">{% translate "Kommentar" %}</th>
                             </tr>
                         </thead>
                         <tbody class="table-group-divider">
@@ -61,10 +62,10 @@
                                     {% endif %}
                                 </td>
                                 <td class="text-nowrap">
-                                    {% if signup.duration == signup.Duration.ALL_DAY %}Ganzer Tag{% endif %}
-                                    {% if signup.duration == signup.Duration.ARRIVING_LATE %}<span class="text-warning">Komme später</span>{% endif %}
-                                    {% if signup.duration == signup.Duration.LEAVING_EARLY %}<span class="text-warning">Gehe früher</span>{% endif %}
-                                    {% if signup.duration == signup.Duration.INDIVIDUALLY %}<span class="text-warning">Individuell</span>{% endif %}
+                                    {% if signup.duration == signup.Duration.ALL_DAY %}{% translate "Ganzer Tag" %}{% endif %}
+                                    {% if signup.duration == signup.Duration.ARRIVING_LATE %}<span class="text-warning">{% translate "Komme später" %}</span>{% endif %}
+                                    {% if signup.duration == signup.Duration.LEAVING_EARLY %}<span class="text-warning">{% translate "Gehe früher" %}</span>{% endif %}
+                                    {% if signup.duration == signup.Duration.INDIVIDUALLY %}<span class="text-warning">{% translate "Individuell" %}</span>{% endif %}
                                 </td>
                                 <td>
                                     {% if signup.get_status_display != 'Canceled' %}
@@ -82,14 +83,14 @@
                         </tbody>
                     </table>
                 </div>
-                <a href="{% url 'signup' %}" class="btn btn-secondary">Einschreiben</a>
+                <a href="{% url 'signup' %}" class="btn btn-secondary">{% translate "Einschreiben" %}</a>
             </div>
         </div>
 
         {% else %}
     
-        <p>Du bist für kein kommendes Training eingeschrieben.</p>
-        <a href="{% url 'signup' %}" class="btn btn-secondary">Einschreiben</a>
+        <p>{% translate "Du bist für kein kommendes Training eingeschrieben." %}</p>
+        <a href="{% url 'signup' %}" class="btn btn-secondary">{% translate "Einschreiben" %}</a>
     
         {% endif %}
 

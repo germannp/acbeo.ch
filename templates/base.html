@@ -1,6 +1,6 @@
 {% load static %}
-
 {% load training_extras %}
+{% load i18n %}
 
 <!doctype html>
 <html lang="de-ch">
@@ -80,27 +80,27 @@
                         <a class="nav-link dropdown-toggle" href="#" id="dropdown04" data-bs-toggle="dropdown"
                             aria-expanded="false">Trainings</a>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="{% url 'signup' %}">Einschreiben</a></li>
-                            <li><a class="dropdown-item" href="{% url 'trainings' %}">Nächste Trainings</a></li>
-                            <li><a class="dropdown-item" href="{% url 'signups' %}">Meine Trainings</a></li>
+                            <li><a class="dropdown-item" href="{% url 'signup' %}">{% translate "Einschreiben" %}</a></li>
+                            <li><a class="dropdown-item" href="{% url 'trainings' %}">{% translate "Nächste Trainings" %}</a></li>
+                            <li><a class="dropdown-item" href="{% url 'signups' %}">{% translate "Meine Trainings" %}</a></li>
                             {% if request.user.is_staff %}
-                            <li><a class="dropdown-item" href="{% url 'create_trainings' %}">Trainings erstellen</a></li>
+                            <li><a class="dropdown-item" href="{% url 'create_trainings' %}">{% translate "Trainings erstellen" %}</a></li>
                             {% endif %}
-                            <li><a class="dropdown-item" href="{% url 'about_trainings' %}">Praktische Infos</a></li>
+                            <li><a class="dropdown-item" href="{% url 'about_trainings' %}">{% translate "Praktische Infos" %}</a></li>
                         </ul>
                     </li>
                     {% if request.user.is_orga %}
                     <li class="nav-item dropup">
                         <a class="nav-link dropdown-toggle" href="#" id="dropdown04" data-bs-toggle="dropdown"
-                            aria-expanded="false">Berichte</a>
+                            aria-expanded="false">{% translate "Berichte" %}</a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             {% training_today as show_create_report %}
                             {% if show_create_report %}
-                                <li><a class="dropdown-item" href="{% url 'create_report' %}">Heutiger Bericht</a></li>
+                                <li><a class="dropdown-item" href="{% url 'create_report' %}">{% translate "Heutiger Bericht" %}</a></li>
                             {% endif %}
-                            <li><a class="dropdown-item" href="{% url 'reports' %}">Berichte</a></li>
-                            <li><a class="dropdown-item" href="{% url 'balance' %}">Bilanz</a></li>
-                            <li><a class="dropdown-item" href="{% url 'pilots' %}">Aktive Pilot·innen</a></li>
+                            <li><a class="dropdown-item" href="{% url 'reports' %}">{% translate "Berichte" %}</a></li>
+                            <li><a class="dropdown-item" href="{% url 'balance' %}">{% translate "Bilanz" %}</a></li>
+                            <li><a class="dropdown-item" href="{% url 'pilots' %}">{% translate "Aktive Pilot·innen" %}</a></li>
                         </ul>
                     </li>
                     {% endif %}
@@ -111,22 +111,35 @@
                     {% if request.user.is_authenticated %}
                     <li class="nav-item dropup">
                         <a class="nav-link dropdown-toggle" href="#" id="dropdown04" data-bs-toggle="dropdown"
-                            aria-expanded="false">Konto</a>
+                            aria-expanded="false">{% translate "Konto" %}</a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             {% if not request.user.is_new %}
-                            <li><a class="dropdown-item" href="{% url 'bills' %}">Rechnungen</a></li>
+                            <li><a class="dropdown-item" href="{% url 'bills' %}">{% translate "Rechnungen" %}</a></li>
                             {% endif %}
-                            <li><a class="dropdown-item" href="{% url 'update_pilot' %}?next={{ request.path }}">Bearbeiten</a></li>
+                            <li><a class="dropdown-item" href="{% url 'update_pilot' %}?next={{ request.path }}">{% translate "Bearbeiten" %}</a></li>
                             {% if not request.user.is_member %}
-                            <li><a class="dropdown-item" href="{% url 'membership' %}">Mitglied werden</a></li>
+                            <li><a class="dropdown-item" href="{% url 'membership' %}">{% translate "Mitglied werden" %}</a></li>
                             {% endif %}
-                            <li><a class="dropdown-item" href="{% url 'logout' %}?next=/">Abmelden</a></li>
+                            <li><a class="dropdown-item" href="{% url 'logout' %}?next=/">{% translate "Abmelden" %}</a></li>
                         </ul>
                     </li>
                     {% else %}
-                    <a class="nav-link" href="{% url 'login' %}?next={{ request.path }}">Anmelden</a>
+                    <a class="nav-link" href="{% url 'login' %}?next={{ request.path }}">{% translate "Anmelden" %}</a>
                     {% endif %}
                     </li>
+
+                    {% get_current_language as CURRENT_LANG %}
+                    <li class="nav-link">
+                        <form action="{% url 'set_language' %}" method="post" class="m-0 p-0">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.path }}">
+                            <button type="submit" name="language" value="{% if CURRENT_LANG == 'de-ch' %}en{% else %}de-ch{% endif %}"
+                                    class="btn btn-link nav-link p-0 m-0">
+                                {% if CURRENT_LANG == "de-ch" %}EN{% else %}DE{% endif %}
+                            </button>
+                        </form>
+                    </li>
+
                 </ul>
             </div>
         </div>

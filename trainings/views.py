@@ -9,6 +9,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.utils.formats import date_format
+from django.utils.translation import gettext_lazy as _
 from django.views import generic
 
 from . import forms
@@ -65,7 +66,7 @@ class TrainingUpdateView(OrgaRequiredMixin, generic.UpdateView):
 
     def get_object(self):
         if self.kwargs["date"] < timezone.now().date():
-            raise Http404("Vergangene Trainings können nicht bearbeitet werden.")
+            raise Http404(_("Vergangene Trainings können nicht bearbeitet werden."))
         return get_object_or_404(Training, date=self.kwargs["date"])
 
     def get_success_url(self):
@@ -81,17 +82,17 @@ class EmergencyMailView(OrgaRequiredMixin, SuccessMessageMixin, generic.UpdateVi
     form_class = forms.EmergencyMailForm
     template_name = "trainings/emergency_mail.html"
     success_url = reverse_lazy("trainings")
-    success_message = "Seepolizeimail abgesendet."
+    success_message = _("Seepolizeimail abgesendet.")
 
     def get_object(self):
         today = timezone.now().date()
         if self.kwargs["date"] < today:
             raise Http404(
-                "Seepolizeimail kann nicht für vergangene Trainings versandt werden."
+                _("Seepolizeimail kann nicht für vergangene Trainings versandt werden.")
             )
         if self.kwargs["date"] > today + timedelta(days=2):
             raise Http404(
-                "Seepolizeimail kann höchstens drei Tage im Voraus versandt werden."
+                _("Seepolizeimail kann höchstens drei Tage im Voraus versandt werden.")
             )
 
         training = get_object_or_404(
@@ -100,7 +101,7 @@ class EmergencyMailView(OrgaRequiredMixin, SuccessMessageMixin, generic.UpdateVi
         )
         if sender := training.emergency_mail_sender:
             messages.info(
-                self.request, f"{sender} hat bereits ein Seepolizeimail versandt."
+                self.request, _("%(sender)s hat bereits ein Seepolizeimail versandt.") % {"sender": sender}
             )
 
         prefetch_related_objects([training], "signups__pilot")
@@ -184,8 +185,12 @@ class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateVi
         if Signup.objects.filter(pilot=pilot, training=training).exists():
             form.add_error(
                 None,
-                f"Du bist für <b>{date_format(self.date, 'l')}</b>, den "
-                f"{date_format(self.date, 'j. F Y')}, bereits eingeschrieben.",
+                _(
+                    "Du bist für <b>%(weekday)s</b>, den %(date)s, bereits eingeschrieben."
+                ) % {
+                    "weekday": date_format(self.date, "l"),
+                    "date": date_format(self.date, "j. F Y"),
+                },
             )
             return super().form_invalid(form)
 
@@ -203,8 +208,12 @@ class SignupCreateView(LoginRequiredMixin, SuccessMessageMixin, generic.CreateVi
 
     def get_success_url(self):
         self.success_message = (
-            f"Eingeschrieben für <b>{date_format(self.date, 'l')}</b>, "
-            f"den {date_format(self.date, 'j. F Y')}."
+            _(
+                "Eingeschrieben für <b>%(weekday)s</b>, den %(date)s."
+            ) % {
+                "weekday": date_format(self.date, "l"),
+                "date": date_format(self.date, "j. F Y"),
+            }
         )
         next_day = self.date + timedelta(days=1)
         success_url = reverse_lazy("signup", kwargs={"date": next_day})
@@ -221,7 +230,7 @@ class SignupUpdateView(LoginRequiredMixin, generic.UpdateView):
 
     def get_object(self):
         if self.kwargs["date"] < timezone.now().date():
-            raise Http404("Vergangene Anmeldungen können nicht bearbeitet werden.")
+            raise Http404(_("Vergangene Anmeldungen können nicht bearbeitet werden."))
         pilot = self.request.user
         training = get_object_or_404(Training, date=self.kwargs["date"])
         signup = get_object_or_404(Signup, pilot=pilot, training=training)

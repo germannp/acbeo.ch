@@ -2,6 +2,7 @@ from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
+from django.utils.translation import gettext_lazy as _
 
 from .models import Pilot
 
@@ -18,19 +19,19 @@ class ContactForm(forms.Form):
     def clean_name(self):
         name = self.cleaned_data.get("name")
         if name:
-            raise ValidationError("Nachricht konnte nicht gesendet werden.")
+            raise ValidationError(_("Nachricht konnte nicht gesendet werden."))
         return name
 
     def clean_javascript(self):
         javascript = self.cleaned_data.get("javascript")
         if javascript != "JavaScript active":
-            raise ValidationError("Du musst JavaScript aktivieren.")
+            raise ValidationError(_("Du musst JavaScript aktivieren."))
         return javascript
 
     def send_mail(self):
         message = self.cleaned_data["message"] + "\n\n" + self.cleaned_data["email"]
         send_mail(
-            subject="Kontaktformular: " + self.cleaned_data["subject"],
+            subject=_("Kontaktformular: ") + self.cleaned_data["subject"],
             message=message,
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[settings.INFO_EMAIL],
@@ -49,13 +50,13 @@ class MembershipForm(forms.Form):
     def clean_request_membership(self):
         request_membership = self.cleaned_data.get("request_membership")
         if not request_membership:
-            raise ValidationError("Du musst Mitglied werden wollen.")
+            raise ValidationError(_("Du musst Mitglied werden wollen."))
         return request_membership
 
     def clean_accept_statutes(self):
         accept_statutes = self.cleaned_data.get("accept_statutes")
         if not accept_statutes:
-            raise ValidationError("Du musst mit unseren Statuten einverstanden sein.")
+            raise ValidationError(_("Du musst mit unseren Statuten einverstanden sein."))
         return accept_statutes
 
     def send_mail(self):
@@ -67,21 +68,24 @@ class MembershipForm(forms.Form):
                 self.cleaned_data["country"],
                 self.sender.email,
                 self.sender.phone,
-                "\nMöchte Mitglied werden.",
+                str(_("\nMöchte Mitglied werden.")),
             ]
         )
         if day_passes := self.sender.day_passes_of_this_season:
             dates = ", ".join(
                 str(day_pass.signup.training.date) for day_pass in day_passes
             )
-            message += (
-                f"\n\n{self.sender.first_name} hat diese Saison {len(day_passes)} "
-                f"Tagesmitgliedschaft(en) bezahlt ({dates})."
-            )
+            message += _(
+                "\n\n%(name)s hat diese Saison %(count)d Tagesmitgliedschaft(en) bezahlt (%(dates)s)."
+            ) % {
+                           "name": self.sender.first_name,
+                           "count": len(day_passes),
+                           "dates": dates,
+            }
         if comment := self.cleaned_data["comment"]:
-            message += "\n\nKommentar:\n" + comment
+            message += _("\n\nKommentar:\n") + comment
         send_mail(
-            subject="Antrag ACBeo-Mitgliedschaft",
+            subject=_("Antrag ACBeo-Mitgliedschaft"),
             message=message,
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[settings.INFO_EMAIL, self.sender.email],
@@ -106,7 +110,7 @@ class PilotCreationForm(forms.ModelForm):
         accept_safety_concept = self.cleaned_data.get("accept_safety_concept")
         if not accept_safety_concept:
             raise ValidationError(
-                "Du musst mit unserem Sicherheitskonzept einverstanden sein."
+                _("Du musst mit unserem Sicherheitskonzept einverstanden sein.")
             )
         return accept_safety_concept
 
@@ -114,19 +118,19 @@ class PilotCreationForm(forms.ModelForm):
         password1 = self.cleaned_data.get("password1")
         password2 = self.cleaned_data.get("password2")
         if password1 and password2 and password1 != password2:
-            raise ValidationError("Passwörter müssen gleich sein.")
+            raise ValidationError(_("Passwörter müssen gleich sein."))
         return password2
 
     def clean_username(self):
         username = self.cleaned_data.get("username")
         if username:
-            raise ValidationError("Konto konnte nicht angelegt werden.")
+            raise ValidationError(_("Konto konnte nicht angelegt werden."))
         return username
 
     def clean_javascript(self):
         javascript = self.cleaned_data.get("javascript")
         if javascript != "JavaScript active":
-            raise ValidationError("Du musst JavaScript aktivieren.")
+            raise ValidationError(_("Du musst JavaScript aktivieren."))
         return javascript
 
     def save(self, commit=True):
@@ -146,14 +150,16 @@ class PilotUpdateForm(forms.ModelForm):
         if not self.changed_data:
             return
 
-        message = (
-            f"{self.cleaned_data['first_name']} {self.cleaned_data['last_name']} hat "
-            "folgende Änderungen am Konto gemacht:\n\n"
-        )
+        message = _(
+            "%(first)s %(last)s hat folgende Änderungen am Konto gemacht:\n\n"
+        ) % {
+                      "first": self.cleaned_data["first_name"],
+                      "last": self.cleaned_data["last_name"],
+        }
         for field in self.changed_data:
             message += f"{field}: {self[field].initial} -> {self.cleaned_data[field]}\n"
         send_mail(
-            subject="Änderung an Konto",
+            subject=_("Änderung an Konto"),
             message=message,
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[settings.INFO_EMAIL],

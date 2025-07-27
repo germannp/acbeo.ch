@@ -3,6 +3,7 @@ from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmVie
 from django.contrib.messages.views import SuccessMessageMixin
 from django.urls import reverse_lazy
 from django.views import generic
+from django.utils.translation import gettext_lazy as _
 
 from .forms import ContactForm, MembershipForm, PilotCreationForm, PilotUpdateForm
 from .models import Post
@@ -21,7 +22,7 @@ class ContactFormView(SuccessMessageMixin, generic.FormView):
     form_class = ContactForm
     template_name = "news/contact.html"
     success_url = reverse_lazy("home")
-    success_message = "Nachricht abgesendet."
+    success_message = _("Nachricht abgesendet.")
 
     def get_initial(self):
         initial = super(ContactFormView, self).get_initial()
@@ -44,7 +45,7 @@ class LoginForbiddenMixin(UserPassesTestMixin):
 class PilotCreateView(LoginForbiddenMixin, SuccessMessageMixin, generic.CreateView):
     form_class = PilotCreationForm
     template_name = "news/pilot_create.html"
-    success_message = "Konto angelegt."
+    success_message = _("Konto angelegt.")
 
     def get_success_url(self):
         success_url = reverse_lazy("login")
@@ -56,7 +57,7 @@ class PilotCreateView(LoginForbiddenMixin, SuccessMessageMixin, generic.CreateVi
 class PilotUpdateView(LoginRequiredMixin, SuccessMessageMixin, generic.UpdateView):
     form_class = PilotUpdateForm
     template_name = "news/pilot_update.html"
-    success_message = "Änderungen gespeichert."
+    success_message = _("Änderungen gespeichert.")
 
     def get_object(self):
         return self.request.user
@@ -78,7 +79,7 @@ class PilotPasswordResetView(SuccessMessageMixin, PasswordResetView):
     subject_template_name = "news/password_reset_subject.txt"
     email_template_name = "news/password_reset_email.html"
     success_url = reverse_lazy("home")
-    success_message = (
+    success_message = _(
         "Instruktionen zum Zurücksetzen des Passworts wurden an die angegebene Email "
         "geschickt."
     )
@@ -87,7 +88,7 @@ class PilotPasswordResetView(SuccessMessageMixin, PasswordResetView):
 class PilotPasswordResetConfirmView(SuccessMessageMixin, PasswordResetConfirmView):
     template_name = "news/password_reset_confirm.html"
     success_url = reverse_lazy("login")
-    success_message = "Passwort geändert."
+    success_message = _("Passwort geändert.")
 
 
 class NonMemberOnlyMixin(LoginRequiredMixin, UserPassesTestMixin):
@@ -99,7 +100,7 @@ class MembershipFormView(NonMemberOnlyMixin, SuccessMessageMixin, generic.FormVi
     form_class = MembershipForm
     template_name = "news/membership.html"
     success_url = reverse_lazy("home")
-    success_message = "Mitgliedschaft beantragt."
+    success_message = _("Mitgliedschaft beantragt.")
 
     def form_valid(self, form):
         form.sender = self.request.user

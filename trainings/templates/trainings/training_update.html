@@ -1,8 +1,9 @@
 {% extends "base.html" %}
+{% load i18n %}
 
-{% block title %}Training bearbeiten{% endblock title %}
+{% block title %}{% translate "Training bearbeiten" %}{% endblock title %}
 
-{% block headline %}Training bearbeiten{% endblock headline %}
+{% block headline %}{% translate "Training bearbeiten" %}{% endblock headline %}
 
 {% block content %}
 
@@ -16,10 +17,10 @@
                     <div class="form-floating mb-3">
                         <textarea type="text" name="info" id="info" class="form-control" placeholder="text"
                             style="height: 100px">{% if form.info.value %}{{ form.info.value }}{% endif %}</textarea>
-                        <label for="floatingInput">Infos</label>
+                        <label for="floatingInput">{% translate "Infos" %}</label>
                     </div>
                     <div class="row mb-3">
-                        <label class="col-6 col-form-label">Max. Pilot·innen</label>
+                        <label class="col-6 col-form-label">{% translate "Max. Pilot·innen" %}</label>
                         <div class="col-6">
                             <input type="number" class="form-control" name="max_pilots" value={{ form.max_pilots.value }}>
                         </div>
@@ -27,37 +28,37 @@
                     <div class="form-floating mb-3">
                         <input type="date" class="form-control" name="priority_date"
                             value="{{ form.instance.priority_date.isoformat }}" required>
-                        <label>Datum Vorrang (bis und mit)</label>
+                        <label>{% translate "Datum Vorrang (bis und mit)" %}</label>
                     </div>
                     <div class="btn-group">
-                        <button class="btn btn-primary" type="submit">Speichern</button>
+                        <button class="btn btn-primary" type="submit">{% translate "Speichern" %}</button>
                         <div class="btn-group dropup">
                             <button id="btnGroupDrop1" type="button" class="btn btn-primary dropdown-toggle"
                                 data-bs-toggle="dropdown">
                             </button>
                             <ul class="dropdown-menu">
                                 <li><a class="dropdown-item text-danger"
-                                        onclick="document.getElementById('info').value='Training findet wegen schlechtem Wetter nicht statt.'"
-                                        href="#">Schlechtes Wetter</a></li>
+                                        onclick="document.getElementById('info').value='{% translate "Training findet wegen schlechtem Wetter nicht statt." %}'"
+                                        href="#">{% translate "Schlechtes Wetter" %}</a></li>
                                 <li><a class="dropdown-item text-danger"
-                                        onclick="document.getElementById('info').value='Training findet nicht statt, zu viel Wind.'"
-                                        href="#">Zu viel Wind</a></li>
+                                        onclick="document.getElementById('info').value='{% translate "Training findet nicht statt, zu viel Wind." %}'"
+                                        href="#">{% translate "Zu viel Wind" %}</a></li>
                                 <li><a class="dropdown-item text-danger"
-                                        onclick="document.getElementById('info').value='Training findet nicht statt, zu wenig Anmeldungen.'"
-                                        href="#">Zu wenig Anmeldungen</a></li>
+                                        onclick="document.getElementById('info').value='{% translate "Training findet nicht statt, zu wenig Anmeldungen." %}'"
+                                        href="#">{% translate "Zu wenig Anmeldungen" %}</a></li>
                                 <li><a class="dropdown-item text-danger"
-                                    onclick="document.getElementById('info').value='Training findet nicht statt, CTR/TMA Meiringen aktiv.'"
-                                    href="#">CTR/TMA aktiv</a></li>
+                                    onclick="document.getElementById('info').value='{% translate "Training findet nicht statt, CTR/TMA Meiringen aktiv." %}'"
+                                    href="#">{% translate "CTR/TMA aktiv" %}</a></li>
                                 <li>
                                     <hr class="dropdown-divider">
                                 </li>
                                 <li><a class="dropdown-item text-success"
-                                        onclick="document.getElementById('info').value='Training findet statt, Treffpunkt 9 Uhr Aaregg. Leiter·in: {{ user.first_name }}, {{ user.phone }}'"
-                                        href="#">Ansagen</a></li>
+                                        onclick="document.getElementById('info').value='{{ _('Training findet statt, Treffpunkt 9 Uhr Aaregg. Leiter·in:') }} {{ user.first_name }}, {{ user.phone }}'"
+                                        href="#">{% translate "Ansagen" %}</a></li>
                             </ul>
                         </div>
                     </div>
-                    <a href="{{ view.get_success_url }}" class="btn btn-outline-dark">Abbrechen</a>
+                    <a href="{{ view.get_success_url }}" class="btn btn-outline-dark">{% translate "Abbrechen" %}</a>
                 </form>
             </main>
         </div>

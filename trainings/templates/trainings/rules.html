@@ -1,38 +1,61 @@
 {% load static %}
+{% load i18n %}
 
 <div class="card mb-4">
-    <h5 class="card-header">Spielregeln</h5>
+    <h5 class="card-header">{% translate "Spielregeln" %}</h5>
     <div class="card-body">
         <p class="card-text">
+            {% blocktrans trimmed %}
             Für einen sinnvollen Trainingsbetrieb brauchen wir mindestens sechs Teilnehmende. Auf der anderen Seite ist
             die Teilnehmerzahl durch die Anzahl Plätze im Bus beschränkt. Damit gute Gruppen zusammen kommen, sind wir
-            auf eure Fairness angewiesen.</p>
+            auf eure Fairness angewiesen.
+            {% endblocktrans %}
+        </p>
         <p class="card-text">
-            Unsere Trainings stehen allen offen, die unser <a href="{% static 'news/sicherheitskonzept.pdf' %}">
-                Sicherheitskonzept</a> akzeptieren. Mitglieder, die sich zu 100% für den ganzen Tag einschreiben, haben
-            bei rechtzeitigem Einschreiben Vorrang.</p>
+            {% static 'news/sicherheitskonzept.pdf' as safety_concept_url %}
+            {% blocktrans trimmed with safety_concept_url=safety_concept_url %}
+            Unsere Trainings stehen allen offen, die unser <a href="{{ safety_concept_url }}">Sicherheitskonzept</a>
+            akzeptieren. Mitglieder, die sich zu 100% für den ganzen Tag einschreiben, haben bei rechtzeitigem
+            Einschreiben Vorrang.
+            {% endblocktrans %}
+        </p>
         <p class="card-text">
+            {% blocktrans trimmed %}
             Bitte schreibt euch frühzeitig ein, damit alle ihr Wochenende und ihre Ferien planen können, viele von uns
             haben Familie oder eine lange Anreise. Bei normalen Trainings haben Mitglieder bis und mit Mittwoch Vorrang,
-            bei den Axalpwochen bis Mitte April, danach gilt die Reihenfolge des Einschreibens.</p>
+            bei den Axalpwochen bis Mitte April, danach gilt die Reihenfolge des Einschreibens.
+            {% endblocktrans %}
+        </p>
         <p class="card-text">
+            {% blocktrans trimmed %}
             Die Option "Ich habe vor zu kommen (75%)" ist ausschliesslich für Leute gedacht, die wegen ihrer
             beruflichen, familiären oder gesundheitlichen Situation nicht ganz sicher sind, ob sie kommen können. Falls
             du dir bis zur letzten Sekunde einen Streckenflugtag offen halten willst, kannst du selbstverständlich ohne
-            Einschreiben und nach Absprache mit den Leitenden spontan zu einem Trainig dazu kommen, falls es Platz hat.
+            Einschreiben und nach Absprache mit den Leitenden spontan zu einem Training dazu kommen, falls es Platz hat.
             Falls du von der 75% Option Gebrauch machen musst, schreibe dich bitte so früh wie möglich zu 100% ein oder
-            melde dich ab.</p>
+            melde dich ab.
+            {% endblocktrans %}
+        </p>
         <p class="card-text">
+            {% blocktrans trimmed %}
             Man kann sich zwar von einem Training wieder abmelden, sollte dies insbesondere bei knapper Teilnehmerzahl
             nur im Notfall tun. Falls es eine Warteliste gibt, ist die Situation anders und man darf seinen Platz
-            natürlich frühzeitig und nach Absprache frei geben.</p>
+            natürlich frühzeitig und nach Absprache frei geben.
+            {% endblocktrans %}
+        </p>
         <p class="card-text">
+            {% blocktrans trimmed %}
             Wir treffen uns in der Regel um 9 Uhr und fliegen, bis nicht mehr genügend Leute hoch fahren wollen. Wenn du
-            dich für den ganzen Tag einschreibst, erwarten wir, dass du dir mindestens von 9 bis 19 Uhr Zeit nimmst.</p>
+            dich für den ganzen Tag einschreibst, erwarten wir, dass du dir mindestens von 9 bis 19 Uhr Zeit nimmst.
+            {% endblocktrans %}
+        </p>
         <p class="card-text">
+            {% blocktrans trimmed %}
             Wir versuchen beim Ansagen der Trainings Wetterwünsche möglichst zu berücksichtigen. Wir erwarten aber, dass
             alle Angemeldeten den Durchführungsentscheid der Leiter·innen akzeptieren, unabhängig vom Wetterwunsch. Wir
             können es nicht immer allen recht machen und es gehört dazu, dass man ab und zu für die Gruppe in den sauren
-            Apfel beisst.</p>
+            Apfel beisst.
+            {% endblocktrans %}
+        </p>
     </div>
 </div>
